@@ -815,8 +815,9 @@ function getOffsetWeekKey(offsetWeeks) {
 }
 
 function saveToStorage() {
-  if (isPlanLocked && isPlanLocked()) return;
-  if (viewingWeekKey !== null && viewingWeekKey <= getCurrentWeekKey()) return;
+  if (typeof isPlanLocked === 'function' && isPlanLocked()) return;
+  const isFutureWeek = viewingWeekKey !== null && viewingWeekKey > getCurrentWeekKey();
+  if (viewingWeekKey !== null && !isFutureWeek) return;
   try {
     localStorage.setItem('mealplanner_plan', JSON.stringify(plan));
     localStorage.setItem('mealplanner_notes', document.getElementById('notes-ta').value);
