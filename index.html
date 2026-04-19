@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.3.4</title>
+<title>Family Meal Planner v2.3.5</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -388,7 +388,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:9px;color:#57534e;align-self:flex-end;padding-bottom:2px;">v2.3.4</span>
+    <span id="version-badge" style="font-size:9px;color:#57534e;align-self:flex-end;padding-bottom:2px;">v2.3.5</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -1693,14 +1693,12 @@ function saveCurrentToArchive() {
 }
 
 function navWeek(dir) {
-  // Save current week to archive before navigating
   saveCurrentToArchive();
-
   const archiveKeys = getArchiveKeys();
   const currentKey = getCurrentWeekKey();
 
   if (dir === 0) { viewingWeekKey = null; loadLiveWeek(); updateWeekNavButtons(); return; }
-  const currentKey = getCurrentWeekKey();
+
   if (viewingWeekKey === null) {
     if (dir === -1 && archiveKeys.length > 0) {
       viewingWeekKey = archiveKeys[archiveKeys.length - 1];
@@ -1710,36 +1708,16 @@ function navWeek(dir) {
       loadArchivedWeek(viewingWeekKey);
     }
   } else {
-    // Use week key arithmetic directly instead of archive index
     const yr = parseInt(viewingWeekKey.split('_W')[0]);
-    const w = parseInt(viewingWeekKey.split('_W')[1]);
-    const newW = w + dir;
+    const w = parseInt(viewingWeekKey.split('_W')[1]) + dir;
     let newKey;
-    if (newW < 1) newKey = (yr-1) + '_W52';
-    else if (newW > 52) newKey = (yr+1) + '_W01';
-    else newKey = yr + '_W' + String(newW).padStart(2,'0');
-    // If navigating forward past current, go to live
-    if (dir === 1 && newKey === currentKey) {
-      viewingWeekKey = null;
-      loadLiveWeek();
-    } else {
-      viewingWeekKey = newKey;
-      loadArchivedWeek(viewingWeekKey);
-    }
-    updateWeekNavButtons();
-    return;
+    if (w < 1) newKey = (yr-1) + '_W52';
+    else if (w > 52) newKey = (yr+1) + '_W01';
+    else newKey = yr + '_W' + String(w).padStart(2,'0');
+    if (dir === 1 && newKey === currentKey) { viewingWeekKey = null; loadLiveWeek(); }
+    else { viewingWeekKey = newKey; loadArchivedWeek(viewingWeekKey); }
   }
-    const idx = archiveKeys.indexOf(viewingWeekKey);
-    const newIdx = idx + dir;
-    if (dir === 1 && idx === archiveKeys.length - 1) {
-      // Back to current live week
-      viewingWeekKey = null;
-      loadLiveWeek();
-    } else if (newIdx >= 0 && newIdx < archiveKeys.length) {
-      viewingWeekKey = archiveKeys[newIdx];
-      loadArchivedWeek(viewingWeekKey);
-    }
-  }
+  updateWeekNavButtons();
   updateWeekNavUI();
 }
 
