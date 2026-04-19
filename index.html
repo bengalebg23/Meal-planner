@@ -963,8 +963,8 @@ function renderTable() {
         const isPizzaHint = isDnD && slot === "T" && !val;
         const td = document.createElement("td");
         td.className = "meal-cell " + slot + (isAB ? " active" : "") + (isPizzaHint ? " pizza-hint" : "");
-        const inp = document.createElement("input");
-        inp.type = "text";
+        const inp = document.createElement("textarea");
+        inp.rows = 2;
         inp.dataset.cellkey = dayKey + "|" + person + "|" + slot;
         inp.value = val;
         inp.placeholder = isPizzaHint ? "🍕?" : "";
@@ -972,9 +972,12 @@ function renderTable() {
           + (val==="School" ? " school" : val==="Karen's" ? " karen" : val==="Nursery" ? " nursery" : val==="MIRA" ? " mira" : val==="Sandwich" ? " sandwich" : "");
         inp.oninput = () => {
           plan[dayKey].meals[person][slot] = inp.value;
+          inp.style.height = 'auto';
+          inp.style.height = inp.scrollHeight + 'px';
           updateMealsDetected();
           saveToStorage();
         };
+        setTimeout(() => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 'px'; }, 0);
         inp.onfocus = () => {
           if (multiSelected.size === 0) {
             activeBank = {day: dayKey, person, slot};
