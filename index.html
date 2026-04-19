@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner</title>
+<title>Family Meal Planner v2.2.0</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -33,7 +33,7 @@
   #legend-hint { font-size: 10px; color: #a8a29e; }
 
   #grid-wrap { overflow-x: auto; padding: 10px 8px 0; }
-  table { border-collapse: collapse; width: 100%; min-width: 780px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  table { border-collapse: collapse; width: 100%; min-width: 1000px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   thead tr:first-child { background: #1c1917; color: white; }
   thead tr:last-child { background: #292524; color: #a8a29e; }
   th { padding: 8px 5px; font-size: 11px; text-align: center; }
@@ -41,7 +41,7 @@
   th.flag-th { width: 72px; font-size: 10px; color: #a8a29e; }
   th.work-th { width: 68px; font-size: 10px; color: #a8a29e; }
   th.person-th { font-size: 12px; font-weight: 600; border-left: 1px solid #44403c; }
-  th.slot-th { font-size: 9px; width: 95px; }
+  th.slot-th { font-size: 9px; width: 120px; }
   th.slot-th.L { border-left: 1px solid #44403c; }
   tbody tr { border-top: 1px solid #e7e5e4; }
   tbody tr:nth-child(odd) { background: #fafaf8; }
@@ -63,7 +63,7 @@
   td.meal-cell.selected .meal-input { color: #0f766e; font-weight: 600; }
   td.meal-cell.pizza-hint { background: #fdf4ff; }
   .flag-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 2px 3px; font-size: 10px; cursor: pointer; width: 100%; }
-  .meal-input { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 4px; font-size: 11px; background: transparent; outline: none; cursor: text; color: #1c1917; }
+  .meal-input { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 4px; font-size: 11px; background: transparent; outline: none; cursor: text; color: #1c1917; resize: none; overflow: hidden; min-height: 44px; line-height: 1.35; display: block; font-family: inherit; white-space: pre-wrap; word-break: break-word; }
   .meal-input:hover { background: #f5f5f4; }
   .meal-input.active-input { border-color: #fbbf24; }
   .meal-input.school { color: #92400e; font-style: italic; }
@@ -331,6 +331,45 @@
     body { background: white; }
   }
 </style>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyCJ2xKRzsh3kQNKzz47xCFzkuLijlNaI-U",
+  authDomain: "meal-planner-f5ba2.firebaseapp.com",
+  databaseURL: "https://meal-planner-f5ba2-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "meal-planner-f5ba2",
+  storageBucket: "meal-planner-f5ba2.firebasestorage.app",
+  messagingSenderId: "948462959670",
+  appId: "1:948462959670:web:1762c493da4670145cec97"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+const planRef = ref(db, "currentWeek");
+let fbSaveTimer = null;
+window.fbSave = function(data) {
+  clearTimeout(fbSaveTimer);
+  fbSaveTimer = setTimeout(() => {
+    set(planRef, data).catch(e => console.warn("Firebase save failed:", e));
+  }, 1500);
+};
+onValue(planRef, (snapshot) => {
+  const data = snapshot.val();
+  if (!data) return;
+  if (window.viewingWeekKey !== null) return;
+  try {
+    if (data.plan) localStorage.setItem("mealplanner_plan", data.plan);
+    if (data.notes !== undefined) localStorage.setItem("mealplanner_notes", data.notes);
+    if (data.week) localStorage.setItem("mealplanner_week", data.week);
+    if (data.activedays) localStorage.setItem("mealplanner_activedays", data.activedays);
+    if (data.customdays) localStorage.setItem("mealplanner_customdays", data.customdays);
+    if (data.shop) localStorage.setItem("mealplanner_shop", data.shop);
+    if (window.applyRemoteUpdate) window.applyRemoteUpdate(data);
+    const ind = document.getElementById("sync-indicator");
+    if (ind) { ind.style.display = "inline"; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = "none", 2000); }
+  } catch(e) { console.warn("Firebase apply failed:", e); }
+});
+</script>
 </head>
 <body>
 
@@ -347,6 +386,8 @@
   </div>
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
+    <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
+    <span id="version-badge" style="font-size:9px;color:#57534e;align-self:flex-end;padding-bottom:2px;">v2.2.0</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -752,6 +793,16 @@ function saveToStorage() {
     localStorage.setItem('mealplanner_activedays', JSON.stringify(activeDays));
     localStorage.setItem('mealplanner_customdays', JSON.stringify(customDays));
     saveCurrentToArchive();
+    if (window.fbSave) {
+      window.fbSave({
+        plan: JSON.stringify(plan),
+        notes: document.getElementById('notes-ta').value,
+        week: document.getElementById('week-label').value,
+        activedays: JSON.stringify(activeDays),
+        customdays: JSON.stringify(customDays),
+        shop: JSON.stringify(shopItems),
+      });
+    }
     const ind = document.getElementById('save-indicator');
     if (ind) { ind.style.display = 'inline'; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = 'none', 1500); }
   } catch(e) { console.warn('Could not save:', e); }
