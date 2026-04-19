@@ -1,543 +1,1547 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#1a1a2e" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Chores" />
-  <link rel="manifest" href="manifest.json" />
-  <title>Chore Tracker</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Meal Planner</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #fafaf8; min-height: 100vh; padding-bottom: 60px; }
+  input, select, textarea, button { font-family: inherit; }
 
-    :root {
-      --bg: #0f0f1a;
-      --surface: #1a1a2e;
-      --surface2: #24243e;
-      --accent: #e8c547;
-      --accent2: #ff6b6b;
-      --text: #f0ede6;
-      --muted: #7a7a9a;
-      --done-bg: #1e2e1e;
-      --done-accent: #5cb85c;
-      --radius: 16px;
-    }
+  #header { background: #1c1917; color: white; padding: 15px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  #header-sub { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #a8a29e; margin-bottom: 3px; }
+  #week-label { background: transparent; border: none; color: white; font-size: 17px; font-weight: 700; outline: none; width: 260px; }
+  #header-btns { display: flex; gap: 7px; }
+  .hbtn { border: none; border-radius: 6px; padding: 6px 13px; cursor: pointer; font-size: 12px; }
+  .hbtn-clear { background: #44403c; color: #d6d3d1; }
+  .hbtn-print { background: #e7e5e4; color: #1c1917; font-weight: 600; }
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100dvh;
-      padding: 0;
-      overflow-x: hidden;
-    }
+  #tabs { background: white; border-bottom: 2px solid #e7e5e4; display: flex; }
+  .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; padding: 11px 18px; font-size: 13px; font-weight: 600; cursor: pointer; color: #78716c; transition: all 0.1s; }
+  .tab-btn.active { color: #1c1917; border-bottom-color: #1c1917; }
 
-    /* Background texture */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 80% 50% at 20% 0%, rgba(232,197,71,0.07) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,107,107,0.06) 0%, transparent 60%);
-      pointer-events: none;
-      z-index: 0;
-    }
+  #legend { padding: 7px 14px; display: flex; gap: 5px; flex-wrap: wrap; background: #fafaf8; border-bottom: 1px solid #e7e5e4; align-items: center; }
+  .legend-tag { border-radius: 20px; padding: 2px 8px; font-size: 10px; font-weight: 500; border: 1px solid transparent; }
+  #legend-hint { font-size: 10px; color: #a8a29e; }
 
-    .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 0 120px; }
+  #grid-wrap { overflow-x: auto; padding: 10px 8px 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 780px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  thead tr:first-child { background: #1c1917; color: white; }
+  thead tr:last-child { background: #292524; color: #a8a29e; }
+  th { padding: 8px 5px; font-size: 11px; text-align: center; }
+  th.day-th { width: 100px; padding: 8px 10px; text-align: left; letter-spacing: 1px; }
+  th.flag-th { width: 72px; font-size: 10px; color: #a8a29e; }
+  th.work-th { width: 68px; font-size: 10px; color: #a8a29e; }
+  th.person-th { font-size: 12px; font-weight: 600; border-left: 1px solid #44403c; }
+  th.slot-th { font-size: 9px; width: 95px; }
+  th.slot-th.L { border-left: 1px solid #44403c; }
+  tbody tr { border-top: 1px solid #e7e5e4; }
+  tbody tr:nth-child(odd) { background: #fafaf8; }
+  tbody tr:nth-child(even) { background: white; }
+  tbody tr.dnd-row { background: #f5f3ff !important; }
+  td.day-cell { padding: 6px 10px; font-weight: 700; font-size: 12px; color: #1c1917; white-space: nowrap; }
+  td.day-cell.dnd { color: #7c3aed; }
+  .dnd-hint { font-size: 9px; color: #7c3aed; margin-top: 1px; }
+  td.flag-cell { padding: 4px 4px; }
+  td.work-cell { padding: 4px 4px; }
+  .work-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 2px 3px; font-size: 10px; cursor: pointer; width: 100%; background: white; color: #78716c; }
+  .work-select.office { background: #eff6ff; color: #1e3a5f; }
+  .work-select.wfh { background: #f0fdf4; color: #166534; }
+  .work-select.weekend { background: #fef9c3; color: #92400e; }
+  td.meal-cell { padding: 2px 2px; }
+  td.meal-cell.L { border-left: 1px solid #e7e5e4; }
+  td.meal-cell.active { background: #fef9c3; }
+  td.meal-cell.selected { background: #ccfbf1 !important; outline: 2px solid #0d9488; outline-offset: -2px; }
+  td.meal-cell.selected .meal-input { color: #0f766e; font-weight: 600; }
+  td.meal-cell.pizza-hint { background: #fdf4ff; }
+  .flag-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 2px 3px; font-size: 10px; cursor: pointer; width: 100%; }
+  .meal-input { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 4px; font-size: 11px; background: transparent; outline: none; cursor: text; color: #1c1917; }
+  .meal-input:hover { background: #f5f5f4; }
+  .meal-input.active-input { border-color: #fbbf24; }
+  .meal-input.school { color: #92400e; font-style: italic; }
+  .meal-input.karen { color: #9d174d; font-style: italic; }
+  .meal-input.nursery { color: #065f46; font-style: italic; }
+  .meal-input.mira { color: #0369a1; font-style: italic; }
+  .meal-input.sandwich { color: #374151; font-style: italic; }
 
-    /* HEADER */
-    .header {
-      padding: 52px 24px 20px;
-      position: sticky;
-      top: 0;
-      background: linear-gradient(to bottom, var(--bg) 70%, transparent);
-      z-index: 10;
-    }
+  #banks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 8px 0; }
+  .bank-card { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
+  .bank-header { background: #292524; color: white; padding: 8px 13px; font-size: 12px; font-weight: 700; }
+  .bank-header span { font-size: 9px; color: #a8a29e; margin-left: 5px; font-weight: 400; }
+  #meal-bank-pills { padding: 9px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .pill { border-radius: 20px; padding: 3px 9px; font-size: 11px; cursor: default; border: 1px solid #e7e5e4; background: #f5f5f4; color: #1c1917; }
+  .pill.active-bank { background: #fef3c7; border-color: #fbbf24; cursor: pointer; }
+  .pill.active-bank:hover { opacity: 0.85; }
 
-    .header-top { display: flex; align-items: flex-start; justify-content: space-between; }
+  #lunch-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+  .lunch-col { border-right: 1px solid #f5f5f4; }
+  .lunch-col-header { padding: 4px 7px; font-size: 10px; font-weight: 700; }
+  .lunch-col-items { padding: 4px 5px; display: flex; flex-direction: column; gap: 1px; }
+  .lunch-item { border: none; text-align: left; padding: 2px 3px; border-radius: 3px; font-size: 10px; cursor: default; color: #374151; background: transparent; }
+  .lunch-item.active-bank { cursor: pointer; }
+  .lunch-item.active-bank:hover { opacity: 0.85; }
 
-    .title {
-      font-family: 'DM Serif Display', serif;
-      font-size: 2.4rem;
-      line-height: 1.05;
-      letter-spacing: -0.5px;
-    }
-    .title span { color: var(--accent); font-style: italic; }
+  #right-banks { display: flex; flex-direction: column; gap: 9px; }
+  #notes-ta { width: 100%; border: none; padding: 9px; font-size: 11px; resize: vertical; min-height: 75px; background: transparent; outline: none; color: #1c1917; }
 
-    .date-pill {
-      background: var(--surface2);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 20px;
-      padding: 6px 14px;
-      font-size: 0.72rem;
-      color: var(--muted);
-      font-weight: 500;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      margin-top: 6px;
-    }
+  #generate-wrap { padding: 14px 8px 0; text-align: center; }
+  #generate-btn { background: #1c1917; color: white; border: none; border-radius: 8px; padding: 11px 26px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  #generate-btn:disabled { background: #a8a29e; cursor: default; }
+  #meals-detected { font-size: 11px; color: #a8a29e; margin-top: 5px; }
 
-    .progress-bar-wrap {
-      margin-top: 18px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .progress-bar-bg {
-      flex: 1;
-      height: 5px;
-      background: var(--surface2);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-    .progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent), #f7a440);
-      border-radius: 999px;
-      transition: width 0.5s cubic-bezier(.4,0,.2,1);
-    }
-    .progress-label { font-size: 0.75rem; color: var(--muted); min-width: 40px; text-align: right; }
+  /* Shopping tab */
+  #shop-tab { padding: 12px 10px; }
+  #shop-summary { background: white; border-radius: 10px; padding: 9px 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 7px; }
+  #shop-summary span { font-size: 13px; color: #374151; }
+  #shop-summary-btns { display: flex; gap: 7px; }
+  .sbtn { border: none; border-radius: 6px; padding: 5px 11px; font-size: 11px; cursor: pointer; }
+  .sbtn-uncheck { background: #f5f5f4; color: #374151; }
+  .sbtn-regen { background: #1c1917; color: white; }
+  #shop-empty { background: white; border-radius: 10px; padding: 22px; text-align: center; color: #78716c; margin-bottom: 12px; }
+  #shop-empty-icon { font-size: 26px; margin-bottom: 7px; }
+  #shop-categories { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .cat-card { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
+  .cat-header { padding: 7px 11px; font-size: 12px; font-weight: 700; display: flex; justify-content: space-between; }
+  .cat-count { font-weight: 400; font-size: 10px; }
+  .cat-items { padding: 5px 7px; min-height: 36px; }
+  .cat-empty { font-size: 11px; color: #d6d3d1; padding: 3px 2px; }
+  .shop-item { display: flex; align-items: center; gap: 6px; padding: 3px 2px; }
+  .shop-item input[type=checkbox] { cursor: pointer; flex-shrink: 0; width: 14px; height: 14px; }
+  .shop-item-text { font-size: 12px; flex: 1; color: #1c1917; }
+  .shop-item-text.checked { color: #a8a29e; text-decoration: line-through; }
+  .shop-item-del { background: none; border: none; color: #d6d3d1; cursor: pointer; font-size: 15px; line-height: 1; padding: 0 1px; flex-shrink: 0; }
+  #manual-add { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 11px; margin-top: 9px; }
+  #manual-add-title { font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 7px; }
+  #manual-add-row { display: flex; gap: 7px; flex-wrap: wrap; }
+  #manual-input { flex: 1; min-width: 130px; border: 1px solid #e7e5e4; border-radius: 6px; padding: 6px 9px; font-size: 12px; outline: none; }
+  #manual-cat { border: 1px solid #e7e5e4; border-radius: 6px; padding: 6px 7px; font-size: 11px; background: white; cursor: pointer; }
+  #manual-add-btn { background: #1c1917; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; cursor: pointer; font-weight: 600; }
 
-    /* SECTION */
-    .section-label {
-      padding: 20px 24px 8px;
-      font-size: 0.68rem;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
+  #floating-bar { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); background: #1c1917; color: white; padding: 8px 16px; border-radius: 30px; font-size: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.25); display: none; gap: 9px; align-items: center; white-space: nowrap; }
+  #floating-bar.visible { display: flex; }
+  #floating-cancel { background: #44403c; border: none; color: #d6d3d1; border-radius: 20px; padding: 2px 9px; cursor: pointer; font-size: 11px; }
 
-    /* CHORE CARD */
-    .chore-list { display: flex; flex-direction: column; gap: 10px; padding: 0 16px; }
+  .all-done { color: #166534; margin-left: 6px; }
+  /* Asda baseline */
+  #asda-section { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 10px; overflow: hidden; }
+  #asda-header { background: #007d31; color: white; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+  #asda-header-text { font-size: 13px; font-weight: 700; }
+  #asda-header-sub { font-size: 11px; color: #a7f3c4; margin-top: 1px; }
+  #asda-body { padding: 10px 14px; }
+  #closest-order-box { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  #closest-order-title { font-size: 12px; font-weight: 700; color: #166534; margin-bottom: 3px; }
+  #closest-order-detail { font-size: 11px; color: #374151; }
+  #closest-order-missing { font-size: 11px; color: #991b1b; margin-top: 4px; }
+  .baseline-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .baseline-pill { background: #f0fdf4; border: 1px solid #86efac; border-radius: 20px; padding: 2px 9px; font-size: 11px; color: #166534; display: flex; align-items: center; gap: 4px; }
+  .baseline-pill.got { background: #f0fdf4; opacity: 0.5; text-decoration: line-through; }
+  .baseline-pill-check { font-size: 10px; }
+  #asda-toggle-btn { background: none; border: 1px solid rgba(255,255,255,0.4); border-radius: 5px; color: white; font-size: 11px; padding: 3px 8px; cursor: pointer; }
 
-    .chore-card {
-      background: var(--surface);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: var(--radius);
-      padding: 16px 18px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      cursor: pointer;
-      transition: transform 0.15s, background 0.2s, border-color 0.2s;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-    .chore-card:active { transform: scale(0.975); }
-    .chore-card.done {
-      background: var(--done-bg);
-      border-color: rgba(92,184,92,0.2);
-    }
+  .add-day-row td { padding: 4px 6px; }
+  .add-day-btn { background: none; border: 1px dashed #d6d3d1; border-radius: 6px; color: #a8a29e; font-size: 11px; padding: 5px 14px; cursor: pointer; width: 100%; text-align: left; }
+  .add-day-btn:hover { border-color: #0d9488; color: #0d9488; }
+  .del-day-btn { background: none; border: none; color: #d6d3d1; cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 3px; }
+  .del-day-btn:hover { color: #991b1b; }
+  .day-label-input { font-weight: 700; font-size: 12px; color: #1c1917; border: none; outline: none; background: transparent; width: 90px; cursor: text; }
+  .day-label-input:focus { border-bottom: 1px solid #0d9488; }
+  /* Recipes tab */
+  #recipes-tab { padding: 12px 10px; }
+  .recipe-section-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #a8a29e; padding: 6px 2px 4px; }
+  .recipe-card { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 8px; overflow: hidden; }
+  .recipe-card-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; user-select: none; }
+  .recipe-card-header:active { background: #f5f5f4; }
+  .recipe-name { font-size: 13px; font-weight: 700; color: #1c1917; flex: 1; }
+  .recipe-name-input { font-size: 13px; font-weight: 700; color: #1c1917; border: none; outline: none; background: transparent; flex: 1; width: 100%; }
+  .recipe-toggle { font-size: 16px; color: #a8a29e; margin-left: 8px; transition: transform 0.15s; }
+  .recipe-toggle.open { transform: rotate(180deg); }
+  .recipe-body { padding: 0 14px 12px; display: none; }
+  .recipe-body.open { display: block; }
+  .recipe-ingredients-label { font-size: 10px; font-weight: 700; color: #78716c; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .ingredient-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .ingredient-input { flex: 1; border: 1px solid #e7e5e4; border-radius: 5px; padding: 5px 8px; font-size: 12px; outline: none; color: #1c1917; }
+  .ingredient-input:focus { border-color: #0d9488; }
+  .ingredient-del { background: none; border: none; color: #d6d3d1; cursor: pointer; font-size: 16px; line-height: 1; padding: 2px 4px; flex-shrink: 0; }
+  .ingredient-del:hover { color: #991b1b; }
+  .add-ingredient-btn { background: none; border: 1px dashed #d6d3d1; border-radius: 5px; color: #a8a29e; font-size: 11px; padding: 4px 10px; cursor: pointer; margin-top: 2px; width: 100%; }
+  .add-ingredient-btn:hover { border-color: #0d9488; color: #0d9488; }
+  .recipe-notes-label { font-size: 10px; font-weight: 700; color: #78716c; margin: 8px 0 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .recipe-notes-input { width: 100%; border: 1px solid #e7e5e4; border-radius: 5px; padding: 6px 8px; font-size: 12px; outline: none; resize: vertical; min-height: 50px; font-family: inherit; color: #1c1917; }
+  .recipe-notes-input:focus { border-color: #0d9488; }
+  .recipe-section-header { display: flex; align-items: center; gap: 8px; padding: 8px 2px 2px; }
+  .recipe-section-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .recipe-tag { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; border-radius: 4px; padding: 2px 6px; margin-left: 7px; flex-shrink: 0; }
+  .recipe-tag.claude { background: #ede9fe; color: #6d28d9; }
+  .recipe-tag.gale  { background: #fef3c7; color: #b45309; }
+  .retag-btn { margin-top: 10px; border: 1px dashed #d97706; background: none; border-radius: 6px; padding: 5px 12px; font-size: 11px; font-weight: 600; color: #b45309; cursor: pointer; width: 100%; transition: background 0.15s; }
+  .retag-btn:hover { background: #fef3c7; }
+  body.dark .recipe-tag.claude { background: #2e1065; color: #a78bfa; }
+  body.dark .recipe-tag.gale  { background: #451a03; color: #fbbf24; }
+  body.dark .retag-btn { border-color: #92400e; color: #fbbf24; }
+  body.dark .retag-btn:hover { background: #451a03; }
 
-    .chore-icon {
-      width: 42px; height: 42px;
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem;
-      flex-shrink: 0;
-      background: var(--surface2);
-      transition: background 0.2s;
-    }
-    .chore-card.done .chore-icon { background: rgba(92,184,92,0.15); }
 
-    .chore-info { flex: 1; min-width: 0; }
-    .chore-name {
-      font-size: 0.95rem;
-      font-weight: 500;
-      transition: color 0.2s;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .chore-card.done .chore-name { color: var(--muted); text-decoration: line-through; }
-    .chore-last {
-      font-size: 0.72rem;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-    .chore-card.done .chore-last { color: var(--done-accent); }
+  /* Dark mode toggle switch */
+  #dark-toggle-wrap { display: flex; align-items: center; gap: 6px; }
+  #dark-toggle-label { font-size: 11px; color: #a8a29e; user-select: none; }
+  #dark-toggle { position: relative; width: 34px; height: 19px; flex-shrink: 0; }
+  #dark-toggle input { opacity: 0; width: 0; height: 0; }
+  #dark-toggle-track { position: absolute; inset: 0; background: #44403c; border-radius: 19px; cursor: pointer; transition: background 0.2s; }
+  #dark-toggle-track:before { content: ''; position: absolute; width: 13px; height: 13px; left: 3px; top: 3px; background: #a8a29e; border-radius: 50%; transition: transform 0.2s, background 0.2s; }
+  #dark-toggle input:checked + #dark-toggle-track { background: #6366f1; }
+  #dark-toggle input:checked + #dark-toggle-track:before { transform: translateX(15px); background: white; }
 
-    .chore-check {
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.15);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      transition: background 0.2s, border-color 0.2s;
-      font-size: 0.85rem;
-    }
-    .chore-card.done .chore-check {
-      background: var(--done-accent);
-      border-color: var(--done-accent);
-    }
+  /* Asda order picker */
+  #asda-header { cursor: default; }
+  #asda-header-sub { font-size: 11px; color: #a7f3c4; margin-top: 1px; transition: opacity 0.15s; }
+  #asda-header-sub:hover { opacity: 0.8; }
+  #asda-active-badge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 4px 10px; font-size: 11px; color: white; white-space: nowrap; max-width: 220px; line-height: 1.4; }
+  #asda-order-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 8px; padding: 4px 0 6px; }
+  .asda-order-card { border: 2px solid #e7e5e4; border-radius: 9px; padding: 10px 11px; cursor: pointer; transition: border-color 0.15s, background 0.15s; background: white; }
+  .asda-order-card:hover { border-color: #007d31; background: #f0fdf4; }
+  .asda-order-card.selected { border-color: #007d31; background: #f0fdf4; }
+  .asda-order-card.selected .aoc-btn { background: #007d31; color: white; }
+  .asda-order-card.recommended { border-color: #f59e0b; }
+  .asda-order-card.recommended.selected { border-color: #007d31; }
+  .aoc-date { font-size: 11px; font-weight: 700; color: #1c1917; margin-bottom: 1px; }
+  .aoc-meta { font-size: 10px; color: #78716c; margin-bottom: 3px; }
+  .aoc-match { font-size: 10px; font-weight: 600; color: #92400e; background: #fef3c7; border-radius: 4px; padding: 1px 5px; display: inline-block; margin-bottom: 7px; }
+  .aoc-match.top { color: #166534; background: #dcfce7; }
+  .aoc-btn { width: 100%; border: none; border-radius: 5px; padding: 5px 0; font-size: 11px; font-weight: 600; cursor: pointer; background: #e7e5e4; color: #1c1917; transition: background 0.15s, color 0.15s; }
+  .aoc-btn:hover { background: #007d31; color: white; }
+  .asda-order-card.selected .aoc-date { color: #166534; }
+  #asda-selected-notice { font-size: 11px; color: #166534; font-weight: 600; padding: 2px 0 4px; display: none; }
 
-    /* Delete button (long-press hint) */
-    .chore-delete {
-      display: none;
-      background: rgba(255,107,107,0.15);
-      border: none;
-      color: var(--accent2);
-      font-size: 1rem;
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      cursor: pointer;
-      align-items: center; justify-content: center;
-      flex-shrink: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .chore-card:hover .chore-delete,
-    .chore-card.edit-mode .chore-delete { display: flex; }
+  body.dark #asda-active-badge { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+  body.dark .asda-order-card { background: #1c1917; border-color: #44403c; }
+  body.dark .asda-order-card:hover { background: #052e16; border-color: #007d31; }
+  body.dark .asda-order-card.selected { background: #052e16; border-color: #007d31; }
+  body.dark .asda-order-card.recommended { border-color: #b45309; }
+  body.dark .aoc-date { color: #e2e0dd; }
+  body.dark .aoc-meta { color: #78716c; }
+  body.dark .aoc-match { color: #92400e; background: #451a03; }
+  body.dark .aoc-match.top { color: #86efac; background: #052e16; }
+  body.dark .aoc-btn { background: #292524; color: #a8a29e; }
+  body.dark #asda-selected-notice { color: #4ade80; }
 
-    /* ADD CHORE BOTTOM BAR */
-    .add-bar {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      padding: 16px;
-      background: linear-gradient(to top, var(--bg) 60%, transparent);
-      z-index: 20;
-    }
-    .add-bar-inner {
-      max-width: 480px;
-      margin: 0 auto;
-      display: flex;
-      gap: 10px;
-    }
-    .add-input {
-      flex: 1;
-      background: var(--surface);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 14px;
-      padding: 14px 18px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .add-input:focus { border-color: var(--accent); }
-    .add-input::placeholder { color: var(--muted); }
+  /* Asda baseline — keep old styles for pill fallback */
+  .baseline-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .baseline-pill { background: #f0fdf4; border: 1px solid #86efac; border-radius: 20px; padding: 2px 9px; font-size: 11px; color: #166534; display: flex; align-items: center; gap: 4px; }
+  .baseline-pill.got { background: #f0fdf4; opacity: 0.5; text-decoration: line-through; }
+  .baseline-pill-check { font-size: 10px; }
+  body.dark { background: #0f0e0d; color: #e2e0dd; }
+  body.dark #tabs { background: #1c1917; border-bottom-color: #44403c; }
+  body.dark .tab-btn { color: #a8a29e; }
+  body.dark .tab-btn.active { color: #e2e0dd; border-bottom-color: #e2e0dd; }
+  body.dark #legend { background: #1c1917; border-bottom-color: #44403c; }
+  body.dark table { background: #1c1917; }
+  body.dark tbody tr:nth-child(odd) { background: #1c1917; }
+  body.dark tbody tr:nth-child(even) { background: #211f1d; }
+  body.dark tbody tr { border-top-color: #44403c; }
+  body.dark tbody tr.dnd-row { background: #2e1065 !important; }
+  body.dark td.day-cell { color: #e2e0dd; }
+  body.dark .work-select { background: #292524; border-color: #44403c; color: #a8a29e; }
+  body.dark .work-select.office { background: #1e3a5f; color: #93c5fd; }
+  body.dark .work-select.wfh { background: #14532d; color: #86efac; }
+  body.dark .work-select.weekend { background: #451a03; color: #fcd34d; }
+  body.dark .flag-select { background: #292524; border-color: #44403c; color: #a8a29e; }
+  body.dark .meal-input { color: #e2e0dd; }
+  body.dark .meal-input:hover { background: #292524; }
+  body.dark td.meal-cell.active { background: #451a03; }
+  body.dark td.meal-cell.pizza-hint { background: #2e1065; }
+  body.dark .bank-card { background: #1c1917; }
+  body.dark .pill { background: #292524; border-color: #44403c; color: #e2e0dd; }
+  body.dark .lunch-col { border-right-color: #292524; }
+  body.dark .lunch-item { color: #a8a29e; }
+  body.dark #notes-ta { color: #e2e0dd; }
+  body.dark #generate-btn { background: #4f46e5; }
+  body.dark #generate-btn:disabled { background: #44403c; }
+  body.dark #meals-detected { color: #78716c; }
+  body.dark #shop-summary { background: #1c1917; }
+  body.dark #shop-summary span { color: #a8a29e; }
+  body.dark .sbtn-uncheck { background: #292524; color: #a8a29e; }
+  body.dark #shop-empty { background: #1c1917; color: #78716c; }
+  body.dark .cat-card { background: #1c1917; }
+  body.dark .shop-item-text { color: #e2e0dd; }
+  body.dark .shop-item-text.checked { color: #44403c; }
+  body.dark .shop-item-del { color: #44403c; }
+  body.dark #manual-add { background: #1c1917; }
+  body.dark #manual-add-title { color: #a8a29e; }
+  body.dark #manual-input { background: #292524; border-color: #44403c; color: #e2e0dd; }
+  body.dark #manual-cat { background: #292524; border-color: #44403c; color: #a8a29e; }
+  body.dark #closest-order-box { background: #052e16; border-color: #166534; }
+  body.dark #closest-order-detail { color: #a8a29e; }
+  body.dark .baseline-pill { background: #052e16; border-color: #166534; color: #86efac; }
+  body.dark .add-day-btn { border-color: #44403c; color: #78716c; }
+  body.dark .del-day-btn { color: #44403c; }
+  body.dark .day-label-input { color: #e2e0dd; }
+  body.dark .recipe-card { background: #1c1917; }
+  body.dark .recipe-card-header:active { background: #292524; }
+  body.dark .recipe-name { color: #e2e0dd; }
+  body.dark .recipe-name-input { color: #e2e0dd; }
+  body.dark .ingredient-input { background: #292524; border-color: #44403c; color: #e2e0dd; }
+  body.dark .recipe-notes-input { background: #292524; border-color: #44403c; color: #e2e0dd; }
+  body.dark .add-ingredient-btn { border-color: #44403c; color: #78716c; }
+  body.dark .recipe-section-label { color: #78716c; }
+  body.dark .recipe-ingredients-label { color: #78716c; }
+  body.dark .recipe-notes-label { color: #78716c; }
+  body.dark .recipe-toggle { color: #78716c; }
 
-    .add-btn {
-      width: 50px; height: 50px;
-      background: var(--accent);
-      color: #000;
-      border: none;
-      border-radius: 14px;
-      font-size: 1.5rem;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      -webkit-tap-highlight-color: transparent;
-      transition: transform 0.15s, background 0.15s;
-      font-weight: 700;
-    }
-    .add-btn:active { transform: scale(0.92); }
-
-    /* EMPTY STATE */
-    .empty {
-      text-align: center;
-      padding: 60px 24px 0;
-      color: var(--muted);
-    }
-    .empty-icon { font-size: 3rem; margin-bottom: 12px; }
-    .empty p { font-size: 0.9rem; line-height: 1.5; }
-
-    /* INSTALL BANNER */
-    .install-banner {
-      margin: 12px 16px 0;
-      background: linear-gradient(135deg, rgba(232,197,71,0.12), rgba(255,107,107,0.08));
-      border: 1px solid rgba(232,197,71,0.25);
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.82rem;
-      color: var(--text);
-    }
-    .install-banner .icon { font-size: 1.4rem; }
-    .install-banner p { flex: 1; line-height: 1.4; }
-    .install-banner p strong { color: var(--accent); }
-    .install-btn {
-      background: var(--accent);
-      color: #000;
-      border: none;
-      border-radius: 8px;
-      padding: 8px 14px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      font-family: 'DM Sans', sans-serif;
-    }
-    .install-banner.hidden { display: none; }
-
-    /* TOAST */
-    .toast {
-      position: fixed;
-      bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
-      background: var(--surface2);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text);
-      padding: 10px 20px;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      opacity: 0;
-      transition: opacity 0.3s, transform 0.3s;
-      pointer-events: none;
-      white-space: nowrap;
-      z-index: 100;
-    }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    /* Animations */
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .chore-card { animation: slideIn 0.25s ease both; }
-
-    /* Overdue badge */
-    .overdue-badge {
-      font-size: 0.65rem;
-      background: rgba(255,107,107,0.15);
-      color: var(--accent2);
-      padding: 2px 7px;
-      border-radius: 999px;
-      margin-left: 6px;
-      font-weight: 600;
-      vertical-align: middle;
-    }
-  </style>
+  @media print {
+    #header-btns, #tabs, #legend, #banks, #generate-wrap, #floating-bar, #shop-summary-btns, #manual-add { display: none !important; }
+    body { background: white; }
+  }
+</style>
 </head>
 <body>
-<div class="app">
-  <div class="header">
-    <div class="header-top">
-      <h1 class="title">My <span>Chores</span></h1>
-      <div class="date-pill" id="todayDate"></div>
+
+<div id="header">
+  <div>
+    <div id="header-sub">Family Meal Plan</div>
+    <input id="week-label" value="Week of __________" oninput="saveToStorage()" />
+  </div>
+  <div id="header-btns">
+    <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
+    <div id="dark-toggle-wrap">
+      <span id="dark-toggle-label">🌙</span>
+      <label id="dark-toggle" title="Toggle dark mode">
+        <input type="checkbox" id="dark-mode-cb" onchange="toggleDark(this.checked)">
+        <span id="dark-toggle-track"></span>
+      </label>
     </div>
-    <div class="progress-bar-wrap">
-      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
-      <div class="progress-label" id="progressLabel">0 / 0</div>
-    </div>
-  </div>
-
-  <div id="installBanner" class="install-banner hidden">
-    <span class="icon">📲</span>
-    <p><strong>Add to home screen</strong> to use like an app!</p>
-    <button class="install-btn" id="installBtn">Install</button>
-  </div>
-
-  <div class="section-label" id="pendingLabel"></div>
-  <div class="chore-list" id="choreList"></div>
-  <div class="empty hidden" id="emptyState">
-    <div class="empty-icon">🧹</div>
-    <p>No chores yet.<br>Add one below to get started!</p>
-  </div>
-
-  <div class="section-label" id="doneLabel" style="display:none"></div>
-  <div class="chore-list" id="doneList"></div>
-</div>
-
-<div class="add-bar">
-  <div class="add-bar-inner">
-    <input class="add-input" id="addInput" type="text" placeholder="Add a new chore…" maxlength="60" />
-    <button class="add-btn" id="addBtn" title="Add chore">+</button>
+    <button class="hbtn hbtn-clear" onclick="clearAll()">Clear all</button>
+    <button class="hbtn hbtn-print" onclick="window.print()">🖨 Print</button>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div id="tabs">
+  <button class="tab-btn active" id="tab-plan" onclick="switchTab('plan')">📅 Meal Plan</button>
+  <button class="tab-btn" id="tab-shopping" onclick="switchTab('shopping')">🛒 Shopping</button>
+  <button class="tab-btn" id="tab-recipes" onclick="switchTab('recipes')">📖 Recipes</button>
+</div>
+
+<!-- PLAN TAB -->
+<div id="plan-tab">
+  <div id="legend">
+    <span class="legend-tag" style="background:#ede9fe;color:#7c3aed;border-color:#7c3aed33">D&D 🎲</span>
+    <span class="legend-tag" style="background:#e0f2fe;color:#0369a1;border-color:#0369a133">Swimming 🏊</span>
+    <span class="legend-tag" style="background:#d1fae5;color:#065f46;border-color:#065f4633">Nursery</span>
+    <span class="legend-tag" style="background:#fef3c7;color:#92400e;border-color:#92400e33">School trip</span>
+    <span class="legend-tag" style="background:#fce7f3;color:#9d174d;border-color:#9d174d33">Karen's</span>
+    <span class="legend-tag" style="background:#f3f4f6;color:#374151;border-color:#37415133">Eating out</span>
+    <span class="legend-tag" style="background:#fffbeb;color:#b45309;border-color:#b4530933">⚡ Quick</span>
+    <span id="legend-hint">· tap cell to fill · double-tap to multi-select</span>
+  </div>
+
+  <div id="grid-wrap">
+    <table id="meal-table">
+      <thead>
+        <tr>
+          <th class="day-th">DAY</th>
+          <th class="flag-th">FLAG</th>
+          <th class="work-th">WHERE</th>
+          <th class="person-th" colspan="2">Reuben</th>
+          <th class="person-th" colspan="2">Vivien</th>
+          <th class="person-th" colspan="2">Emily</th>
+          <th class="person-th" colspan="2">Ben</th>
+        </tr>
+        <tr>
+          <th></th><th></th><th></th>
+          <th class="slot-th L">LUNCH</th><th class="slot-th">TEA</th>
+          <th class="slot-th L">LUNCH</th><th class="slot-th">TEA</th>
+          <th class="slot-th L">LUNCH</th><th class="slot-th">TEA</th>
+          <th class="slot-th L">LUNCH</th><th class="slot-th">TEA</th>
+        </tr>
+      </thead>
+      <tbody id="meal-tbody"></tbody>
+    </table>
+  </div>
+
+  <div id="banks">
+    <div class="bank-card">
+      <div class="bank-header" id="meal-bank-header">🍽 Meal Bank</div>
+      <div id="meal-bank-pills"></div>
+    </div>
+    <div id="right-banks">
+      <div class="bank-card">
+        <div class="bank-header">🥪 Lunch Options</div>
+        <div id="lunch-grid">
+          <div class="lunch-col">
+            <div class="lunch-col-header" style="background:#fffbeb;color:#b45309">⚡ Quick</div>
+            <div class="lunch-col-items" id="quick-lunches"></div>
+          </div>
+          <div class="lunch-col">
+            <div class="lunch-col-header" style="background:#e0f2fe;color:#0369a1">🍳 Cooked</div>
+            <div class="lunch-col-items" id="cooked-lunches"></div>
+          </div>
+          <div class="lunch-col">
+            <div class="lunch-col-header" style="background:#d1fae5;color:#065f46">🧒 Viv</div>
+            <div class="lunch-col-items" id="viv-lunches"></div>
+          </div>
+        </div>
+      </div>
+      <div class="bank-card">
+        <div class="bank-header">📝 Notes</div>
+        <textarea id="notes-ta" oninput="saveToStorage()" placeholder="defrost chicken Tues&#10;need pitta bread&#10;Reuben school trip Fri"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div id="generate-wrap">
+    <button id="generate-btn" onclick="generateShoppingList()">✨ Generate Shopping List from Plan</button>
+    <div id="meals-detected"></div>
+  </div>
+</div>
+
+
+<!-- RECIPES TAB -->
+<div id="recipes-tab" style="display:none">
+  <div id="recipes-list"></div>
+</div>
+<!-- SHOPPING TAB -->
+<div id="shop-tab" style="display:none">
+  <div id="asda-section">
+    <div id="asda-header">
+      <div style="flex:1">
+        <div id="asda-header-text">🛒 Asda Order Baseline</div>
+        <div id="asda-header-sub" style="cursor:pointer" onclick="toggleAsdaSection()">▶ Show past orders</div>
+      </div>
+      <div id="asda-active-badge" style="display:none"></div>
+    </div>
+    <div id="asda-body" style="display:none">
+      <div id="asda-order-grid"></div>
+      <div id="asda-selected-notice"></div>
+    </div>
+  </div>
+  <div id="shop-summary" style="display:none">
+    <span id="shop-progress"></span>
+    <div id="shop-summary-btns">
+      <button class="sbtn sbtn-uncheck" onclick="uncheckAll()">Uncheck all</button>
+      <button class="sbtn sbtn-regen" onclick="generateShoppingList()">↺ Regenerate</button>
+    </div>
+  </div>
+  <div id="shop-empty">
+    <div id="shop-empty-icon">🛒</div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:3px">No items yet</div>
+    <div style="font-size:11px">Fill in your meal plan and tap "Generate Shopping List", or add items below.</div>
+    <button onclick="switchTab('plan')" style="margin-top:10px;background:#1c1917;color:white;border:none;border-radius:6px;padding:7px 16px;font-size:12px;cursor:pointer">← Back to plan</button>
+  </div>
+  <div id="shop-categories"></div>
+  <div id="manual-add">
+    <div id="manual-add-title">➕ Add item manually</div>
+    <div id="manual-add-row">
+      <input id="manual-input" placeholder="e.g. sourdough bread" onkeydown="if(event.key==='Enter')addManualItem()" />
+      <select id="manual-cat">
+        <option value="produce">🥦 Fruit &amp; Veg</option>
+        <option value="meat">🥩 Meat &amp; Fish</option>
+        <option value="dairy">🧀 Dairy &amp; Eggs</option>
+        <option value="dry">🍝 Dry &amp; Tins</option>
+        <option value="frozen">❄️ Frozen</option>
+        <option value="other" selected>🛒 Other</option>
+      </select>
+      <button id="manual-add-btn" onclick="addManualItem()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div id="floating-bar">
+  <span id="floating-text"></span>
+  <button id="floating-cancel" onclick="cancelFill()">✕</button>
+</div>
 
 <script>
-  // ─── STATE ───────────────────────────────────────────────────────────
-  let chores = JSON.parse(localStorage.getItem('chores') || '[]');
+const FAMILY = ["Reuben","Vivien","Emily","Ben"];
+const DAYS = [
+  {key:"mon",label:"Monday",isWeekday:true},
+  {key:"tue",label:"Tuesday",isWeekday:true},
+  {key:"wed",label:"Wednesday 🏊",isWeekday:true},
+  {key:"thu",label:"Thursday",isWeekday:true},
+  {key:"fri",label:"Friday",isWeekday:true},
+  {key:"sat",label:"Saturday",isWeekday:false},
+  {key:"sun",label:"Sunday",isWeekday:false},
+  {key:"spare",label:"Spare",isWeekday:false},
+];
+let activeDays = DAYS.map(d => d.key);
+let customDays = {};
+const QUICK_LUNCHES = ["Karen's","Nursery","School","MIRA","Salad pot","Chicken","Peppers","Skewers","Garlic bites","Ravioli","Pâté","Soup + pâté","Sandwiches","PB toast","Avo toast"];
+const COOKED_LUNCHES = ["Pizza pockets","Saus + bean","Noodles","Pasta sauce","Tuna toastie","Chicken bake","Porridge fingers","Omelette","Scrambled eggs"];
+const VIV_LUNCHES = ["Tortilla","Avo toast","Peanut toast","Crumpets","Sausage roll","Pitta pizza","Philly bagel","Crackers + hummus","Melon","Banana"];
+const MEAL_BANK_SECTIONS = [
+  {
+    key:"all", label:"👨‍👩‍👧‍👦 Everyone", color:"#1c1917", bg:"#f5f5f4",
+    items:["Karen's","Nursery","MIRA","Spaghetti Bolognese","Sausage potato bean","Fish pie","Lasagne","Fish cakes + wedges","Stir fry","Tinga + rice","Cottage pie","Chicken & leek bake","Burgers","Sausage orzo","One pot garlic chicken","Teriyaki skewers","Chilli","Pizza","Roast","Fajitas"],
+  },
+  {
+    key:"adults", label:"🧑 Adults only", color:"#7c3aed", bg:"#ede9fe",
+    items:["Laksa","Thai curry","Fajita + nachos","Loaded nachos","Sourdough chicken kievs","Mushroom burgers","Spinach ricotta pasta bake","Greek feta salad","Aioli roast veg + chorizo + potato"],
+  },
+  {
+    key:"kids", label:"🧒 Kids", color:"#0369a1", bg:"#e0f2fe",
+    items:["Chicken Alfredo","Pitta pizza","Fish fingers + wedges","Porridge fingers","Mac & cheese","Pasta sauce","Snack Attack","Dairylea Dunker","Tortellini"],
+  },
+];
+const SHOP_CATS = [
+  {key:"produce",label:"🥦 Fruit & Veg",color:"#166534",bg:"#f0fdf4"},
+  {key:"meat",label:"🥩 Meat & Fish",color:"#991b1b",bg:"#fef2f2"},
+  {key:"dairy",label:"🧀 Dairy & Eggs",color:"#1e3a5f",bg:"#eff6ff"},
+  {key:"dry",label:"🍝 Dry & Tins",color:"#78350f",bg:"#fffbeb"},
+  {key:"frozen",label:"❄️ Frozen",color:"#0c4a6e",bg:"#f0f9ff"},
+  {key:"other",label:"🛒 Other",color:"#374151",bg:"#f9fafb"},
+];
+const FLAG_STYLES = {
+  dnd:      {color:"#7c3aed",bg:"#ede9fe"},
+  swimming: {color:"#0369a1",bg:"#e0f2fe"},
+  nursery:  {color:"#065f46",bg:"#d1fae5"},
+  school:   {color:"#92400e",bg:"#fef3c7"},
+  karen:    {color:"#9d174d",bg:"#fce7f3"},
+  out:      {color:"#374151",bg:"#f3f4f6"},
+  quick:    {color:"#b45309",bg:"#fffbeb"},
+};
 
-  const DEFAULT_CHORES = [
-    { name: 'Vacuum floors', icon: '🧹' },
-    { name: 'Do laundry', icon: '👕' },
-    { name: 'Wash dishes', icon: '🍽️' },
-    { name: 'Clean bathroom', icon: '🚿' },
-    { name: 'Take out trash', icon: '🗑️' },
-    { name: 'Mop kitchen', icon: '🪣' },
+const DEFAULT_RECIPES = {
+  "Spaghetti Bolognese": { tag: "ClaudeRecipe", ingredients: ["500g beef mince","Red sauce (see note)","Spaghetti","Parmesan to serve"], notes: "🍅 Make the red sauce first: roast a courgette, pepper, carrot and a whole bulb of garlic with olive oil and mixed herbs at 200°C for 35–40 mins until caramelised, then blend with a 500g carton of passata until smooth. Brown the mince, add the red sauce and simmer for 20 mins." },
+  "Sausage potato bean": { tag: "ClaudeRecipe", ingredients: ["8 sausages","4 potatoes, diced","400g tinned cannellini beans","passata","frozen diced onion","1 tsp smoked paprika"], notes: "Kids love this. Can swap cannellini for baked beans." },
+  "Fish pie": { tag: "ClaudeRecipe", ingredients: ["300g white fish (cod or haddock)","200g salmon","150g prawns","600g potatoes, mashed","300ml milk","30g butter","30g plain flour","1 leek, sliced","Handful frozen peas","Cheddar for topping"], notes: "" },
+  "Lasagne": { tag: "ClaudeRecipe", ingredients: ["500g beef mince","Red sauce (see note)","Lasagne sheets","600ml milk","50g butter","50g plain flour","100g cheddar, grated","Parmesan"], notes: "🍅 Make the red sauce first: roast a courgette, pepper, carrot and a whole bulb of garlic with olive oil and mixed herbs at 200°C for 35–40 mins, then blend with a 500g carton of passata. Brown the mince, stir through the red sauce and layer with sheets and béchamel. Make double and freeze one." },
+  "Laksa": { tag: "ClaudeRecipe", ingredients: ["2 tbsp laksa paste","400ml coconut milk","500ml chicken stock","200g rice noodles","300g chicken breast or prawns","100g beansprouts","2 spring onions","Lime to serve","Fresh coriander"], notes: "Adults only. Can use ready-made laksa paste." },
+  "Thai curry": { tag: "ClaudeRecipe", ingredients: ["2 tbsp Thai curry paste (green or red)","400ml coconut milk","400g chicken thighs, diced","1 courgette, sliced","100g green beans","1 red pepper","Jasmine rice","Fish sauce","Lime"], notes: "Adults only. Adjust paste to taste." },
+  "Chicken & leek bake": { tag: "ClaudeRecipe", ingredients: ["6 chicken thighs, bone-in","3 leeks, sliced","200ml double cream","200ml chicken stock","frozen garlic","Fresh thyme","Salt & pepper"], notes: "Great with crusty bread or mash." },
+  "Fish cakes + wedges": { tag: "ClaudeRecipe", ingredients: ["400g fish cakes (ready-made or homemade)","4 large potatoes, cut into wedges","Olive oil","Paprika","Frozen peas or beans to serve"], notes: "" },
+  "Stir fry": { tag: "ClaudeRecipe", ingredients: ["400g chicken breast or tofu, sliced","3 tbsp soy sauce","1 tbsp sesame oil","1 tbsp oyster sauce","300g stir fry veg mix","frozen garlic","1 inch fresh ginger","Noodles or rice"], notes: "" },
+  "Tinga + rice": { tag: "ClaudeRecipe", ingredients: ["600g chicken thighs","passata","2 chipotle peppers in adobo","frozen sliced onion","frozen garlic","1 tsp oregano","Basmati rice","Sour cream & coriander to serve"], notes: "Shred chicken in sauce. Good in tacos too." },
+  "Cottage pie": { tag: "ClaudeRecipe", ingredients: ["500g beef mince","frozen diced onion","2 carrots, diced","2 celery sticks, diced","400ml beef stock","2 tbsp Worcestershire sauce","2 tbsp tomato purée","800g potatoes, mashed","50g butter","Cheddar for topping"], notes: "" },
+  "Chicken & leek bake": { tag: "ClaudeRecipe", ingredients: ["6 chicken thighs","3 leeks, sliced","200ml double cream","200ml chicken stock","frozen garlic","Thyme"], notes: "" },
+  "Burgers": { tag: "ClaudeRecipe", ingredients: ["500g beef mince","1 egg","Breadcrumbs","Salt & pepper","Burger buns","Lettuce, tomato, cheese","Ketchup & mayo"], notes: "Shape into 4 patties. Kids love these." },
+  "Sausage orzo": { tag: "ClaudeRecipe", ingredients: ["6 sausages, skins removed","frozen diced onion","frozen garlic","passata","300g orzo","600ml chicken stock","Large handful spinach","Parmesan"], notes: "One pot. Add stock gradually like risotto. 💡 Works really well with red sauce instead of plain passata — roast veg, garlic and mixed herbs blended with passata." },
+  "One pot garlic chicken": { tag: "ClaudeRecipe", ingredients: ["8 chicken thighs, bone-in","frozen garlic","300ml white wine or chicken stock","400g new potatoes","Fresh thyme & rosemary","Lemon, sliced"], notes: "Roast at 200°C for 45 mins." },
+  "Teriyaki skewers": { tag: "ClaudeRecipe", ingredients: ["600g chicken thigh, diced","4 tbsp soy sauce","2 tbsp mirin","1 tbsp honey","frozen garlic","1 tsp sesame oil","Basmati rice","Spring onions"], notes: "Marinate for at least 30 mins. Kids love these." },
+  "Chilli": { tag: "ClaudeRecipe", ingredients: ["500g beef mince","frozen diced onion","frozen garlic","passata","400g kidney beans, drained","2 tbsp tomato purée","1 tsp cumin","1 tsp smoked paprika","1 tsp chilli flakes","Basmati rice","Sour cream & cheddar to serve"], notes: "Freeze leftovers well. 💡 Red sauce works great here instead of plain passata — adds depth without extra effort." },
+  "Fajitas": { tag: "ClaudeRecipe", ingredients: ["600g chicken breast, sliced","2 peppers, sliced","frozen sliced onion","2 tbsp fajita seasoning","Flour tortillas","Sour cream","Grated cheddar","Guacamole","Salsa"], notes: "Let everyone build their own. Kids can have plain chicken and tortillas." },
+  "Pizza": { tag: "ClaudeRecipe", ingredients: ["Ready-made pizza bases or dough","Tomato passata","Mozzarella, torn","Choice of toppings"], notes: "Friday night favourite. Let the kids choose toppings." },
+  "Roast": { tag: "ClaudeRecipe", ingredients: ["1.5kg joint of meat (beef, chicken, pork or lamb)","Roast potatoes","Seasonal veg (carrots, parsnips, broccoli)","Gravy","Yorkshire puddings (if beef)"], notes: "Sunday classic." },
+  "Fajita + nachos": { tag: "ClaudeRecipe", ingredients: ["600g chicken breast, sliced","2 peppers, sliced","frozen sliced onion","2 tbsp fajita seasoning","Flour tortillas","Sour cream","Guacamole","Grated cheddar","Nachos","Salsa"], notes: "Adults only. Let everyone build their own." },
+  "Loaded nachos": { tag: "ClaudeRecipe", ingredients: ["200g tortilla chips","400g pulled chicken or beef mince","400g tinned black beans","100g cheddar, grated","Jalapeños","Sour cream","Guacamole","Salsa"], notes: "Adults only." },
+  "Sourdough chicken kievs": { tag: "ClaudeRecipe", ingredients: ["4 chicken breasts","100g butter, softened","frozen garlic","Handful parsley, chopped","Sourdough breadcrumbs","2 eggs, beaten","Plain flour"], notes: "Make ahead and chill before baking." },
+  "Mushroom burgers": { tag: "ClaudeRecipe", ingredients: ["4 large portobello mushrooms","Olive oil","Burger buns","Halloumi or cheese slices","Lettuce, tomato, red onion","Burger sauce or mayo"], notes: "Adults only." },
+  "Spinach ricotta pasta bake": { tag: "ClaudeRecipe", ingredients: ["400g pasta (rigatoni or penne)","250g ricotta","200g spinach","500g passata","frozen garlic","100g mozzarella, torn","Parmesan","Nutmeg"], notes: "Adults only." },
+  "Greek feta salad": { tag: "ClaudeRecipe", ingredients: ["200g feta, cubed","1 cucumber, diced","400g cherry tomatoes, halved","frozen sliced red onion","Kalamata olives","Extra virgin olive oil","Dried oregano","Crusty bread to serve"], notes: "Adults only. Add grilled chicken to bulk it up." },
+  "Aioli roast veg + chorizo + potato": { tag: "ClaudeRecipe", ingredients: ["200g chorizo, sliced","4 potatoes, cubed","2 peppers, chopped","1 courgette, sliced","frozen sliced red onion","Olive oil","Smoked paprika","Aioli to serve"], notes: "Adults only. Roast everything at 200°C for 35 mins." },
+  "Chicken Alfredo": { tag: "ClaudeRecipe", ingredients: ["400g pasta (tagliatelle or penne)","400g chicken breast, sliced","300ml double cream","frozen garlic","50g parmesan","Salt & pepper","Butter"], notes: "Kids love this. Mild and creamy." },
+  "Pitta pizza": { tag: "ClaudeRecipe", ingredients: ["4 pitta breads","4 tbsp tomato sauce","100g mozzarella, grated","Toppings of choice"], notes: "Quick kids' tea. Let them build their own." },
+  "Fish fingers + wedges": { tag: "ClaudeRecipe", ingredients: ["8–12 fish fingers","4 potatoes, cut into wedges","Olive oil","Baked beans or peas to serve","Ketchup"], notes: "" },
+  "Porridge fingers": { tag: "ClaudeRecipe", ingredients: ["150g porridge oats","200ml milk","1 banana, mashed","1 egg","1 tsp cinnamon","1 tbsp honey"], notes: "Great for Vivien. Bake at 180°C for 20 mins." },
+  "Mac & cheese": { tag: "ClaudeRecipe", ingredients: ["300g macaroni","40g butter","40g plain flour","500ml milk","150g cheddar, grated","1 tsp mustard","Salt & pepper","Breadcrumbs for topping"], notes: "Kids' favourite. Can add hidden veg." },
+  "Pasta sauce": { tag: "ClaudeRecipe", ingredients: ["400g pasta","400g passata","frozen diced onion","frozen garlic","1 tsp mixed herbs","Parmesan to serve"], notes: "Simple base. Add mince, veg or tuna as needed." },
+  "Tortellini": { tag: "ClaudeRecipe", ingredients: ["300g fresh tortellini (cheese or ham & cheese)","Butter","Parmesan to serve","Handful frozen peas (optional)"], notes: "Quick kids' tea. Cook tortellini per packet, toss in butter and parmesan. Peas add colour and veg without fuss. Can serve with a simple tomato sauce on the side if needed." },
+  "Snack Attack": { tag: "ClaudeRecipe", ingredients: ["Crackers or breadsticks","Cheese slices or babybels","Cucumber sticks","Cherry tomatoes","Hummus","Grapes or fruit"], notes: "No cooking needed. Great for tired evenings." },
+  "Dairylea Dunker": { tag: "ClaudeRecipe", ingredients: ["Dairylea Dunkers pack","Fruit (grapes, banana)","Cucumber sticks"], notes: "Vivien and Reuben approved." },
+  "Omelette": { tag: "ClaudeRecipe", ingredients: ["3 eggs per person","Splash of milk","Butter","Filling of choice (cheese, ham, mushrooms)","Salt & pepper"], notes: "" },
+  "Scrambled eggs": { tag: "ClaudeRecipe", ingredients: ["3 eggs per person","Splash of milk or cream","Knob of butter","Toast to serve","Salt & pepper"], notes: "" },
+};
+
+let recipes = {};
+
+function initRecipes() {
+  try {
+    const saved = localStorage.getItem('mealplanner_recipes');
+    if (saved) {
+      recipes = JSON.parse(saved);
+      Object.keys(DEFAULT_RECIPES).forEach(name => {
+        if (!recipes[name]) recipes[name] = JSON.parse(JSON.stringify(DEFAULT_RECIPES[name]));
+        // Backfill tag on old saved recipes that predate tagging
+        if (!recipes[name].tag) recipes[name].tag = 'ClaudeRecipe';
+      });
+    } else {
+      recipes = JSON.parse(JSON.stringify(DEFAULT_RECIPES));
+    }
+  } catch(e) { recipes = JSON.parse(JSON.stringify(DEFAULT_RECIPES)); }
+}
+
+function saveRecipes() {
+  try {
+    localStorage.setItem('mealplanner_recipes', JSON.stringify(recipes));
+    const ind = document.getElementById('save-indicator');
+    if (ind) { ind.style.display = 'inline'; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = 'none', 1500); }
+  } catch(e) {}
+}
+
+function getDay(key) {
+  return DAYS.find(d => d.key === key) || customDays[key] || {key, label: key, isWeekday: false};
+}
+
+
+// ── ASDA ORDER DATA ──
+const ASDA_ORDERS = [
+  { date: "08 Jan", label: "Thu 8 Jan", items: ["Semi skimmed milk 6 pints","Warburtons wholemeal bread","Free range eggs","Carrots","Multiseeded rolls","Sausages","Chicken breast fillets","Mini cucumbers","Sweet peppers","Baby leaf","Spring onions","Apple juice","Ham slices","Passata","Crumpets","Chicken soup","Vegetable soup","Orzo","Parmesan","Philadelphia garlic & herbs","Heinz baked beans","Salmon fillets","Sausage rolls","Avocados","Courgettes"] },
+  { date: "14 Jan", label: "Wed 14 Jan", items: ["Semi skimmed milk 6 pints","Warburtons wholemeal bread","Mini cucumbers","Avocados","Baby leaf","Carrots","Passata","Crumpets","Organix toddler snacks","Porridge oats","Philadelphia garlic & herbs","Sourdough bloomer","Chicken breast slices","Apple juice","Red lentils","Courgettes","Sausage rolls"] },
+  { date: "14 Jan", label: "Wed 14 Jan (2)", items: ["Semi skimmed milk 6 pints","Warburtons wholemeal bread","Avocados","Mini cucumbers","Passata","Crumpets","Carrots","Courgettes","Porridge oats","Tenderstem broccoli","Red onions","Aubergine","Ham slices","Chicken breast slices","Sausage rolls","Red lentils","Baby leaf","Philadelphia garlic & herbs"] },
+  { date: "24 Jan", label: "Sat 24 Jan", items: ["Semi skimmed milk 6 pints","Multiseeded rolls","Crumpets","Avocados","Whole cucumber","Mini cucumbers","Sausages","Beef mince","Passata","Fish fingers","Carrots","Apple juice","Bagels","Chicken breast slices","Courgettes","Coconut milk","Thai curry paste"] },
+  { date: "31 Jan", label: "Sat 31 Jan", items: ["Semi skimmed milk 6 pints","Warburtons wholemeal bread","Multiseeded rolls","Passata","Tuna chunks","Free range eggs","Double cream","Mature cheddar","Philadelphia garlic & herbs","Ham slices","Carrots","Baby leaf","Sweet peppers","Beef mince","Chicken breast fillets","Pitta bread","Courgettes","Sausage rolls"] },
+  { date: "08 Feb", label: "Sun 8 Feb", items: ["Semi skimmed milk 6 pints","Warburtons wholemeal bread","Multiseeded rolls","Passata","Tuna chunks","Crumpets","Mature cheddar","Philadelphia garlic & herbs","Ham slices","Baby leaf","Avocados","Bananas","Carrots","Beef mince","Chicken breast fillets","Bagels","Courgettes","Sausage rolls","Lasagne sheets","Fish fingers"] },
+  { date: "16 Feb", label: "Mon 16 Feb", items: ["Semi skimmed milk 6 pints","Warburtons wholemeal bread","Multiseeded rolls","Passata","Free range eggs","Mature cheddar","Ham slices","Carrots","Whole cucumber","Bananas","Avocados","Sweet peppers","Apple juice","Coconut milk","Spaghetti","Wholemeal wraps","Courgettes"] },
+  { date: "23 Feb", label: "Mon 23 Feb", items: ["Semi skimmed milk 6 pints","Warburtons wholemeal bread","Multiseeded rolls","Free range eggs","Mature cheddar","Ham slices","Pâté","Sourdough bloomer","Baby leaf","Sweet peppers","Avocados","Bagels","Wholemeal wraps","Apple juice","Courgettes","Sausage rolls"] },
+  { date: "01 Mar", label: "Sun 1 Mar", items: ["Semi skimmed milk 6 pints","Free range eggs","Bananas","Carrots","Avocados","Sweet peppers","Passata","Crumpets","Sausages","Pâté","Double cream","Pitta bread","Fish fingers","Heinz baked beans","Courgettes","Beef mince","Chicken breast fillets"] },
+  { date: "09 Apr", label: "Thu 9 Apr", items: ["Semi skimmed milk 6 pints","Warburtons wholemeal bread","Multiseeded rolls","Free range eggs","Clover spread","Avocados","Baby leaf","Mini cucumbers","Courgettes","Carrots","Tenderstem broccoli","Wholemeal wraps","Bagels","Garlic & coriander naans","Porridge oats","Multigrain hoops","Fruit & fibre","Trek protein flapjacks","Ham slices","Salmon fillets","Snack sausage rolls","Doritos multipack","Coconut milk","Butter chicken curry kit","Veggie fingers","Bin liners","Dishwasher tablets","Bleach"] },
+  { date: "20 Mar", label: "Fri 20 Mar", items: ["Semi skimmed milk 6 pints","Warburtons wholemeal bread","Multiseeded rolls","Avocados","Baby leaf","Sweet peppers","Whole cucumber","Courgettes","Carrots","Leeks","Chicken breast fillets","Whole chicken","Passata","Spaghetti loops & sausages","Double cream","Unsalted butter","Puff pastry","Mature cheddar","Philadelphia garlic & herbs","Apple juice","Coconut milk","Bagels","Plain naans","Croissants","Pains au chocolat","Fajita seasoning","Porridge sachets","Organix toddler snacks","Chicken snacks"] },
+  { date: "30 Mar", label: "Mon 30 Mar", items: ["Blueberries","Mixed grapes","Bananas","Baby watermelon","Strawberries","Passata","Tuna chunks","Mixed beans","Baking potatoes","Pak choi","Baby corn","Aubergine","Sausages","Chicken breast portions","Pork mince","Beef mince","Chorizo","Prawns","Mini corn on the cob","Frozen diced onions","Gnocchi","Cheese & garlic flatbread","Prawn pasta salad","Chicken pasta salad","Sweet peppers","Mini cucumbers"] },
+];
+
+// Items in 3+ of 12 orders (25%+)
+const BASELINE_ITEMS = [
+  { text: "Semi skimmed milk 6 pints", cat: "dairy" },
+  { text: "Free range eggs", cat: "dairy" },
+  { text: "Philadelphia garlic & herbs", cat: "dairy" },
+  { text: "Mature cheddar", cat: "dairy" },
+  { text: "Double cream", cat: "dairy" },
+  { text: "Courgettes", cat: "produce" },
+  { text: "Carrots", cat: "produce" },
+  { text: "Avocados", cat: "produce" },
+  { text: "Baby leaf", cat: "produce" },
+  { text: "Sweet peppers", cat: "produce" },
+  { text: "Mini cucumbers", cat: "produce" },
+  { text: "Whole cucumber", cat: "produce" },
+  { text: "Bananas", cat: "produce" },
+  { text: "Passata", cat: "dry" },
+  { text: "Apple juice", cat: "dry" },
+  { text: "Tuna chunks", cat: "dry" },
+  { text: "Coconut milk", cat: "dry" },
+  { text: "Warburtons wholemeal bread", cat: "other" },
+  { text: "Multiseeded rolls", cat: "other" },
+  { text: "Crumpets", cat: "other" },
+  { text: "Bagels", cat: "other" },
+  { text: "Wholemeal wraps", cat: "other" },
+  { text: "Porridge oats", cat: "other" },
+  { text: "Ham slices", cat: "meat" },
+  { text: "Chicken breast fillets", cat: "meat" },
+  { text: "Chicken breast slices", cat: "meat" },
+  { text: "Beef mince", cat: "meat" },
+  { text: "Sausages", cat: "meat" },
+  { text: "Sausage rolls", cat: "frozen" },
+  { text: "Fish fingers", cat: "frozen" },
+];
+
+const SKIP_MEALS = new Set(["school","nursery","karen","karen's","nurs","out",""]);
+
+// State
+let plan = {};
+let activeBank = null; // {day, person, slot}
+let multiSelected = new Set(); // Set of "day|person|slot" keys
+let lastTap = {}; // for double-tap detection
+let shopItems = {produce:[],meat:[],dairy:[],dry:[],frozen:[],other:[]};
+let checkedItems = {};
+let currentTab = "plan";
+let generating = false;
+
+function emptyPlan() {
+  const p = {};
+  DAYS.forEach(d => {
+    let work = "";
+    if (d.key === "mon" || d.key === "wed") work = "office";
+    else if (d.key === "sat" || d.key === "sun") work = "weekend";
+    else if (d.isWeekday) work = "wfh";
+    p[d.key] = {special:"", work, meals:{}};
+    FAMILY.forEach(person => {
+      let L = "", T = "";
+      if (person === "Reuben" && d.isWeekday) L = "School";
+      if (person === "Reuben" && (d.key === "mon" || d.key === "thu")) T = "Karen's";
+      if (person === "Vivien" && d.key === "mon") { L = "Karen's"; T = "Karen's"; }
+      if (person === "Vivien" && (d.key === "thu" || d.key === "fri")) { L = "Nursery"; T = "Nursery"; }
+      if (person === "Ben" && d.key === "mon") L = "MIRA";
+      if (person === "Emily" && (d.key === "mon" || d.key === "thu")) L = "Sandwich";
+      p[d.key].meals[person] = {L, T};
+    });
+  });
+  return p;
+}
+
+function addCustomDay() {
+  const id = "custom_" + Date.now();
+  customDays[id] = {key: id, label: "New day", isWeekday: false};
+  activeDays.unshift(id);
+  ensureDayInPlan(id);
+  saveToStorage();
+  renderTable();
+}
+
+function removeDay(key) {
+  activeDays = activeDays.filter(k => k !== key);
+  delete customDays[key];
+  saveToStorage();
+  renderTable();
+}
+
+function ensureDayInPlan(key) {
+  if (!plan[key]) {
+    plan[key] = {special:"", work:"", meals:{}};
+    FAMILY.forEach(p => { plan[key].meals[p] = {L:"", T:""}; });
+  }
+}
+
+
+function saveToStorage() {
+  try {
+    localStorage.setItem('mealplanner_plan', JSON.stringify(plan));
+    localStorage.setItem('mealplanner_notes', document.getElementById('notes-ta').value);
+    localStorage.setItem('mealplanner_week', document.getElementById('week-label').value);
+    localStorage.setItem('mealplanner_activedays', JSON.stringify(activeDays));
+    localStorage.setItem('mealplanner_customdays', JSON.stringify(customDays));
+    const ind = document.getElementById('save-indicator');
+    if (ind) { ind.style.display = 'inline'; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = 'none', 1500); }
+  } catch(e) { console.warn('Could not save:', e); }
+}
+
+function loadFromStorage() {
+  try {
+    const savedPlan = localStorage.getItem('mealplanner_plan');
+    if (savedPlan) {
+      const parsed = JSON.parse(savedPlan);
+      // Merge saved data into fresh plan (preserves defaults for any new keys)
+      const fresh = emptyPlan();
+      Object.keys(parsed).forEach(key => {
+        if (!fresh[key]) { fresh[key] = {special:"", work:"", meals:{}}; FAMILY.forEach(p => { fresh[key].meals[p] = {L:"",T:""}; }); }
+        if (parsed[key]) {
+          fresh[key].special = parsed[key].special || "";
+          fresh[key].work = parsed[key].work !== undefined ? parsed[key].work : fresh[key].work;
+          FAMILY.forEach(p => {
+            if (parsed[key].meals && parsed[key].meals[p]) {
+              fresh[key].meals[p].L = parsed[key].meals[p].L !== undefined ? parsed[key].meals[p].L : fresh[key].meals[p].L;
+              fresh[key].meals[p].T = parsed[key].meals[p].T !== undefined ? parsed[key].meals[p].T : fresh[key].meals[p].T;
+            }
+          });
+        }
+      });
+      plan = fresh;
+    }
+    const savedNotes = localStorage.getItem('mealplanner_notes');
+    if (savedNotes !== null) document.getElementById('notes-ta').value = savedNotes;
+    const savedWeek = localStorage.getItem('mealplanner_week');
+    if (savedWeek) document.getElementById('week-label').value = savedWeek;
+    const savedActiveDays = localStorage.getItem('mealplanner_activedays');
+    if (savedActiveDays) activeDays = JSON.parse(savedActiveDays);
+    const savedCustomDays = localStorage.getItem('mealplanner_customdays');
+    if (savedCustomDays) customDays = JSON.parse(savedCustomDays);
+  } catch(e) { console.warn('Could not load:', e); }
+}
+
+function init() {
+  plan = emptyPlan();
+  loadFromStorage();
+  initRecipes();
+  // Restore selected baseline order
+  try {
+    const saved = localStorage.getItem('mealplanner_baseline_order');
+    if (saved !== null) selectedOrderIndex = parseInt(saved);
+  } catch(e) {}
+  if (selectedOrderIndex === null) loadBaselineIntoShop();
+  else loadSelectedOrderIntoShop();
+  renderTable();
+  renderBanks();
+  renderShop();
+}
+
+function renderTable() {
+  const tbody = document.getElementById("meal-tbody");
+  tbody.innerHTML = "";
+
+  // Add day button row at top
+  const addTr = document.createElement("tr");
+  addTr.className = "add-day-row";
+  const addTd = document.createElement("td");
+  addTd.colSpan = 11;
+  const addBtn = document.createElement("button");
+  addBtn.className = "add-day-btn";
+  addBtn.textContent = "+ Add day at top";
+  addBtn.onclick = () => addCustomDay();
+  addTd.appendChild(addBtn);
+  addTr.appendChild(addTd);
+  tbody.appendChild(addTr);
+
+  activeDays.forEach((dayKey, di) => {
+    const day = getDay(dayKey);
+    ensureDayInPlan(dayKey);
+    const isDnD = plan[dayKey].special === "dnd";
+    const tr = document.createElement("tr");
+    if (isDnD) tr.classList.add("dnd-row");
+
+    // Day cell - editable label for custom days
+    const tdDay = document.createElement("td");
+    tdDay.className = "day-cell" + (isDnD ? " dnd" : "");
+    const isCustom = !!customDays[dayKey];
+    if (isCustom) {
+      const labelInp = document.createElement("input");
+      labelInp.className = "day-label-input";
+      labelInp.value = day.label;
+      labelInp.oninput = () => { customDays[dayKey].label = labelInp.value; saveToStorage(); };
+      const delBtn = document.createElement("button");
+      delBtn.className = "del-day-btn";
+      delBtn.title = "Remove this row";
+      delBtn.textContent = "✕";
+      delBtn.onclick = () => removeDay(dayKey);
+      tdDay.appendChild(labelInp);
+      tdDay.appendChild(delBtn);
+    } else {
+      tdDay.innerHTML = day.label + (isDnD ? '<div class="dnd-hint">⚡ Quick tea</div>' : '');
+    }
+    tr.appendChild(tdDay);
+
+    // Flag cell
+    const tdFlag = document.createElement("td");
+    tdFlag.className = "flag-cell";
+    const sel = document.createElement("select");
+    sel.className = "flag-select";
+    const special = plan[dayKey].special;
+    const fs = special ? FLAG_STYLES[special] : null;
+    if (fs) { sel.style.background = fs.bg; sel.style.color = fs.color; }
+    else { sel.style.background = "white"; sel.style.color = "#78716c"; }
+    sel.innerHTML = `<option value="">—</option>
+      <option value="dnd"${special==="dnd"?" selected":""}>D&D 🎲</option>
+      <option value="swimming"${special==="swimming"?" selected":""}>Swimming 🏊</option>
+      <option value="nursery"${special==="nursery"?" selected":""}>Nursery</option>
+      <option value="school"${special==="school"?" selected":""}>School trip</option>
+      <option value="karen"${special==="karen"?" selected":""}>Karen's</option>
+      <option value="out"${special==="out"?" selected":""}>Eating out</option>
+      <option value="quick"${special==="quick"?" selected":""}>⚡ Quick</option>`;
+    sel.onchange = () => {
+      plan[dayKey].special = sel.value;
+      renderTable();
+      updateMealsDetected();
+      saveToStorage();
+    };
+    tdFlag.appendChild(sel);
+    tr.appendChild(tdFlag);
+
+    // Work cell
+    const tdWork = document.createElement("td");
+    tdWork.className = "work-cell";
+    const wsel = document.createElement("select");
+    const wval = plan[dayKey].work || "";
+    wsel.className = "work-select" + (wval === "office" ? " office" : wval === "wfh" ? " wfh" : wval === "weekend" ? " weekend" : "");
+    wsel.innerHTML = `<option value="">—</option>
+      <option value="office"${wval==="office"?" selected":""}>🏢 Office</option>
+      <option value="wfh"${wval==="wfh"?" selected":""}>🏠 WFH</option>
+      <option value="weekend"${wval==="weekend"?" selected":""}>🌤 Weekend!</option>`;
+    wsel.onchange = () => {
+      plan[dayKey].work = wsel.value;
+      saveToStorage();
+      wsel.className = "work-select" + (wsel.value === "office" ? " office" : wsel.value === "wfh" ? " wfh" : wsel.value === "weekend" ? " weekend" : "");
+    };
+    tdWork.appendChild(wsel);
+    tr.appendChild(tdWork);
+
+    // Meal cells
+    FAMILY.forEach(person => {
+      ["L","T"].forEach(slot => {
+        const val = plan[dayKey].meals[person][slot] || "";
+        const isAB = activeBank && activeBank.day === dayKey && activeBank.person === person && activeBank.slot === slot;
+        const isPizzaHint = isDnD && slot === "T" && !val;
+        const td = document.createElement("td");
+        td.className = "meal-cell " + slot + (isAB ? " active" : "") + (isPizzaHint ? " pizza-hint" : "");
+        const inp = document.createElement("input");
+        inp.type = "text";
+        inp.dataset.cellkey = dayKey + "|" + person + "|" + slot;
+        inp.value = val;
+        inp.placeholder = isPizzaHint ? "🍕?" : "";
+        inp.className = "meal-input" + (isAB ? " active-input" : "")
+          + (val==="School" ? " school" : val==="Karen's" ? " karen" : val==="Nursery" ? " nursery" : val==="MIRA" ? " mira" : val==="Sandwich" ? " sandwich" : "");
+        inp.oninput = () => {
+          plan[dayKey].meals[person][slot] = inp.value;
+          updateMealsDetected();
+          saveToStorage();
+        };
+        inp.onfocus = () => {
+          if (multiSelected.size === 0) {
+            activeBank = {day: dayKey, person, slot};
+            updateFloating();
+            updateBankHighlight();
+            updateTableHighlight();
+          }
+        };
+        // Double-tap to toggle multi-select
+        const cellKey = dayKey + "|" + person + "|" + slot;
+        td.addEventListener("touchend", e => {
+          const now = Date.now();
+          const last = lastTap[cellKey] || 0;
+          if (now - last < 350) {
+            e.preventDefault();
+            inp.blur();
+            activeBank = null;
+            if (multiSelected.has(cellKey)) {
+              multiSelected.delete(cellKey);
+            } else {
+              multiSelected.add(cellKey);
+            }
+            updateFloating();
+            updateBankHighlight();
+            renderTableHighlights();
+          }
+          lastTap[cellKey] = now;
+        });
+        // Also support double-click for desktop testing
+        td.addEventListener("dblclick", e => {
+          e.preventDefault();
+          inp.blur();
+          activeBank = null;
+          if (multiSelected.has(cellKey)) {
+            multiSelected.delete(cellKey);
+          } else {
+            multiSelected.add(cellKey);
+          }
+          updateFloating();
+          updateBankHighlight();
+          renderTableHighlights();
+        });
+        td.appendChild(inp);
+        tr.appendChild(td);
+      });
+    });
+
+    tbody.appendChild(tr);
+  });
+}
+
+function renderTableHighlights() {
+  document.querySelectorAll(".meal-cell").forEach(td => {
+    const inp = td.querySelector("input");
+    if (!inp) return;
+    const key = inp.dataset.cellkey;
+    if (multiSelected.has(key)) {
+      td.classList.add("selected");
+    } else {
+      td.classList.remove("selected");
+    }
+  });
+}
+
+function updateTableHighlight() {
+  document.querySelectorAll(".meal-cell").forEach(td => {
+    td.classList.remove("active");
+    const inp = td.querySelector("input");
+    if (inp) inp.classList.remove("active-input");
+  });
+  if (!activeBank) return;
+  // Re-render is simplest for highlight
+  renderTable();
+}
+
+function renderBanks() {
+  // Meal bank pills - sectioned
+  const pillsDiv = document.getElementById("meal-bank-pills");
+  pillsDiv.innerHTML = "";
+  MEAL_BANK_SECTIONS.forEach(section => {
+    const secDiv = document.createElement("div");
+    secDiv.style.cssText = "width:100%;margin-bottom:6px;";
+    const secLabel = document.createElement("div");
+    secLabel.style.cssText = `background:${section.bg};color:${section.color};padding:4px 9px;font-size:10px;font-weight:700;border-radius:4px 4px 0 0;border-bottom:1px solid ${section.color}22;`;
+    secLabel.textContent = section.label;
+    secDiv.appendChild(secLabel);
+    const pillsRow = document.createElement("div");
+    pillsRow.style.cssText = `padding:6px 6px 2px;display:flex;flex-wrap:wrap;gap:4px;background:${section.bg}33;border-radius:0 0 4px 4px;`;
+    section.items.forEach(m => {
+      const btn = document.createElement("button");
+      btn.className = "pill" + (activeBank || multiSelected.size > 0 ? " active-bank" : "");
+      if (activeBank || multiSelected.size > 0) { btn.style.background = section.bg; btn.style.borderColor = section.color + "66"; btn.style.color = section.color; }
+      btn.textContent = m;
+      btn.onclick = () => { if (activeBank || multiSelected.size > 0) injectMeal(m); };
+      pillsRow.appendChild(btn);
+    });
+    secDiv.appendChild(pillsRow);
+    pillsDiv.appendChild(secDiv);
+  });
+
+  // Lunch cols
+  [
+    {id:"quick-lunches", items:QUICK_LUNCHES, bg:"#fffbeb"},
+    {id:"cooked-lunches", items:COOKED_LUNCHES, bg:"#e0f2fe"},
+    {id:"viv-lunches", items:VIV_LUNCHES, bg:"#d1fae5"},
+  ].forEach(col => {
+    const div = document.getElementById(col.id);
+    div.innerHTML = "";
+    col.items.forEach(item => {
+      const btn = document.createElement("button");
+      btn.className = "lunch-item" + (activeBank || multiSelected.size > 0 ? " active-bank" : "");
+      btn.textContent = item;
+      if (activeBank || multiSelected.size > 0) btn.style.background = col.bg;
+      btn.onclick = () => { if (activeBank || multiSelected.size > 0) injectMeal(item); };
+      div.appendChild(btn);
+    });
+  });
+
+  // Bank header hint
+  const hdr = document.getElementById("meal-bank-header");
+  if (activeBank) {
+    const dayLabel = DAYS.find(d => d.key === activeBank.day)?.label || "";
+    hdr.innerHTML = `🍽 Meal Bank <span>→ tap to fill ${activeBank.person} ${activeBank.slot === "L" ? "lunch" : "tea"} on ${dayLabel}</span>`;
+  } else {
+    hdr.innerHTML = "🍽 Meal Bank";
+  }
+}
+
+function updateBankHighlight() {
+  renderBanks();
+}
+
+function injectMeal(text) {
+  if (multiSelected.size > 0) {
+    multiSelected.forEach(key => {
+      const [day, person, slot] = key.split("|");
+      plan[day].meals[person][slot] = text;
+    });
+    multiSelected.clear();
+    updateFloating();
+    renderTable();
+    renderBanks();
+    updateMealsDetected();
+    saveToStorage();
+    return;
+  }
+  if (!activeBank) return;
+  plan[activeBank.day].meals[activeBank.person][activeBank.slot] = text;
+  activeBank = null;
+  updateFloating();
+  renderTable();
+  renderBanks();
+  updateMealsDetected();
+  saveToStorage();
+}
+
+function cancelFill() {
+  activeBank = null;
+  multiSelected.clear();
+  updateFloating();
+  renderTable();
+  renderBanks();
+}
+
+function updateFloating() {
+  const bar = document.getElementById("floating-bar");
+  if (multiSelected.size > 0 && currentTab === "plan") {
+    document.getElementById("floating-text").innerHTML =
+      `<strong>${multiSelected.size}</strong> cell${multiSelected.size > 1 ? "s" : ""} selected · tap a meal to fill all`;
+    bar.classList.add("visible");
+  } else if (activeBank && currentTab === "plan") {
+    const dayLabel = DAYS.find(d => d.key === activeBank.day)?.label || "";
+    document.getElementById("floating-text").innerHTML =
+      `Filling <strong>${activeBank.person}</strong> · ${activeBank.slot === "L" ? "Lunch" : "Tea"} · ${dayLabel}`;
+    bar.classList.add("visible");
+  } else {
+    bar.classList.remove("visible");
+  }
+}
+
+function updateMealsDetected() {
+  const meals = getPlannedMeals();
+  const el = document.getElementById("meals-detected");
+  el.textContent = meals.length > 0 ? meals.length + " unique meals detected" : "";
+}
+
+function getPlannedMeals() {
+  const meals = new Set();
+  activeDays.forEach(key => {
+    FAMILY.forEach(p => {
+      ["L","T"].forEach(slot => {
+        const v = plan[key]?.meals?.[p]?.[slot]?.trim();
+        if (v && !SKIP_MEALS.has(v.toLowerCase()) && v.length > 2) meals.add(v);
+      });
+    });
+  });
+  return [...meals];
+}
+
+function clearAll() {
+  if (!confirm("Clear the whole plan and shopping list?")) return;
+  plan = emptyPlan();
+  shopItems = {produce:[],meat:[],dairy:[],dry:[],frozen:[],other:[]};
+  checkedItems = {};
+  activeBank = null;
+  multiSelected.clear();
+  document.getElementById("notes-ta").value = "";
+  activeDays = DAYS.map(d => d.key);
+  customDays = {};
+  try { localStorage.removeItem('mealplanner_plan'); localStorage.removeItem('mealplanner_notes'); localStorage.removeItem('mealplanner_week'); localStorage.removeItem('mealplanner_activedays'); localStorage.removeItem('mealplanner_customdays'); } catch(e) {}
+  renderTable();
+  renderBanks();
+  renderShop();
+  updateMealsDetected();
+  updateTabLabel();
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById("plan-tab").style.display = tab === "plan" ? "block" : "none";
+  document.getElementById("shop-tab").style.display = tab === "shopping" ? "block" : "none";
+  document.getElementById("recipes-tab").style.display = tab === "recipes" ? "block" : "none";
+  document.getElementById("tab-plan").classList.toggle("active", tab === "plan");
+  document.getElementById("tab-shopping").classList.toggle("active", tab === "shopping");
+  document.getElementById("tab-recipes").classList.toggle("active", tab === "recipes");
+  if (tab === "plan") updateFloating();
+  else document.getElementById("floating-bar").classList.remove("visible");
+  if (tab === "recipes") renderRecipes();
+}
+
+async function generateShoppingList() {
+  const meals = getPlannedMeals();
+  if (meals.length === 0) { alert("Fill in some meals first!"); return; }
+  if (generating) return;
+  generating = true;
+  document.getElementById("generate-btn").disabled = true;
+  document.getElementById("generate-btn").textContent = "⏳ Generating list...";
+  document.querySelector(".sbtn-regen") && (document.querySelector(".sbtn-regen").textContent = "⏳");
+
+  const prompt = `You are a helpful UK family meal planning assistant. The family: 2 adults (Emily, Ben), school-age child (Reuben), 1.5-year-old (Vivien).
+
+Meals planned this week:
+${meals.map(m => "- " + m).join("\n")}
+
+Generate a shopping list grouped into these exact JSON keys: produce, meat, dairy, dry, frozen, other.
+
+Rules:
+- Only include ingredients genuinely needed for these meals
+- Use British English (mince not ground beef, coriander not cilantro, courgette not zucchini, tinned not canned)
+- Skip absolute staples (salt, pepper, olive oil unless needed in quantity)
+- Consolidate duplicates across meals
+- Keep items short (e.g. "chicken thighs" not "boneless skinless chicken thighs")
+
+Respond ONLY with valid JSON, no markdown, no preamble:
+{"produce":[],"meat":[],"dairy":[],"dry":[],"frozen":[],"other":[]}`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{role:"user", content: prompt}]
+      })
+    });
+    const data = await response.json();
+    const raw = data.content?.[0]?.text || "{}";
+    const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
+    // Auto-select the best matching order based on planned meals + size weighting
+    autoSelectBestOrder();
+    // Then merge meal-generated ingredients on top (skip duplicates already in the order)
+    SHOP_CATS.forEach(cat => {
+      (parsed[cat.key] || []).forEach(item => {
+        const exists = shopItems[cat.key].some(i => i.text.toLowerCase() === item.toLowerCase());
+        if (!exists) shopItems[cat.key].push({ text: item, id: Math.random().toString(36).slice(2) });
+      });
+    });
+    checkedItems = {};
+    renderShop();
+    switchTab("shopping");
+  } catch(e) {
+    console.error(e);
+    alert("Could not generate list — try again or add items manually.");
+  }
+
+  generating = false;
+  document.getElementById("generate-btn").disabled = false;
+  document.getElementById("generate-btn").textContent = "✨ Generate Shopping List from Plan";
+  const regenBtn = document.querySelector(".sbtn-regen");
+  if (regenBtn) regenBtn.textContent = "↺ Regenerate";
+  updateTabLabel();
+}
+
+
+function renderRecipes() {
+  const container = document.getElementById('recipes-list');
+  container.innerHTML = '';
+
+  const sections = [
+    { key: 'all',    label: '👨‍👩‍👧‍👦 Everyone',   color: '#1c1917', bg: '#f5f5f4', dot: '#1c1917' },
+    { key: 'adults', label: '🧑 Adults only', color: '#7c3aed', bg: '#ede9fe', dot: '#7c3aed' },
+    { key: 'kids',   label: '🧒 Kids',        color: '#0369a1', bg: '#e0f2fe', dot: '#0369a1' },
   ];
 
-  if (chores.length === 0) {
-    chores = DEFAULT_CHORES.map((c, i) => ({
-      id: Date.now() + i,
-      name: c.name,
-      icon: c.icon,
-      done: false,
-      lastDone: null,
-    }));
-    save();
+  sections.forEach(sec => {
+    const sectionMeals = MEAL_BANK_SECTIONS.find(s => s.key === sec.key)?.items || [];
+    const relevantMeals = sectionMeals.filter(name => recipes[name]);
+
+    const secHeader = document.createElement('div');
+    secHeader.className = 'recipe-section-header';
+    secHeader.innerHTML = `<div class="recipe-section-dot" style="background:${sec.dot}"></div><div class="recipe-section-label" style="margin:0;color:${sec.color}">${sec.label}</div>`;
+    container.appendChild(secHeader);
+
+    relevantMeals.forEach(name => {
+      const r = recipes[name];
+      const card = document.createElement('div');
+      card.className = 'recipe-card';
+
+      const hdr = document.createElement('div');
+      hdr.className = 'recipe-card-header';
+      hdr.style.borderLeft = `3px solid ${sec.dot}`;
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'recipe-name';
+      nameEl.textContent = name;
+
+      const tag = recipes[name].tag || 'ClaudeRecipe';
+      const tagEl = document.createElement('span');
+      tagEl.className = 'recipe-tag ' + (tag === 'GaleRecipe' ? 'gale' : 'claude');
+      tagEl.textContent = '#' + tag;
+
+      const toggle = document.createElement('span');
+      toggle.className = 'recipe-toggle';
+      toggle.textContent = '⌄';
+
+      hdr.appendChild(nameEl);
+      hdr.appendChild(tagEl);
+      hdr.appendChild(toggle);
+
+      const body = document.createElement('div');
+      body.className = 'recipe-body';
+
+      // Ingredients
+      const ingLabel = document.createElement('div');
+      ingLabel.className = 'recipe-ingredients-label';
+      ingLabel.textContent = 'Ingredients';
+      body.appendChild(ingLabel);
+
+      const ingList = document.createElement('div');
+      ingList.className = 'ing-list';
+
+      const renderIngredients = () => {
+        ingList.innerHTML = '';
+        (r.ingredients || []).forEach((ing, i) => {
+          const row = document.createElement('div');
+          row.className = 'ingredient-row';
+          const inp = document.createElement('input');
+          inp.className = 'ingredient-input';
+          inp.value = ing;
+          inp.oninput = () => { r.ingredients[i] = inp.value; saveRecipes(); };
+          const del = document.createElement('button');
+          del.className = 'ingredient-del';
+          del.textContent = '×';
+          del.onclick = () => { r.ingredients.splice(i, 1); renderIngredients(); saveRecipes(); };
+          row.appendChild(inp); row.appendChild(del);
+          ingList.appendChild(row);
+        });
+        const addBtn = document.createElement('button');
+        addBtn.className = 'add-ingredient-btn';
+        addBtn.textContent = '+ Add ingredient';
+        addBtn.onclick = () => { r.ingredients.push(''); renderIngredients(); saveRecipes(); };
+        ingList.appendChild(addBtn);
+      };
+
+      renderIngredients();
+      body.appendChild(ingList);
+
+      // Notes
+      const notesLabel = document.createElement('div');
+      notesLabel.className = 'recipe-notes-label';
+      notesLabel.textContent = 'Notes';
+      body.appendChild(notesLabel);
+      const notesInp = document.createElement('textarea');
+      notesInp.className = 'recipe-notes-input';
+      notesInp.value = r.notes || '';
+      notesInp.placeholder = 'e.g. double batch and freeze, serve with crusty bread...';
+      notesInp.oninput = () => { r.notes = notesInp.value; saveRecipes(); };
+      body.appendChild(notesInp);
+
+      // Retag button — only show if still ClaudeRecipe
+      const retagBtn = document.createElement('button');
+      retagBtn.className = 'retag-btn';
+      const updateRetagBtn = () => {
+        const currentTag = recipes[name].tag || 'ClaudeRecipe';
+        if (currentTag === 'GaleRecipe') {
+          retagBtn.textContent = '✓ #GaleRecipe — mark back as #ClaudeRecipe';
+          retagBtn.onclick = () => { recipes[name].tag = 'ClaudeRecipe'; saveRecipes(); updateRetagBtn(); tagEl.className = 'recipe-tag claude'; tagEl.textContent = '#ClaudeRecipe'; };
+        } else {
+          retagBtn.textContent = '✏️ I\'ve reviewed this — tag as #GaleRecipe';
+          retagBtn.onclick = () => { recipes[name].tag = 'GaleRecipe'; saveRecipes(); updateRetagBtn(); tagEl.className = 'recipe-tag gale'; tagEl.textContent = '#GaleRecipe'; };
+        }
+      };
+      updateRetagBtn();
+      body.appendChild(retagBtn);
+
+      hdr.onclick = () => {
+        const isOpen = body.classList.contains('open');
+        body.classList.toggle('open', !isOpen);
+        toggle.classList.toggle('open', !isOpen);
+      };
+
+      card.appendChild(hdr);
+      card.appendChild(body);
+      container.appendChild(card);
+    });
+  });
+}
+
+
+let asdaSectionVisible = false;
+
+function toggleAsdaSection() {
+  const body = document.getElementById('asda-body');
+  const sub = document.getElementById('asda-header-sub');
+  asdaSectionVisible = !asdaSectionVisible;
+  body.style.display = asdaSectionVisible ? 'block' : 'none';
+  sub.textContent = asdaSectionVisible ? '▼ Hide past orders' : '▶ Show past orders';
+}
+
+let selectedOrderIndex = null;
+
+function scoreOrder(order, plannedKeywords) {
+  const orderText = order.items.join(' ').toLowerCase();
+  let matchScore = 0;
+  plannedKeywords.forEach(kw => { if (orderText.includes(kw)) matchScore++; });
+  const sizeBonus = order.items.length * 0.4; // weight towards bigger shops
+  return matchScore * 3 + sizeBonus;
+}
+
+function getPlannedKeywords() {
+  const meals = typeof getPlannedMeals === 'function' ? getPlannedMeals() : [];
+  const stopWords = new Set(['with','and','the','in','on','of','a','to','for','or','from']);
+  const words = new Set();
+  meals.forEach(m => {
+    m.toLowerCase().split(/[\s,+\/&]+/).forEach(w => {
+      if (w.length > 3 && !stopWords.has(w)) words.add(w);
+    });
+  });
+  return [...words];
+}
+
+function autoSelectBestOrder() {
+  const keywords = getPlannedKeywords();
+  let bestIndex = null, bestScore = -1;
+  ASDA_ORDERS.forEach((order, i) => {
+    const s = scoreOrder(order, keywords);
+    if (s > bestScore) { bestScore = s; bestIndex = i; }
+  });
+  if (bestIndex !== null) {
+    selectedOrderIndex = bestIndex;
+    try { localStorage.setItem('mealplanner_baseline_order', bestIndex); } catch(e) {}
+    loadSelectedOrderIntoShop();
   }
+  renderAsdaSection();
+  renderShop();
+}
 
-  function save() { localStorage.setItem('chores', JSON.stringify(chores)); }
+function renderAsdaSection() {
+  const grid = document.getElementById('asda-order-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
 
-  // ─── UTILS ───────────────────────────────────────────────────────────
-  const ICONS = ['🧹','👕','🍽️','🚿','🗑️','🪣','🪴','🛏️','🧺','🧼','🧽','🪟','🧴','🐾','📦','🔧'];
+  const keywords = getPlannedKeywords();
+  const hasMeals = keywords.length > 0;
 
-  function randomIcon() { return ICONS[Math.floor(Math.random() * ICONS.length)]; }
+  // Score all orders to find the top
+  const scores = ASDA_ORDERS.map((o, i) => ({
+    origIndex: i,
+    score: scoreOrder(o, keywords),
+    matchCount: hasMeals ? keywords.filter(kw => o.items.join(' ').toLowerCase().includes(kw)).length : 0
+  }));
+  const topScore = Math.max(...scores.map(s => s.score));
 
-  function formatDate(ts) {
-    if (!ts) return 'Never done';
-    const d = new Date(ts);
-    const today = new Date();
-    const diff = Math.floor((today - d) / 86400000);
-    if (diff === 0) return 'Done today ✓';
-    if (diff === 1) return 'Done yesterday';
-    if (diff < 7) return `Done ${diff} days ago`;
-    if (diff < 14) return 'Done last week';
-    return 'Done ' + d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
-  }
+  // Display newest-first
+  const byDate = scores.slice().reverse();
 
-  function isOverdue(ts, days = 7) {
-    if (!ts) return true;
-    return (Date.now() - ts) > days * 86400000;
-  }
+  byDate.forEach(({origIndex, score, matchCount}) => {
+    const order = ASDA_ORDERS[origIndex];
+    const i = origIndex;
+    const isSelected = selectedOrderIndex === i;
+    const isTop = hasMeals && score === topScore;
+    const card = document.createElement('div');
+    card.className = 'asda-order-card' + (isSelected ? ' selected' : '') + (isTop && !isSelected ? ' recommended' : '');
 
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2000);
-  }
+    const matchHtml = hasMeals
+      ? `<div class="aoc-match${isTop ? ' top' : ''}">${isTop ? '⭐ Best match' : matchCount + ' meal matches'}</div>`
+      : '';
 
-  // ─── RENDER ──────────────────────────────────────────────────────────
-  function render() {
-    const pending = chores.filter(c => !c.done);
-    const done    = chores.filter(c => c.done);
-
-    // Progress
-    const total = chores.length;
-    const doneCount = done.length;
-    const pct = total ? Math.round(doneCount / total * 100) : 0;
-    document.getElementById('progressFill').style.width = pct + '%';
-    document.getElementById('progressLabel').textContent = `${doneCount} / ${total}`;
-
-    // Today
-    document.getElementById('todayDate').textContent =
-      new Date().toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
-
-    // Pending list
-    const pl = document.getElementById('choreList');
-    pl.innerHTML = '';
-    document.getElementById('pendingLabel').textContent =
-      pending.length ? `To Do — ${pending.length}` : '';
-
-    pending.forEach(c => pl.appendChild(makeCard(c)));
-
-    // Done list
-    const dl = document.getElementById('doneList');
-    dl.innerHTML = '';
-    const doneLabel = document.getElementById('doneLabel');
-    if (done.length) {
-      doneLabel.style.display = '';
-      doneLabel.textContent = `Completed — ${done.length}`;
-      done.forEach(c => dl.appendChild(makeCard(c)));
-    } else {
-      doneLabel.style.display = 'none';
-    }
-
-    document.getElementById('emptyState').classList.toggle('hidden', total > 0);
-  }
-
-  function makeCard(c) {
-    const div = document.createElement('div');
-    div.className = 'chore-card' + (c.done ? ' done' : '');
-    div.dataset.id = c.id;
-
-    const overdue = !c.done && isOverdue(c.lastDone);
-    const overdueHtml = overdue
-      ? `<span class="overdue-badge">overdue</span>` : '';
-
-    div.innerHTML = `
-      <div class="chore-icon">${c.icon}</div>
-      <div class="chore-info">
-        <div class="chore-name">${c.name}${overdueHtml}</div>
-        <div class="chore-last">${formatDate(c.lastDone)}</div>
-      </div>
-      <div class="chore-check">${c.done ? '✓' : ''}</div>
-      <button class="chore-delete" title="Delete">✕</button>
+    card.innerHTML = `
+      <div class="aoc-date">${order.label}</div>
+      <div class="aoc-meta">${order.items.length} items</div>
+      ${matchHtml}
+      <button class="aoc-btn" onclick="selectAsdaOrder(${i})">${isSelected ? '✓ Selected' : 'Use as baseline'}</button>
     `;
+    grid.appendChild(card);
+  });
 
-    // Toggle done
-    div.addEventListener('click', (e) => {
-      if (e.target.closest('.chore-delete')) return;
-      const chore = chores.find(x => x.id == div.dataset.id);
-      if (!chore) return;
-      chore.done = !chore.done;
-      if (chore.done) {
-        chore.lastDone = Date.now();
-        showToast(`✓ ${chore.name} done!`);
-      } else {
-        showToast(`↩ Marked as undone`);
-      }
-      save();
-      render();
-    });
-
-    // Delete
-    div.querySelector('.chore-delete').addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (confirm(`Delete "${c.name}"?`)) {
-        chores = chores.filter(x => x.id != c.id);
-        save();
-        render();
-      }
-    });
-
-    return div;
+  const notice = document.getElementById('asda-selected-notice');
+  if (notice) {
+    if (selectedOrderIndex !== null) {
+      const o = ASDA_ORDERS[selectedOrderIndex];
+      notice.style.display = 'block';
+      notice.textContent = `✓ ${o.label} loaded (${o.items.length} items) — delete what you don't need`;
+    } else {
+      notice.style.display = 'none';
+    }
   }
 
-  // ─── ADD CHORE ───────────────────────────────────────────────────────
-  function addChore() {
-    const input = document.getElementById('addInput');
-    const name = input.value.trim();
-    if (!name) return;
-    chores.push({ id: Date.now(), name, icon: randomIcon(), done: false, lastDone: null });
-    save();
-    render();
-    input.value = '';
-    input.blur();
-    showToast('Chore added!');
+  // Collapsed header badge
+  const badge = document.getElementById('asda-active-badge');
+  if (badge) {
+    if (selectedOrderIndex !== null) {
+      const o = ASDA_ORDERS[selectedOrderIndex];
+      badge.style.display = 'block';
+      badge.innerHTML = `<strong>${o.label}</strong> · ${o.items.length} items loaded`;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
+function selectAsdaOrder(index) {
+  selectedOrderIndex = index;
+  try { localStorage.setItem('mealplanner_baseline_order', index); } catch(e) {}
+  loadSelectedOrderIntoShop();
+  renderAsdaSection();
+  renderShop();
+}
+
+function loadSelectedOrderIntoShop() {
+  if (selectedOrderIndex === null) return;
+  const order = ASDA_ORDERS[selectedOrderIndex];
+  // Map order items into shop categories using BASELINE_ITEMS cat lookup, fallback to 'other'
+  const catLookup = {};
+  BASELINE_ITEMS.forEach(b => { catLookup[b.text.toLowerCase()] = b.cat; });
+
+  // Category heuristics for items not in BASELINE_ITEMS
+  function guessCat(text) {
+    const t = text.toLowerCase();
+    if (catLookup[t]) return catLookup[t];
+    if (/milk|egg|cheese|cream|butter|yogurt|spread|pastry/.test(t)) return 'dairy';
+    if (/chicken|beef|mince|sausage|ham|salmon|fish|prawn|pork|lamb|chorizo/.test(t)) return 'meat';
+    if (/carrot|courgette|pepper|cucumber|avocado|banana|apple|tomato|onion|broccoli|leek|spinach|kale|leaf|potato|aubergine|corn|pak choi|melon|strawberr|blueberr|grape|pear|fruit/.test(t)) return 'produce';
+    if (/pasta|rice|lentil|bean|passata|tinned|tuna|coconut milk|juice|stock|soup|noodle|oat/.test(t)) return 'dry';
+    if (/frozen|fish finger|sausage roll|veggie finger|pizza|chips/.test(t)) return 'frozen';
+    return 'other';
   }
 
-  document.getElementById('addBtn').addEventListener('click', addChore);
-  document.getElementById('addInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') addChore();
-  });
+  // Clear existing baseline items (keep any meal-generated items that are already there)
+  // Actually replace entirely — user can re-generate meals on top
+  shopItems = {produce:[],meat:[],dairy:[],dry:[],frozen:[],other:[]};
+  checkedItems = {};
 
-  // ─── PWA INSTALL ─────────────────────────────────────────────────────
-  let deferredPrompt = null;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    document.getElementById('installBanner').classList.remove('hidden');
+  order.items.forEach(item => {
+    const cat = guessCat(item);
+    shopItems[cat].push({ text: item, id: Math.random().toString(36).slice(2) });
   });
+}
 
-  document.getElementById('installBtn').addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    document.getElementById('installBanner').classList.add('hidden');
-    if (outcome === 'accepted') showToast('App installed! 🎉');
+function loadBaselineIntoShop() {
+  // Legacy: only used if no order selected
+  if (selectedOrderIndex !== null) return;
+  BASELINE_ITEMS.forEach(item => {
+    const cat = item.cat;
+    const exists = shopItems[cat].some(i => i.text === item.text);
+    if (!exists) {
+      shopItems[cat].push({ text: item.text, id: Math.random().toString(36).slice(2) });
+    }
   });
+}
 
-  window.addEventListener('appinstalled', () => {
-    document.getElementById('installBanner').classList.add('hidden');
-    showToast('App installed! 🎉');
+function renderShop() {
+  const total = Object.values(shopItems).flat().length;
+  const checked = Object.values(checkedItems).filter(Boolean).length;
+
+  const summary = document.getElementById("shop-summary");
+  const empty = document.getElementById("shop-empty");
+  summary.style.display = total > 0 ? "flex" : "none";
+  empty.style.display = total === 0 ? "block" : "none";
+
+  if (total > 0) {
+    const allDone = checked === total;
+    document.getElementById("shop-progress").innerHTML =
+      `<strong>${checked}</strong> / <strong>${total}</strong> ticked off` +
+      (allDone ? '<span class="all-done">✓ All done!</span>' : '');
+  }
+
+  const catsDiv = document.getElementById("shop-categories");
+  catsDiv.innerHTML = "";
+  SHOP_CATS.forEach(cat => {
+    const items = shopItems[cat.key] || [];
+    const catChecked = items.filter(i => checkedItems[i.id]).length;
+    const card = document.createElement("div");
+    card.className = "cat-card";
+    const hdr = document.createElement("div");
+    hdr.className = "cat-header";
+    hdr.style.background = cat.bg;
+    hdr.style.color = cat.color;
+    hdr.style.borderBottom = `1px solid ${cat.color}20`;
+    hdr.innerHTML = `<span>${cat.label}</span>${items.length > 0 ? `<span class="cat-count">${catChecked}/${items.length}</span>` : ''}`;
+    card.appendChild(hdr);
+    const itemsDiv = document.createElement("div");
+    itemsDiv.className = "cat-items";
+    if (items.length === 0) {
+      itemsDiv.innerHTML = '<div class="cat-empty">—</div>';
+    } else {
+      items.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "shop-item";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !!checkedItems[item.id];
+        cb.style.accentColor = cat.color;
+        cb.onchange = () => { checkedItems[item.id] = cb.checked; renderShop(); updateTabLabel(); };
+        const span = document.createElement("span");
+        span.className = "shop-item-text" + (checkedItems[item.id] ? " checked" : "");
+        span.textContent = item.text;
+        const del = document.createElement("button");
+        del.className = "shop-item-del";
+        del.textContent = "×";
+        del.onclick = () => {
+          shopItems[cat.key] = shopItems[cat.key].filter(i => i.id !== item.id);
+          delete checkedItems[item.id];
+          renderShop();
+          updateTabLabel();
+        };
+        row.appendChild(cb); row.appendChild(span); row.appendChild(del);
+        itemsDiv.appendChild(row);
+      });
+    }
+    card.appendChild(itemsDiv);
+    catsDiv.appendChild(card);
   });
+  renderAsdaSection();
+  updateTabLabel();
+}
 
-  // ─── INIT ─────────────────────────────────────────────────────────────
-  render();
+function updateTabLabel() {
+  const total = Object.values(shopItems).flat().length;
+  const checked = Object.values(checkedItems).filter(Boolean).length;
+  document.getElementById("tab-shopping").textContent =
+    total > 0 ? `🛒 Shopping (${checked}/${total})` : "🛒 Shopping";
+}
+
+function uncheckAll() {
+  checkedItems = {};
+  renderShop();
+}
+
+function addManualItem() {
+  const input = document.getElementById("manual-input");
+  const cat = document.getElementById("manual-cat").value;
+  const text = input.value.trim();
+  if (!text) return;
+  shopItems[cat].push({text, id: Math.random().toString(36).slice(2)});
+  input.value = "";
+  renderShop();
+  updateTabLabel();
+}
+
+// Click outside inputs to cancel active bank
+document.addEventListener("click", e => {
+  if (!activeBank && multiSelected.size === 0) return;
+  if (e.target.closest("#meal-bank-pills") || e.target.closest("#quick-lunches") ||
+      e.target.closest("#cooked-lunches") || e.target.closest("#viv-lunches") ||
+      e.target.closest("#meal-tbody") || e.target.closest("#floating-bar")) return;
+  cancelFill();
+});
+
+function toggleDark(on) {
+  document.body.classList.toggle('dark', on);
+  try { localStorage.setItem('mealplanner_dark', on ? '1' : '0'); } catch(e) {}
+}
+
+init();
+// Restore dark mode preference
+try {
+  if (localStorage.getItem('mealplanner_dark') === '1') {
+    document.body.classList.add('dark');
+    document.getElementById('dark-mode-cb').checked = true;
+  }
+} catch(e) {}
 </script>
 </body>
 </html>
