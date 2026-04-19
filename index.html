@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Family Meal Planner</title>
+<meta name="application-name" content="Meal Planner">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Meal Planner">
+<meta name="theme-color" content="#1c1917">
+<link id="pwa-manifest" rel="manifest">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: #fafaf8; min-height: 100vh; padding-bottom: 60px; }
@@ -16,6 +22,7 @@
   .hbtn { border: none; border-radius: 6px; padding: 6px 13px; cursor: pointer; font-size: 12px; }
   .hbtn-clear { background: #44403c; color: #d6d3d1; }
   .hbtn-print { background: #e7e5e4; color: #1c1917; font-weight: 600; }
+  .share-btn { background: #44403c; color: #d6d3d1; }
 
   #tabs { background: white; border-bottom: 2px solid #e7e5e4; display: flex; }
   .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; padding: 11px 18px; font-size: 13px; font-weight: 600; cursor: pointer; color: #78716c; transition: all 0.1s; }
@@ -182,7 +189,38 @@
   body.dark .retag-btn:hover { background: #451a03; }
 
 
-  /* Dark mode toggle switch */
+  /* Week navigation */
+  #week-nav { display: flex; align-items: center; gap: 4px; }
+  .week-nav-btn { background: none; border: none; color: #a8a29e; font-size: 16px; cursor: pointer; padding: 2px 5px; line-height: 1; border-radius: 4px; }
+  .week-nav-btn:hover { background: #44403c; color: white; }
+  .week-nav-btn:disabled { opacity: 0.2; cursor: default; }
+  #week-label { background: transparent; border: none; color: white; font-size: 15px; font-weight: 700; outline: none; width: 180px; }
+  #week-readonly-badge { font-size: 9px; background: #7c3aed; color: white; border-radius: 4px; padding: 1px 5px; margin-left: 4px; display: none; vertical-align: middle; }
+  #restore-week-btn { font-size: 10px; background: #44403c; color: #d6d3d1; border: none; border-radius: 4px; padding: 3px 7px; cursor: pointer; display: none; }
+  #restore-week-btn:hover { background: #78716c; }
+
+  /* Export/Import modal */
+  #share-btn { background: #44403c; color: #d6d3d1; }
+  #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; align-items: center; justify-content: center; padding: 16px; }
+  #share-modal.visible { display: flex; }
+  #share-box { background: white; border-radius: 14px; width: 100%; max-width: 420px; overflow: hidden; }
+  #share-box-header { background: #1c1917; color: white; padding: 14px 16px; font-size: 14px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  #share-close { background: none; border: none; color: #a8a29e; font-size: 20px; cursor: pointer; line-height: 1; }
+  #share-box-body { padding: 14px 16px; }
+  .share-section-label { font-size: 11px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; margin-top: 12px; }
+  .share-section-label:first-child { margin-top: 0; }
+  #export-btn { width: 100%; background: #1c1917; color: white; border: none; border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  #export-btn:active { opacity: 0.8; }
+  #export-confirm { font-size: 11px; color: #166534; text-align: center; margin-top: 5px; display: none; }
+  #import-ta { width: 100%; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 10px; font-size: 11px; height: 80px; resize: none; outline: none; font-family: monospace; color: #374151; }
+  #import-ta:focus { border-color: #0d9488; }
+  #import-btn { width: 100%; background: #0d9488; color: white; border: none; border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 6px; }
+  #import-error { font-size: 11px; color: #991b1b; margin-top: 4px; display: none; }
+
+  body.dark #share-box { background: #1c1917; }
+  body.dark #share-box-body { background: #1c1917; }
+  body.dark .share-section-label { color: #78716c; }
+  body.dark #import-ta { background: #292524; border-color: #44403c; color: #e2e0dd; }
   #dark-toggle-wrap { display: flex; align-items: center; gap: 6px; }
   #dark-toggle-label { font-size: 11px; color: #a8a29e; user-select: none; }
   #dark-toggle { position: relative; width: 34px; height: 19px; flex-shrink: 0; }
@@ -299,7 +337,13 @@
 <div id="header">
   <div>
     <div id="header-sub">Family Meal Plan</div>
-    <input id="week-label" value="Week of __________" oninput="saveToStorage()" />
+    <div id="week-nav">
+      <button class="week-nav-btn" id="week-prev-btn" onclick="navWeek(-1)" title="Previous week">‹</button>
+      <input id="week-label" value="Week of __________" oninput="saveToStorage()" />
+      <span id="week-readonly-badge">past</span>
+      <button class="week-nav-btn" id="week-next-btn" onclick="navWeek(1)" title="Next week" disabled>›</button>
+    </div>
+    <button id="restore-week-btn" onclick="restoreWeek()">↩ Restore to current</button>
   </div>
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
@@ -310,8 +354,28 @@
         <span id="dark-toggle-track"></span>
       </label>
     </div>
+    <button class="hbtn share-btn" onclick="openShareModal()">↗ Share</button>
     <button class="hbtn hbtn-clear" onclick="clearAll()">Clear all</button>
     <button class="hbtn hbtn-print" onclick="window.print()">🖨 Print</button>
+  </div>
+</div>
+
+<!-- Share / Export / Import modal -->
+<div id="share-modal" onclick="if(event.target===this)closeShareModal()">
+  <div id="share-box">
+    <div id="share-box-header">
+      ↗ Share this week
+      <button id="share-close" onclick="closeShareModal()">×</button>
+    </div>
+    <div id="share-box-body">
+      <div class="share-section-label">Export — send to someone</div>
+      <button id="export-btn" onclick="exportWeek()">📋 Copy week data to clipboard</button>
+      <div id="export-confirm">✓ Copied! Paste it into WhatsApp, Notes, anywhere.</div>
+      <div class="share-section-label">Import — load from someone else</div>
+      <textarea id="import-ta" placeholder="Paste shared week data here…"></textarea>
+      <button id="import-btn" onclick="importWeek()">Load week</button>
+      <div id="import-error">Couldn't read that data — make sure you pasted the full text.</div>
+    </div>
   </div>
 </div>
 
@@ -680,12 +744,14 @@ function ensureDayInPlan(key) {
 
 
 function saveToStorage() {
+  if (viewingWeekKey !== null) return; // don't save when viewing a past week
   try {
     localStorage.setItem('mealplanner_plan', JSON.stringify(plan));
     localStorage.setItem('mealplanner_notes', document.getElementById('notes-ta').value);
     localStorage.setItem('mealplanner_week', document.getElementById('week-label').value);
     localStorage.setItem('mealplanner_activedays', JSON.stringify(activeDays));
     localStorage.setItem('mealplanner_customdays', JSON.stringify(customDays));
+    saveCurrentToArchive();
     const ind = document.getElementById('save-indicator');
     if (ind) { ind.style.display = 'inline'; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = 'none', 1500); }
   } catch(e) { console.warn('Could not save:', e); }
@@ -728,16 +794,17 @@ function init() {
   plan = emptyPlan();
   loadFromStorage();
   initRecipes();
-  // Restore selected baseline order
   try {
     const saved = localStorage.getItem('mealplanner_baseline_order');
     if (saved !== null) selectedOrderIndex = parseInt(saved);
   } catch(e) {}
   if (selectedOrderIndex === null) loadBaselineIntoShop();
   else loadSelectedOrderIntoShop();
+  autoArchiveOnLoad();
   renderTable();
   renderBanks();
   renderShop();
+  updateWeekNavUI();
 }
 
 function renderTable() {
@@ -1529,6 +1596,224 @@ document.addEventListener("click", e => {
   cancelFill();
 });
 
+// ── WEEK ARCHIVE ──
+let viewingWeekKey = null; // null = current live week
+
+function getCurrentWeekKey() {
+  // ISO week number based key e.g. "2026_W16"
+  const now = new Date();
+  const jan4 = new Date(now.getFullYear(), 0, 4);
+  const weekNum = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  return `${now.getFullYear()}_W${String(weekNum).padStart(2,'0')}`;
+}
+
+function getArchiveKeys() {
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('mealplanner_archive_')) keys.push(k.replace('mealplanner_archive_',''));
+  }
+  return keys.sort();
+}
+
+function saveCurrentToArchive() {
+  const weekKey = getCurrentWeekKey();
+  const snapshot = {
+    plan: localStorage.getItem('mealplanner_plan'),
+    notes: localStorage.getItem('mealplanner_notes'),
+    week: localStorage.getItem('mealplanner_week'),
+    activedays: localStorage.getItem('mealplanner_activedays'),
+    customdays: localStorage.getItem('mealplanner_customdays'),
+    shop: JSON.stringify(shopItems),
+    checked: JSON.stringify(checkedItems),
+  };
+  try { localStorage.setItem('mealplanner_archive_' + weekKey, JSON.stringify(snapshot)); } catch(e) {}
+}
+
+function navWeek(dir) {
+  // Save current week to archive before navigating
+  saveCurrentToArchive();
+
+  const archiveKeys = getArchiveKeys();
+  const currentKey = getCurrentWeekKey();
+
+  if (viewingWeekKey === null) {
+    // Currently on live week, can only go back
+    if (dir === -1 && archiveKeys.length > 0) {
+      viewingWeekKey = archiveKeys[archiveKeys.length - 1];
+      loadArchivedWeek(viewingWeekKey);
+    }
+  } else {
+    const idx = archiveKeys.indexOf(viewingWeekKey);
+    const newIdx = idx + dir;
+    if (dir === 1 && idx === archiveKeys.length - 1) {
+      // Back to current live week
+      viewingWeekKey = null;
+      loadLiveWeek();
+    } else if (newIdx >= 0 && newIdx < archiveKeys.length) {
+      viewingWeekKey = archiveKeys[newIdx];
+      loadArchivedWeek(viewingWeekKey);
+    }
+  }
+  updateWeekNavUI();
+}
+
+function loadArchivedWeek(weekKey) {
+  try {
+    const raw = localStorage.getItem('mealplanner_archive_' + weekKey);
+    if (!raw) return;
+    const snapshot = JSON.parse(raw);
+    // Load into app state
+    if (snapshot.plan) {
+      const parsed = JSON.parse(snapshot.plan);
+      const fresh = emptyPlan();
+      Object.keys(parsed).forEach(key => {
+        if (!fresh[key]) { fresh[key] = {special:"", work:"", meals:{}}; FAMILY.forEach(p => { fresh[key].meals[p] = {L:"",T:""}; }); }
+        if (parsed[key]) {
+          fresh[key].special = parsed[key].special || "";
+          fresh[key].work = parsed[key].work !== undefined ? parsed[key].work : fresh[key].work;
+          FAMILY.forEach(p => {
+            if (parsed[key].meals && parsed[key].meals[p]) {
+              fresh[key].meals[p].L = parsed[key].meals[p].L || "";
+              fresh[key].meals[p].T = parsed[key].meals[p].T || "";
+            }
+          });
+        }
+      });
+      plan = fresh;
+    }
+    if (snapshot.notes !== null) document.getElementById('notes-ta').value = snapshot.notes || '';
+    if (snapshot.week) document.getElementById('week-label').value = snapshot.week;
+    if (snapshot.activedays) activeDays = JSON.parse(snapshot.activedays);
+    if (snapshot.customdays) customDays = JSON.parse(snapshot.customdays);
+    if (snapshot.shop) shopItems = JSON.parse(snapshot.shop);
+    if (snapshot.checked) checkedItems = JSON.parse(snapshot.checked);
+  } catch(e) { console.warn('Could not load archived week:', e); }
+  renderTable();
+  renderBanks();
+  renderShop();
+  updateMealsDetected();
+}
+
+function loadLiveWeek() {
+  plan = emptyPlan();
+  loadFromStorage();
+  if (selectedOrderIndex === null) loadBaselineIntoShop();
+  else loadSelectedOrderIntoShop();
+  renderTable();
+  renderBanks();
+  renderShop();
+  updateMealsDetected();
+}
+
+function updateWeekNavUI() {
+  const archiveKeys = getArchiveKeys();
+  const isLive = viewingWeekKey === null;
+  const idx = isLive ? -1 : archiveKeys.indexOf(viewingWeekKey);
+
+  document.getElementById('week-prev-btn').disabled = isLive ? archiveKeys.length === 0 : idx === 0;
+  document.getElementById('week-next-btn').disabled = isLive;
+  document.getElementById('week-readonly-badge').style.display = isLive ? 'none' : 'inline';
+  document.getElementById('restore-week-btn').style.display = isLive ? 'none' : 'inline-block';
+  document.getElementById('week-label').readOnly = !isLive;
+
+  // Make table inputs read-only when viewing past week
+  document.querySelectorAll('.meal-input, .work-select, .flag-select, .day-label-input').forEach(el => {
+    el.disabled = !isLive;
+  });
+}
+
+function restoreWeek() {
+  if (!viewingWeekKey) return;
+  if (!confirm('Load this past week as your current plan? Your current week will be saved to the archive first.')) return;
+  saveCurrentToArchive();
+  // Copy archived week into live storage
+  try {
+    const raw = localStorage.getItem('mealplanner_archive_' + viewingWeekKey);
+    if (raw) {
+      const snapshot = JSON.parse(raw);
+      if (snapshot.plan) localStorage.setItem('mealplanner_plan', snapshot.plan);
+      if (snapshot.notes !== null) localStorage.setItem('mealplanner_notes', snapshot.notes);
+      if (snapshot.week) localStorage.setItem('mealplanner_week', snapshot.week);
+      if (snapshot.activedays) localStorage.setItem('mealplanner_activedays', snapshot.activedays);
+      if (snapshot.customdays) localStorage.setItem('mealplanner_customdays', snapshot.customdays);
+    }
+  } catch(e) {}
+  viewingWeekKey = null;
+  loadLiveWeek();
+  updateWeekNavUI();
+}
+
+// Auto-archive current week when app loads (captures previous week's data)
+function autoArchiveOnLoad() {
+  const weekKey = getCurrentWeekKey();
+  const existing = localStorage.getItem('mealplanner_archive_' + weekKey);
+  if (!existing) saveCurrentToArchive();
+}
+
+// ── EXPORT / IMPORT ──
+function openShareModal() {
+  document.getElementById('share-modal').classList.add('visible');
+  document.getElementById('export-confirm').style.display = 'none';
+  document.getElementById('import-error').style.display = 'none';
+  document.getElementById('import-ta').value = '';
+}
+
+function closeShareModal() {
+  document.getElementById('share-modal').classList.remove('visible');
+}
+
+function exportWeek() {
+  // Bundle the current visible week's data
+  const isLive = viewingWeekKey === null;
+  let snapshot;
+  if (isLive) {
+    snapshot = {
+      week: localStorage.getItem('mealplanner_week') || '',
+      plan: localStorage.getItem('mealplanner_plan') || '{}',
+      notes: localStorage.getItem('mealplanner_notes') || '',
+      activedays: localStorage.getItem('mealplanner_activedays') || '[]',
+      customdays: localStorage.getItem('mealplanner_customdays') || '{}',
+      shop: JSON.stringify(shopItems),
+      checked: JSON.stringify(checkedItems),
+    };
+  } else {
+    try {
+      snapshot = JSON.parse(localStorage.getItem('mealplanner_archive_' + viewingWeekKey) || '{}');
+    } catch(e) { snapshot = {}; }
+  }
+  const payload = 'MEALPLAN:' + btoa(JSON.stringify(snapshot));
+  navigator.clipboard.writeText(payload).then(() => {
+    document.getElementById('export-confirm').style.display = 'block';
+  }).catch(() => {
+    // Fallback for browsers that block clipboard
+    document.getElementById('import-ta').value = payload;
+    document.getElementById('export-confirm').textContent = 'Clipboard blocked — copy the text above manually.';
+    document.getElementById('export-confirm').style.display = 'block';
+  });
+}
+
+function importWeek() {
+  const raw = document.getElementById('import-ta').value.trim();
+  document.getElementById('import-error').style.display = 'none';
+  try {
+    if (!raw.startsWith('MEALPLAN:')) throw new Error('bad format');
+    const snapshot = JSON.parse(atob(raw.replace('MEALPLAN:','')));
+    // Write into live storage
+    if (snapshot.plan) localStorage.setItem('mealplanner_plan', snapshot.plan);
+    if (snapshot.notes !== undefined) localStorage.setItem('mealplanner_notes', snapshot.notes);
+    if (snapshot.week) localStorage.setItem('mealplanner_week', snapshot.week);
+    if (snapshot.activedays) localStorage.setItem('mealplanner_activedays', snapshot.activedays);
+    if (snapshot.customdays) localStorage.setItem('mealplanner_customdays', snapshot.customdays);
+    viewingWeekKey = null;
+    loadLiveWeek();
+    updateWeekNavUI();
+    closeShareModal();
+  } catch(e) {
+    document.getElementById('import-error').style.display = 'block';
+  }
+}
+
 function toggleDark(on) {
   document.body.classList.toggle('dark', on);
   try { localStorage.setItem('mealplanner_dark', on ? '1' : '0'); } catch(e) {}
@@ -1542,6 +1827,41 @@ try {
     document.getElementById('dark-mode-cb').checked = true;
   }
 } catch(e) {}
+</script>
+<script>
+// ── PWA SETUP ──
+// Build the app icon as an inline SVG (no external files needed)
+const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#1c1917"/>
+  <text x="256" y="340" font-size="280" text-anchor="middle" font-family="system-ui,sans-serif">🍽</text>
+</svg>`;
+const iconBlob = new Blob([iconSvg], {type:'image/svg+xml'});
+const iconUrl  = URL.createObjectURL(iconBlob);
+
+// Inject the Web App Manifest dynamically so it works from a file:// or https:// URL
+const manifest = {
+  name: "Family Meal Planner",
+  short_name: "Meal Planner",
+  description: "Weekly meal planning and shopping list for the Gale family",
+  start_url: "./",
+  display: "standalone",
+  background_color: "#1c1917",
+  theme_color: "#1c1917",
+  orientation: "portrait-primary",
+  icons: [
+    { src: iconUrl, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
+    { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+  ]
+};
+const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+document.getElementById('pwa-manifest').href = URL.createObjectURL(manifestBlob);
+
+// ── SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js', {scope: './'})
+    .then(() => console.log('Meal Planner SW registered'))
+    .catch(e => console.warn('SW failed:', e));
+}
 </script>
 </body>
 </html>
