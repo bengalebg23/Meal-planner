@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.2.0</title>
+<title>Family Meal Planner v2.2.1</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -198,6 +198,10 @@
   #week-readonly-badge { font-size: 9px; background: #7c3aed; color: white; border-radius: 4px; padding: 1px 5px; margin-left: 4px; display: none; vertical-align: middle; }
   #restore-week-btn { font-size: 10px; background: #44403c; color: #d6d3d1; border: none; border-radius: 4px; padding: 3px 7px; cursor: pointer; display: none; }
   #restore-week-btn:hover { background: #78716c; }
+  #lock-btn { border: none; border-radius: 6px; padding: 4px 9px; cursor: pointer; font-size: 13px; background: #44403c; color: #d6d3d1; transition: background 0.15s; }
+  #lock-btn.locked { background: #dc2626; color: white; }
+  #lock-btn.locked:hover { background: #b91c1c; }
+  #lock-btn:hover { background: #78716c; }
 
   /* Export/Import modal */
   #share-btn { background: #44403c; color: #d6d3d1; }
@@ -380,12 +384,14 @@ onValue(planRef, (snapshot) => {
       <button class="week-nav-btn" id="week-prev-btn" onclick="navWeek(-1)" title="Previous week">‹</button>
       <input id="week-label" value="Week of __________" oninput="saveToStorage()" />
       <span id="week-readonly-badge">past</span>
-      <button class="week-nav-btn" id="week-next-btn" onclick="navWeek(1)" title="Next week" disabled>›</button>
+      <button class="week-nav-btn" id="week-next-btn" onclick="navWeek(1)" title="Next week">›</button>
     </div>
     <button id="restore-week-btn" onclick="restoreWeek()">↩ Restore to current</button>
   </div>
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
+    <span id="version-badge">v2.2.1</span>
+    <button id="lock-btn" onclick="toggleLock()" title="Lock/unlock meal plan">🔓</button>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
     <span id="version-badge" style="font-size:9px;color:#57534e;align-self:flex-end;padding-bottom:2px;">v2.2.0</span>
     <div id="dark-toggle-wrap">
@@ -785,7 +791,8 @@ function ensureDayInPlan(key) {
 
 
 function saveToStorage() {
-  if (viewingWeekKey !== null) return; // don't save when viewing a past week
+  if (isPlanLocked && isPlanLocked()) return;
+  if (viewingWeekKey !== null && viewingWeekKey <= getCurrentWeekKey()) return;
   try {
     localStorage.setItem('mealplanner_plan', JSON.stringify(plan));
     localStorage.setItem('mealplanner_notes', document.getElementById('notes-ta').value);
@@ -1689,20 +1696,27 @@ function navWeek(dir) {
   const currentKey = getCurrentWeekKey();
 
   if (viewingWeekKey === null) {
-    // Currently on live week, can only go back
     if (dir === -1 && archiveKeys.length > 0) {
       viewingWeekKey = archiveKeys[archiveKeys.length - 1];
+      loadArchivedWeek(viewingWeekKey);
+    } else if (dir === 1) {
+      viewingWeekKey = getOffsetWeekKey(1);
       loadArchivedWeek(viewingWeekKey);
     }
   } else {
     const idx = archiveKeys.indexOf(viewingWeekKey);
-    const newIdx = idx + dir;
-    if (dir === 1 && idx === archiveKeys.length - 1) {
-      // Back to current live week
+    const currentKey = getCurrentWeekKey();
+    if (dir === 1 && viewingWeekKey >= currentKey && idx === archiveKeys.length - 1) {
+      viewingWeekKey = getOffsetWeekKey(1);
+      loadArchivedWeek(viewingWeekKey);
+    } else if (dir === 1 && idx === archiveKeys.length - 1) {
       viewingWeekKey = null;
       loadLiveWeek();
-    } else if (newIdx >= 0 && newIdx < archiveKeys.length) {
-      viewingWeekKey = archiveKeys[newIdx];
+    } else if (dir === 1 && idx >= 0) {
+      viewingWeekKey = archiveKeys[idx + 1];
+      loadArchivedWeek(viewingWeekKey);
+    } else if (dir === -1 && idx > 0) {
+      viewingWeekKey = archiveKeys[idx - 1];
       loadArchivedWeek(viewingWeekKey);
     }
   }
@@ -1763,7 +1777,16 @@ function updateWeekNavUI() {
   const idx = isLive ? -1 : archiveKeys.indexOf(viewingWeekKey);
 
   document.getElementById('week-prev-btn').disabled = isLive ? archiveKeys.length === 0 : idx === 0;
-  document.getElementById('week-next-btn').disabled = isLive;
+  document.getElementById('week-next-btn').disabled = false;
+  const currentKey = getCurrentWeekKey();
+  const isFuture = !isLive && viewingWeekKey > currentKey;
+  const badge = document.getElementById('week-readonly-badge');
+  badge.style.display = isLive ? 'none' : 'inline';
+  badge.textContent = isFuture ? 'future' : 'past';
+  badge.style.background = isFuture ? '#0369a1' : '#7c3aed';
+  const locked = isPlanLocked();
+  const lockBtn = document.getElementById('lock-btn');
+  if (lockBtn) { lockBtn.textContent = locked ? '\u{1F512}' : '\u{1F513}'; lockBtn.classList.toggle('locked', locked); }
   document.getElementById('week-readonly-badge').style.display = isLive ? 'none' : 'inline';
   document.getElementById('restore-week-btn').style.display = isLive ? 'none' : 'inline-block';
   document.getElementById('week-label').readOnly = !isLive;
@@ -1914,5 +1937,26 @@ if ('serviceWorker' in navigator) {
     .catch(e => console.warn('SW failed:', e));
 }
 </script>
+
+// -- LOCK --
+function isPlanLocked() {
+  try { return localStorage.getItem('mealplanner_locked') === '1'; } catch(e) { return false; }
+}
+function toggleLock() {
+  const locked = !isPlanLocked();
+  try { localStorage.setItem('mealplanner_locked', locked ? '1' : '0'); } catch(e) {}
+  updateWeekNavUI();
+  renderTable();
+}
+
+// -- FORWARD WEEK NAV --
+function getOffsetWeekKey(offsetWeeks) {
+  const now = new Date();
+  now.setDate(now.getDate() + offsetWeeks * 7);
+  const jan4 = new Date(now.getFullYear(), 0, 4);
+  const weekNum = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  return now.getFullYear() + '_W' + String(weekNum).padStart(2,'0');
+}
+
 </body>
 </html>
