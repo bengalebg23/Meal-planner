@@ -1961,26 +1961,3 @@ if ('serviceWorker' in navigator) {
     .catch(e => console.warn('SW failed:', e));
 }
 </script>
-
-// -- LOCK --
-function isPlanLocked() {
-  try { return localStorage.getItem('mealplanner_locked') === '1'; } catch(e) { return false; }
-}
-function toggleLock() {
-  const locked = !isPlanLocked();
-  try { localStorage.setItem('mealplanner_locked', locked ? '1' : '0'); } catch(e) {}
-  updateWeekNavUI();
-  renderTable();
-}
-
-// -- FORWARD WEEK NAV --
-function getOffsetWeekKey(offsetWeeks) {
-  const now = new Date();
-  now.setDate(now.getDate() + offsetWeeks * 7);
-  const jan4 = new Date(now.getFullYear(), 0, 4);
-  const weekNum = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-  return now.getFullYear() + '_W' + String(weekNum).padStart(2,'0');
-}
-
-</body>
-</html>
