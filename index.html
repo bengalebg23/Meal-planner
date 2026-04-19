@@ -794,6 +794,26 @@ function ensureDayInPlan(key) {
 }
 
 
+
+function isPlanLocked() {
+  try { return localStorage.getItem('mealplanner_locked') === '1'; } catch(e) { return false; }
+}
+
+function toggleLock() {
+  const locked = !isPlanLocked();
+  try { localStorage.setItem('mealplanner_locked', locked ? '1' : '0'); } catch(e) {}
+  updateWeekNavUI();
+  renderTable();
+}
+
+function getOffsetWeekKey(offsetWeeks) {
+  const now = new Date();
+  now.setDate(now.getDate() + offsetWeeks * 7);
+  const jan4 = new Date(now.getFullYear(), 0, 4);
+  const weekNum = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  return now.getFullYear() + '_W' + String(weekNum).padStart(2,'0');
+}
+
 function saveToStorage() {
   if (isPlanLocked && isPlanLocked()) return;
   if (viewingWeekKey !== null && viewingWeekKey <= getCurrentWeekKey()) return;
