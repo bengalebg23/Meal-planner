@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.2.0</title>
+<title>Family Meal Planner v2.3.0</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -378,7 +378,7 @@ onValue(planRef, (snapshot) => {
     <div id="header-sub">Family Meal Plan</div>
     <div id="week-nav">
       <button class="week-nav-btn" id="week-prev-btn" onclick="navWeek(-1)" title="Previous week">‹</button>
-      <input id="week-label" value="Week of __________" oninput="saveToStorage()" />
+      <input id="week-label" style="display:none" value="Week of __________" oninput="saveToStorage()" />
       <span id="week-readonly-badge">past</span>
       <button class="week-nav-btn" id="week-next-btn" onclick="navWeek(1)" title="Next week" disabled>›</button>
     </div>
@@ -387,7 +387,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:9px;color:#57534e;align-self:flex-end;padding-bottom:2px;">v2.2.0</span>
+    <span id="version-badge" style="font-size:9px;color:#57534e;align-self:flex-end;padding-bottom:2px;">v2.3.0</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -556,6 +556,10 @@ onValue(planRef, (snapshot) => {
 </div>
 
 <script>
+function isPlanLocked() {
+  try { return localStorage.getItem('mealplanner_locked') === '1'; } catch(e) { return false; }
+}
+
 const FAMILY = ["Reuben","Vivien","Emily","Ben"];
 const DAYS = [
   {key:"mon",label:"Monday",isWeekday:true},
@@ -785,7 +789,9 @@ function ensureDayInPlan(key) {
 
 
 function saveToStorage() {
-  if (viewingWeekKey !== null) return; // don't save when viewing a past week
+  if (typeof isPlanLocked === 'function' && isPlanLocked()) return;
+  const isFutureWk = viewingWeekKey !== null && viewingWeekKey > getCurrentWeekKey();
+  if (viewingWeekKey !== null && !isFutureWk) return;
   try {
     localStorage.setItem('mealplanner_plan', JSON.stringify(plan));
     localStorage.setItem('mealplanner_notes', document.getElementById('notes-ta').value);
@@ -856,6 +862,7 @@ function init() {
   renderBanks();
   renderShop();
   updateWeekNavUI();
+  if (typeof updateWeekNavButtons === 'function') updateWeekNavButtons();
 }
 
 function renderTable() {
@@ -1688,10 +1695,13 @@ function navWeek(dir) {
   const archiveKeys = getArchiveKeys();
   const currentKey = getCurrentWeekKey();
 
+  if (dir === 0) { viewingWeekKey = null; loadLiveWeek(); updateWeekNavButtons(); return; }
   if (viewingWeekKey === null) {
-    // Currently on live week, can only go back
     if (dir === -1 && archiveKeys.length > 0) {
       viewingWeekKey = archiveKeys[archiveKeys.length - 1];
+      loadArchivedWeek(viewingWeekKey);
+    } else if (dir === 1) {
+      viewingWeekKey = getOffsetWeekKey(1);
       loadArchivedWeek(viewingWeekKey);
     }
   } else {
@@ -1763,7 +1773,8 @@ function updateWeekNavUI() {
   const idx = isLive ? -1 : archiveKeys.indexOf(viewingWeekKey);
 
   document.getElementById('week-prev-btn').disabled = isLive ? archiveKeys.length === 0 : idx === 0;
-  document.getElementById('week-next-btn').disabled = isLive;
+  document.getElementById('week-next-btn').disabled = false;
+  if (typeof updateWeekNavButtons === 'function') updateWeekNavButtons();
   document.getElementById('week-readonly-badge').style.display = isLive ? 'none' : 'inline';
   document.getElementById('restore-week-btn').style.display = isLive ? 'none' : 'inline-block';
   document.getElementById('week-label').readOnly = !isLive;
@@ -1868,6 +1879,51 @@ function importWeek() {
 function toggleDark(on) {
   document.body.classList.toggle('dark', on);
   try { localStorage.setItem('mealplanner_dark', on ? '1' : '0'); } catch(e) {}
+}
+
+
+function toggleLock() {
+  const locked = !isPlanLocked();
+  try { localStorage.setItem('mealplanner_locked', locked ? '1' : '0'); } catch(e) {}
+  const btn = document.getElementById('lock-btn');
+  if (btn) { btn.textContent = locked ? '🔒' : '🔓'; btn.classList.toggle('locked', locked); }
+  document.querySelectorAll('.meal-input, .work-select, .flag-select, .day-label-input').forEach(el => {
+    el.disabled = locked;
+  });
+}
+
+function getOffsetWeekKey(n) {
+  const now = new Date();
+  now.setDate(now.getDate() + n * 7);
+  const jan4 = new Date(now.getFullYear(), 0, 4);
+  const w = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  return now.getFullYear() + '_W' + String(w).padStart(2, '0');
+}
+
+function updateWeekNavButtons() {
+  const currentKey = getCurrentWeekKey();
+  const activeKey = viewingWeekKey || currentKey;
+  function wkOffset(base, n) {
+    const yr = parseInt(base.split('_W')[0]);
+    const w = parseInt(base.split('_W')[1]) + n;
+    if (w < 1) return (yr-1) + '_W52';
+    if (w > 52) return (yr+1) + '_W01';
+    return yr + '_W' + String(w).padStart(2,'0');
+  }
+  function wkLabel(k) { return 'W' + parseInt(k.split('_W')[1]); }
+  const prevKey = wkOffset(activeKey, -1);
+  const nextKey = wkOffset(activeKey, 1);
+  const pb = document.getElementById('week-prev-btn');
+  const cb = document.getElementById('week-center-btn');
+  const nb = document.getElementById('week-next-btn');
+  if (pb) { pb.textContent = wkLabel(prevKey); pb.className = 'week-nav-btn ' + (prevKey < currentKey ? 'past-week' : prevKey > currentKey ? 'future-week' : 'current-week'); }
+  if (cb) { cb.textContent = wkLabel(activeKey); cb.className = 'week-nav-btn current-week'; }
+  if (nb) { nb.textContent = wkLabel(nextKey); nb.className = 'week-nav-btn ' + (nextKey < currentKey ? 'past-week' : nextKey > currentKey ? 'future-week' : 'current-week'); }
+  const restoreBtn = document.getElementById('restore-week-btn');
+  if (restoreBtn) restoreBtn.style.display = viewingWeekKey ? 'inline-block' : 'none';
+  const locked = isPlanLocked();
+  const lockBtn = document.getElementById('lock-btn');
+  if (lockBtn) { lockBtn.textContent = locked ? '🔒' : '🔓'; lockBtn.classList.toggle('locked', locked); }
 }
 
 init();
