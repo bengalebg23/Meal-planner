@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.2.1</title>
+<title>Family Meal Planner v2.2.2</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -190,10 +190,13 @@
 
 
   /* Week navigation */
-  #week-nav { display: flex; align-items: center; gap: 4px; }
-  .week-nav-btn { background: none; border: none; color: #a8a29e; font-size: 16px; cursor: pointer; padding: 2px 5px; line-height: 1; border-radius: 4px; }
+  #week-nav { display: flex; align-items: center; gap: 3px; margin-top: 3px; }
+  .week-nav-btn { background: none; border: none; color: #78716c; font-size: 12px; font-weight: 600; cursor: pointer; padding: 3px 8px; border-radius: 6px; transition: all 0.15s; letter-spacing: 0.3px; }
   .week-nav-btn:hover { background: #44403c; color: white; }
-  .week-nav-btn:disabled { opacity: 0.2; cursor: default; }
+  .week-nav-btn.current-week { background: white; color: #1c1917; font-size: 13px; font-weight: 700; padding: 3px 10px; }
+  .week-nav-btn.future-week { color: #0369a1; }
+  .week-nav-btn.past-week { color: #78716c; }
+  .week-nav-btn:disabled { opacity: 0.3; cursor: default; }
   #week-label { background: transparent; border: none; color: white; font-size: 15px; font-weight: 700; outline: none; width: 180px; }
   #week-readonly-badge { font-size: 9px; background: #7c3aed; color: white; border-radius: 4px; padding: 1px 5px; margin-left: 4px; display: none; vertical-align: middle; }
   #restore-week-btn { font-size: 10px; background: #44403c; color: #d6d3d1; border: none; border-radius: 4px; padding: 3px 7px; cursor: pointer; display: none; }
@@ -381,19 +384,20 @@ onValue(planRef, (snapshot) => {
   <div>
     <div id="header-sub">Family Meal Plan</div>
     <div id="week-nav">
-      <button class="week-nav-btn" id="week-prev-btn" onclick="navWeek(-1)" title="Previous week">‹</button>
-      <input id="week-label" value="Week of __________" oninput="saveToStorage()" />
-      <span id="week-readonly-badge">past</span>
-      <button class="week-nav-btn" id="week-next-btn" onclick="navWeek(1)" title="Next week">›</button>
+      <button class="week-nav-btn" id="week-prev-btn" onclick="navWeek(-1)"></button>
+      <input id="week-label" style="display:none" value="Week of __________" oninput="saveToStorage()" />
+      
+      <button class="week-nav-btn" id="week-center-btn" onclick="navWeek(0)"></button>
+      <button class="week-nav-btn" id="week-next-btn" onclick="navWeek(1)">›</button>
     </div>
     <button id="restore-week-btn" onclick="restoreWeek()">↩ Restore to current</button>
   </div>
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
-    <span id="version-badge">v2.2.1</span>
+    <span id="version-badge">v2.2.2</span>
     <button id="lock-btn" onclick="toggleLock()" title="Lock/unlock meal plan">🔓</button>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:9px;color:#57534e;align-self:flex-end;padding-bottom:2px;">v2.2.0</span>
+    <span id="version-badge" style="font-size:9px;color:#57534e;align-self:flex-end;padding-bottom:2px;">v2.2.2</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -1774,6 +1778,26 @@ function loadLiveWeek() {
 function updateWeekNavUI() {
   const archiveKeys = getArchiveKeys();
   const isLive = viewingWeekKey === null;
+  const currentKey = getCurrentWeekKey();
+  const activeKey = isLive ? currentKey : viewingWeekKey;
+
+  function wkOffset(base, n) {
+    const yr = parseInt(base.split('_W')[0]);
+    const w = parseInt(base.split('_W')[1]) + n;
+    if (w < 1) return (yr-1) + '_W52';
+    if (w > 52) return (yr+1) + '_W01';
+    return yr + '_W' + String(w).padStart(2,'0');
+  }
+  function wkLabel(k) { return 'W' + parseInt(k.split('_W')[1]); }
+
+  const prevKey = wkOffset(activeKey, -1);
+  const nextKey = wkOffset(activeKey, 1);
+  const pb = document.getElementById('week-prev-btn');
+  const cb = document.getElementById('week-center-btn');
+  const nb = document.getElementById('week-next-btn');
+  if (pb) { pb.textContent = wkLabel(prevKey); pb.className = 'week-nav-btn ' + (prevKey < currentKey ? 'past-week' : prevKey > currentKey ? 'future-week' : 'current-week'); }
+  if (cb) { cb.textContent = wkLabel(activeKey); cb.className = 'week-nav-btn current-week'; }
+  if (nb) { nb.textContent = wkLabel(nextKey); nb.className = 'week-nav-btn ' + (nextKey < currentKey ? 'past-week' : nextKey > currentKey ? 'future-week' : 'current-week'); }
   const idx = isLive ? -1 : archiveKeys.indexOf(viewingWeekKey);
 
   document.getElementById('week-prev-btn').disabled = isLive ? archiveKeys.length === 0 : idx === 0;
