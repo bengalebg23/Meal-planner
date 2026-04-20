@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.3.12</title>
+<title>Family Meal Planner v2.3.13</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -62,6 +62,7 @@
   td.meal-cell.selected { background: #ccfbf1 !important; outline: 2px solid #0d9488; outline-offset: -2px; }
   td.meal-cell.selected .meal-input { color: #0f766e; font-weight: 600; }
   td.meal-cell.pizza-hint { background: #fdf4ff; }
+  td.meal-cell.quick-hint { background: #fffbeb; }
   .flag-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 2px 3px; font-size: 10px; cursor: pointer; width: 100%; }
   .meal-input { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 4px; font-size: 11px; background: transparent; outline: none; cursor: text; color: #1c1917; resize: none; overflow: hidden; min-height: 24px; line-height: 1.35; display: block; font-family: inherit; white-space: pre-wrap; word-break: break-word; }
   .meal-input:hover { background: #f5f5f4; }
@@ -290,6 +291,7 @@
   body.dark .meal-input:hover { background: #292524; }
   body.dark td.meal-cell.active { background: #451a03; }
   body.dark td.meal-cell.pizza-hint { background: #2e1065; }
+  body.dark td.meal-cell.quick-hint { background: #451a03; }
   body.dark .bank-card { background: #1c1917; }
   body.dark .pill { background: #292524; border-color: #44403c; color: #e2e0dd; }
   body.dark .lunch-col { border-right-color: #292524; }
@@ -388,7 +390,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.3.12</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.3.13</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -887,6 +889,7 @@ function renderTable() {
     const day = getDay(dayKey);
     ensureDayInPlan(dayKey);
     const isDnD = plan[dayKey].special === "dnd";
+    const isSwim = plan[dayKey].special === "swimming";
     const tr = document.createElement("tr");
     if (isDnD) tr.classList.add("dnd-row");
 
@@ -907,7 +910,7 @@ function renderTable() {
       tdDay.appendChild(labelInp);
       tdDay.appendChild(delBtn);
     } else {
-      tdDay.innerHTML = day.label + (isDnD ? '<div class="dnd-hint">⚡ Quick tea</div>' : '');
+      tdDay.innerHTML = day.label + (isDnD ? '<div class="dnd-hint">🍕 Pizza night</div>' : '') + (isSwim ? '<div class="dnd-hint" style="color:#0369a1">⚡ Quick tea</div>' : '');
     }
     tr.appendChild(tdDay);
 
@@ -960,14 +963,15 @@ function renderTable() {
       ["L","T"].forEach(slot => {
         const val = plan[dayKey].meals[person][slot] || "";
         const isAB = activeBank && activeBank.day === dayKey && activeBank.person === person && activeBank.slot === slot;
-        const isPizzaHint = isDnD && slot === "T" && !val;
+        const isPizzaHint = (isDnD && slot === "T" && !val);
+        const isQuickHint = (isSwim && slot === "T" && !val);
         const td = document.createElement("td");
-        td.className = "meal-cell " + slot + (isAB ? " active" : "") + (isPizzaHint ? " pizza-hint" : "");
+        td.className = "meal-cell " + slot + (isAB ? " active" : "") + (isPizzaHint ? " pizza-hint" : "") + (isQuickHint ? " quick-hint" : "");
         const inp = document.createElement("textarea");
         inp.rows = 2;
         inp.dataset.cellkey = dayKey + "|" + person + "|" + slot;
         inp.value = val;
-        inp.placeholder = isPizzaHint ? "🍕?" : "";
+        inp.placeholder = isPizzaHint ? "🍕?" : isQuickHint ? "⚡?" : "";
         inp.className = "meal-input" + (isAB ? " active-input" : "")
           + (val==="School" ? " school" : val==="Karen's" ? " karen" : val==="Nursery" ? " nursery" : val==="MIRA" ? " mira" : val==="Sandwich" ? " sandwich" : "");
         inp.oninput = () => {
