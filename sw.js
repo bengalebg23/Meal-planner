@@ -1,4 +1,4 @@
-const CACHE = 'meal-planner-v2.3.6';
+const CACHE = 'meal-planner-v1';
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -17,15 +17,9 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Network first — always try to get latest, fall back to cache if offline
   e.respondWith(
-    fetch(e.request)
-      .then(response => {
-        // Update cache with fresh response
-        const clone = response.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-        return response;
-      })
-      .catch(() => caches.match(e.request))
+    caches.match(e.request)
+      .then(r => r || fetch(e.request)
+      .catch(() => caches.match('./index.html')))
   );
 });

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.3.6</title>
+<title>Family Meal Planner v2.3.7</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -17,6 +17,7 @@
 
   #header { background: #1c1917; color: white; padding: 15px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
   #header-sub { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #a8a29e; margin-bottom: 3px; }
+  #version-badge { font-size: 9px; color: #57534e; letter-spacing: 0.5px; align-self: flex-end; padding-bottom: 2px; }
   #week-label { background: transparent; border: none; color: white; font-size: 17px; font-weight: 700; outline: none; width: 260px; }
   #header-btns { display: flex; gap: 7px; }
   .hbtn { border: none; border-radius: 6px; padding: 6px 13px; cursor: pointer; font-size: 12px; }
@@ -63,7 +64,7 @@
   td.meal-cell.selected .meal-input { color: #0f766e; font-weight: 600; }
   td.meal-cell.pizza-hint { background: #fdf4ff; }
   .flag-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 2px 3px; font-size: 10px; cursor: pointer; width: 100%; }
-  .meal-input { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 4px; font-size: 11px; background: transparent; outline: none; cursor: text; color: #1c1917; resize: none; overflow: hidden; min-height: 44px; line-height: 1.35; display: block; font-family: inherit; white-space: pre-wrap; word-break: break-word; }
+  .meal-input { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 4px; font-size: 11px; background: transparent; outline: none; cursor: text; color: #1c1917; resize: none; overflow: hidden; min-height: 24px; line-height: 1.35; display: block; font-family: inherit; white-space: pre-wrap; word-break: break-word; }
   .meal-input:hover { background: #f5f5f4; }
   .meal-input.active-input { border-color: #fbbf24; }
   .meal-input.school { color: #92400e; font-style: italic; }
@@ -190,16 +191,21 @@
 
 
   /* Week navigation */
-  #week-nav { display: flex; align-items: center; gap: 0; margin-top: 3px; width: 100%; }
-  .week-nav-btn { background: none; border: none; color: #78716c; font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 0; border-radius: 6px; transition: all 0.15s; flex: 1; text-align: center; }
+  #week-nav { display: flex; align-items: center; gap: 3px; margin-top: 3px; }
+  .week-nav-btn { background: none; border: none; color: #78716c; font-size: 12px; font-weight: 600; cursor: pointer; padding: 3px 8px; border-radius: 6px; transition: all 0.15s; letter-spacing: 0.3px; }
   .week-nav-btn:hover { background: #44403c; color: white; }
-  .week-nav-btn.current-week { background: white; color: #1c1917; font-size: 14px; font-weight: 800; }
-  .week-nav-btn.future-week { color: #93c5fd; }
+  .week-nav-btn.current-week { background: white; color: #1c1917; font-size: 13px; font-weight: 700; padding: 3px 10px; }
+  .week-nav-btn.future-week { color: #0369a1; }
   .week-nav-btn.past-week { color: #78716c; }
+  .week-nav-btn:disabled { opacity: 0.3; cursor: default; }
   #week-label { background: transparent; border: none; color: white; font-size: 15px; font-weight: 700; outline: none; width: 180px; }
   #week-readonly-badge { font-size: 9px; background: #7c3aed; color: white; border-radius: 4px; padding: 1px 5px; margin-left: 4px; display: none; vertical-align: middle; }
   #restore-week-btn { font-size: 10px; background: #44403c; color: #d6d3d1; border: none; border-radius: 4px; padding: 3px 7px; cursor: pointer; display: none; }
   #restore-week-btn:hover { background: #78716c; }
+  #lock-btn { border: none; border-radius: 6px; padding: 4px 9px; cursor: pointer; font-size: 13px; background: #44403c; color: #d6d3d1; transition: background 0.15s; }
+  #lock-btn.locked { background: #dc2626; color: white; }
+  #lock-btn.locked:hover { background: #b91c1c; }
+  #lock-btn:hover { background: #78716c; }
 
   /* Export/Import modal */
   #share-btn { background: #44403c; color: #d6d3d1; }
@@ -332,10 +338,11 @@
     #header-btns, #tabs, #legend, #banks, #generate-wrap, #floating-bar, #shop-summary-btns, #manual-add { display: none !important; }
     body { background: white; }
   }
-</style>
 <script type="module">
+// ── FIREBASE REALTIME SYNC ──
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyCJ2xKRzsh3kQNKzz47xCFzkuLijlNaI-U",
   authDomain: "meal-planner-f5ba2.firebaseapp.com",
@@ -345,50 +352,66 @@ const firebaseConfig = {
   messagingSenderId: "948462959670",
   appId: "1:948462959670:web:1762c493da4670145cec97"
 };
+
 const fbApp = initializeApp(firebaseConfig);
 const db = getDatabase(fbApp);
-const planRef = ref(db, "currentWeek");
+const planRef = ref(db, 'currentWeek');
+
+let fbIgnoreNext = false; // prevent echo loop
 let fbSaveTimer = null;
+
+// Push to Firebase (debounced 1.5s so we don't write every keystroke)
 window.fbSave = function(data) {
   clearTimeout(fbSaveTimer);
   fbSaveTimer = setTimeout(() => {
-    set(planRef, data).catch(e => console.warn("Firebase save failed:", e));
+    set(planRef, data).catch(e => console.warn('Firebase save failed:', e));
   }, 1500);
 };
+
+// Listen for remote changes and apply them
 onValue(planRef, (snapshot) => {
+  if (fbIgnoreNext) { fbIgnoreNext = false; return; }
   const data = snapshot.val();
   if (!data) return;
+  // Only apply if we're on the live week
   if (window.viewingWeekKey !== null) return;
+
   try {
-    if (data.plan) localStorage.setItem("mealplanner_plan", data.plan);
-    if (data.notes !== undefined) localStorage.setItem("mealplanner_notes", data.notes);
-    if (data.week) localStorage.setItem("mealplanner_week", data.week);
-    if (data.activedays) localStorage.setItem("mealplanner_activedays", data.activedays);
-    if (data.customdays) localStorage.setItem("mealplanner_customdays", data.customdays);
-    if (data.shop) localStorage.setItem("mealplanner_shop", data.shop);
+    if (data.plan) localStorage.setItem('mealplanner_plan', data.plan);
+    if (data.notes !== undefined) localStorage.setItem('mealplanner_notes', data.notes);
+    if (data.week) localStorage.setItem('mealplanner_week', data.week);
+    if (data.activedays) localStorage.setItem('mealplanner_activedays', data.activedays);
+    if (data.customdays) localStorage.setItem('mealplanner_customdays', data.customdays);
+    if (data.shop) localStorage.setItem('mealplanner_shop', data.shop);
+
+    // Re-render the app with new data
     if (window.applyRemoteUpdate) window.applyRemoteUpdate(data);
-    const ind = document.getElementById("sync-indicator");
-    if (ind) { ind.style.display = "inline"; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = "none", 2000); }
-  } catch(e) { console.warn("Firebase apply failed:", e); }
+
+    const ind = document.getElementById('sync-indicator');
+    if (ind) { ind.style.display = 'inline'; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = 'none', 2000); }
+  } catch(e) { console.warn('Firebase apply failed:', e); }
 });
+
+window.fbReady = true;
 </script>
-</head>
 <body>
 
 <div id="header">
   <div>
     <div id="header-sub">Family Meal Plan</div>
     <div id="week-nav">
-      <button class="week-nav-btn" id="week-prev-btn" onclick="navWeek(-1)">W15</button>
-      <button class="week-nav-btn current-week" id="week-center-btn" onclick="navWeek(0)">W16</button>
-      <button class="week-nav-btn" id="week-next-btn" onclick="navWeek(1)">W17</button>
+      <button class="week-nav-btn" id="week-prev-btn" onclick="navWeek(-1)"></button>
+      <button class="week-nav-btn" id="week-center-btn" onclick="navWeek(0)"></button>
+      <button class="week-nav-btn" id="week-next-btn" onclick="navWeek(1)"></button>
     </div>
+    <input id="week-label" value="Week of __________" oninput="saveToStorage()" style="display:none" />
     <button id="restore-week-btn" onclick="restoreWeek()">↩ Restore to current</button>
   </div>
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:9px;color:#57534e;align-self:flex-end;padding-bottom:2px;">v2.3.6</span>
+    <span id="version-badge">v2.3.7</span>
+    <button id="lock-btn" onclick="toggleLock()" title="Lock/unlock meal plan">🔓</button>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -557,6 +580,7 @@ onValue(planRef, (snapshot) => {
 </div>
 
 <script>
+// Defined first — called by saveToStorage before other functions load
 function isPlanLocked() {
   try { return localStorage.getItem('mealplanner_locked') === '1'; } catch(e) { return false; }
 }
@@ -791,29 +815,77 @@ function ensureDayInPlan(key) {
 
 function saveToStorage() {
   if (typeof isPlanLocked === 'function' && isPlanLocked()) return;
-  const isFutureWk = viewingWeekKey !== null && viewingWeekKey > getCurrentWeekKey();
-  if (viewingWeekKey !== null && !isFutureWk) return;
+  const isFuture = viewingWeekKey !== null && viewingWeekKey > getCurrentWeekKey();
+  if (viewingWeekKey !== null && !isFuture) return; // don't save past weeks
   try {
-    localStorage.setItem('mealplanner_plan', JSON.stringify(plan));
-    localStorage.setItem('mealplanner_notes', document.getElementById('notes-ta').value);
-    localStorage.setItem('mealplanner_week', document.getElementById('week-label').value);
-    localStorage.setItem('mealplanner_activedays', JSON.stringify(activeDays));
-    localStorage.setItem('mealplanner_customdays', JSON.stringify(customDays));
-    saveCurrentToArchive();
-    if (window.fbSave) {
-      window.fbSave({
+    if (viewingWeekKey === null) {
+      // Live week — save to main storage
+      localStorage.setItem('mealplanner_plan', JSON.stringify(plan));
+      localStorage.setItem('mealplanner_notes', document.getElementById('notes-ta').value);
+      localStorage.setItem('mealplanner_week', document.getElementById('week-label').value);
+      localStorage.setItem('mealplanner_activedays', JSON.stringify(activeDays));
+      localStorage.setItem('mealplanner_customdays', JSON.stringify(customDays));
+      saveCurrentToArchive();
+      if (window.fbSave) {
+        window.fbSave({
+          plan: JSON.stringify(plan),
+          notes: document.getElementById('notes-ta').value,
+          week: document.getElementById('week-label').value,
+          activedays: JSON.stringify(activeDays),
+          customdays: JSON.stringify(customDays),
+          shop: JSON.stringify(shopItems),
+        });
+      }
+    } else {
+      // Future week — save to its archive slot
+      const snapshot = {
         plan: JSON.stringify(plan),
         notes: document.getElementById('notes-ta').value,
         week: document.getElementById('week-label').value,
         activedays: JSON.stringify(activeDays),
         customdays: JSON.stringify(customDays),
         shop: JSON.stringify(shopItems),
-      });
+        checked: JSON.stringify(checkedItems),
+      };
+      localStorage.setItem('mealplanner_archive_' + viewingWeekKey, JSON.stringify(snapshot));
     }
     const ind = document.getElementById('save-indicator');
     if (ind) { ind.style.display = 'inline'; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = 'none', 1500); }
   } catch(e) { console.warn('Could not save:', e); }
 }
+
+// Apply data pushed from another device via Firebase
+window.applyRemoteUpdate = function(data) {
+  try {
+    if (data.plan) {
+      const parsed = JSON.parse(data.plan);
+      const fresh = emptyPlan();
+      Object.keys(parsed).forEach(key => {
+        if (!fresh[key]) { fresh[key] = {special:"", work:"", meals:{}}; FAMILY.forEach(p => { fresh[key].meals[p] = {L:"",T:""}; }); }
+        if (parsed[key]) {
+          fresh[key].special = parsed[key].special || "";
+          fresh[key].work = parsed[key].work !== undefined ? parsed[key].work : fresh[key].work;
+          FAMILY.forEach(p => {
+            if (parsed[key].meals && parsed[key].meals[p]) {
+              fresh[key].meals[p].L = parsed[key].meals[p].L || "";
+              fresh[key].meals[p].T = parsed[key].meals[p].T || "";
+            }
+          });
+        }
+      });
+      plan = fresh;
+    }
+    if (data.notes !== undefined) document.getElementById('notes-ta').value = data.notes;
+    if (data.week) document.getElementById('week-label').value = data.week;
+    if (data.activedays) activeDays = JSON.parse(data.activedays);
+    if (data.customdays) customDays = JSON.parse(data.customdays);
+    if (data.shop) shopItems = JSON.parse(data.shop);
+    renderTable();
+    renderBanks();
+    renderShop();
+    updateMealsDetected();
+  } catch(e) { console.warn('applyRemoteUpdate failed:', e); }
+};
 
 function loadFromStorage() {
   try {
@@ -863,7 +935,13 @@ function init() {
   renderBanks();
   renderShop();
   updateWeekNavUI();
-  if (typeof updateWeekNavButtons === 'function') updateWeekNavButtons();
+  // Apply lock state
+  const lockBtn = document.getElementById('lock-btn');
+  if (lockBtn) {
+    const locked = isPlanLocked();
+    lockBtn.textContent = locked ? '🔒' : '🔓';
+    lockBtn.classList.toggle('locked', locked);
+  }
 }
 
 function renderTable() {
@@ -964,20 +1042,20 @@ function renderTable() {
         const td = document.createElement("td");
         td.className = "meal-cell " + slot + (isAB ? " active" : "") + (isPizzaHint ? " pizza-hint" : "");
         const inp = document.createElement("textarea");
-        inp.rows = 2;
+        inp.rows = 1;
         inp.dataset.cellkey = dayKey + "|" + person + "|" + slot;
         inp.value = val;
         inp.placeholder = isPizzaHint ? "🍕?" : "";
         inp.className = "meal-input" + (isAB ? " active-input" : "")
           + (val==="School" ? " school" : val==="Karen's" ? " karen" : val==="Nursery" ? " nursery" : val==="MIRA" ? " mira" : val==="Sandwich" ? " sandwich" : "");
+        const autoResize = () => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 'px'; };
         inp.oninput = () => {
           plan[dayKey].meals[person][slot] = inp.value;
-          inp.style.height = 'auto';
-          inp.style.height = inp.scrollHeight + 'px';
+          autoResize();
           updateMealsDetected();
           saveToStorage();
         };
-        setTimeout(() => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 'px'; }, 0);
+        setTimeout(autoResize, 0);
         inp.onfocus = () => {
           if (multiSelected.size === 0) {
             activeBank = {day: dayKey, person, slot};
@@ -1031,7 +1109,7 @@ function renderTable() {
 
 function renderTableHighlights() {
   document.querySelectorAll(".meal-cell").forEach(td => {
-    const inp = td.querySelector("input");
+    const inp = td.querySelector(".meal-input");
     if (!inp) return;
     const key = inp.dataset.cellkey;
     if (multiSelected.has(key)) {
@@ -1045,7 +1123,7 @@ function renderTableHighlights() {
 function updateTableHighlight() {
   document.querySelectorAll(".meal-cell").forEach(td => {
     td.classList.remove("active");
-    const inp = td.querySelector("input");
+    const inp = td.querySelector(".meal-input");
     if (inp) inp.classList.remove("active-input");
   });
   if (!activeBank) return;
@@ -1694,68 +1772,105 @@ function saveCurrentToArchive() {
 
 function navWeek(dir) {
   saveCurrentToArchive();
-  const archiveKeys = getArchiveKeys();
-  const currentKey = getCurrentWeekKey();
 
-  if (dir === 0) { viewingWeekKey = null; loadLiveWeek(); updateWeekNavButtons(); return; }
+  const archiveKeys = getArchiveKeys();
 
   if (viewingWeekKey === null) {
     if (dir === -1 && archiveKeys.length > 0) {
+      // Go back into archive
       viewingWeekKey = archiveKeys[archiveKeys.length - 1];
       loadArchivedWeek(viewingWeekKey);
     } else if (dir === 1) {
+      // Go forward into a future week
       viewingWeekKey = getOffsetWeekKey(1);
-      loadArchivedWeek(viewingWeekKey);
+      loadArchivedWeek(viewingWeekKey); // loads empty if doesn't exist
     }
   } else {
-    const yr = parseInt(viewingWeekKey.split('_W')[0]);
-    const w = parseInt(viewingWeekKey.split('_W')[1]) + dir;
-    let newKey;
-    if (w < 1) newKey = (yr-1) + '_W52';
-    else if (w > 52) newKey = (yr+1) + '_W01';
-    else newKey = yr + '_W' + String(w).padStart(2,'0');
-    if (dir === 1 && newKey === currentKey) { viewingWeekKey = null; loadLiveWeek(); }
-    else { viewingWeekKey = newKey; loadArchivedWeek(viewingWeekKey); }
+    const idx = archiveKeys.indexOf(viewingWeekKey);
+    const currentKey = getCurrentWeekKey();
+    if (dir === 1 && viewingWeekKey === currentKey) {
+      // Already on current live week in archive view — step into future
+      viewingWeekKey = getOffsetWeekKey(1);
+      loadArchivedWeek(viewingWeekKey);
+    } else if (dir === 1 && idx === archiveKeys.length - 1) {
+      // Last archive entry — go to live week
+      viewingWeekKey = null;
+      loadLiveWeek();
+    } else if (dir === 1) {
+      viewingWeekKey = archiveKeys[idx + 1];
+      loadArchivedWeek(viewingWeekKey);
+    } else if (dir === -1 && idx === 0) {
+      // Can't go further back
+    } else {
+      viewingWeekKey = archiveKeys[idx - 1];
+      loadArchivedWeek(viewingWeekKey);
+    }
   }
-  updateWeekNavButtons();
   updateWeekNavUI();
+}
+
+function getOffsetWeekKey(offsetWeeks) {
+  const now = new Date();
+  now.setDate(now.getDate() + offsetWeeks * 7);
+  const jan4 = new Date(now.getFullYear(), 0, 4);
+  const weekNum = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  return `${now.getFullYear()}_W${String(weekNum).padStart(2,'0')}`;
 }
 
 function loadArchivedWeek(weekKey) {
   try {
     const raw = localStorage.getItem('mealplanner_archive_' + weekKey);
-    if (!raw) return;
-    const snapshot = JSON.parse(raw);
-    // Load into app state
-    if (snapshot.plan) {
-      const parsed = JSON.parse(snapshot.plan);
-      const fresh = emptyPlan();
-      Object.keys(parsed).forEach(key => {
-        if (!fresh[key]) { fresh[key] = {special:"", work:"", meals:{}}; FAMILY.forEach(p => { fresh[key].meals[p] = {L:"",T:""}; }); }
-        if (parsed[key]) {
-          fresh[key].special = parsed[key].special || "";
-          fresh[key].work = parsed[key].work !== undefined ? parsed[key].work : fresh[key].work;
-          FAMILY.forEach(p => {
-            if (parsed[key].meals && parsed[key].meals[p]) {
-              fresh[key].meals[p].L = parsed[key].meals[p].L || "";
-              fresh[key].meals[p].T = parsed[key].meals[p].T || "";
-            }
-          });
-        }
-      });
-      plan = fresh;
+    if (raw) {
+      const snapshot = JSON.parse(raw);
+      if (snapshot.plan) {
+        const parsed = JSON.parse(snapshot.plan);
+        const fresh = emptyPlan();
+        Object.keys(parsed).forEach(key => {
+          if (!fresh[key]) { fresh[key] = {special:"", work:"", meals:{}}; FAMILY.forEach(p => { fresh[key].meals[p] = {L:"",T:""}; }); }
+          if (parsed[key]) {
+            fresh[key].special = parsed[key].special || "";
+            fresh[key].work = parsed[key].work !== undefined ? parsed[key].work : fresh[key].work;
+            FAMILY.forEach(p => {
+              if (parsed[key].meals && parsed[key].meals[p]) {
+                fresh[key].meals[p].L = parsed[key].meals[p].L || "";
+                fresh[key].meals[p].T = parsed[key].meals[p].T || "";
+              }
+            });
+          }
+        });
+        plan = fresh;
+      }
+      if (snapshot.notes !== undefined) document.getElementById('notes-ta').value = snapshot.notes || '';
+      if (snapshot.week) document.getElementById('week-label').value = snapshot.week;
+      if (snapshot.activedays) activeDays = JSON.parse(snapshot.activedays);
+      if (snapshot.customdays) customDays = JSON.parse(snapshot.customdays);
+      if (snapshot.shop) shopItems = JSON.parse(snapshot.shop);
+      if (snapshot.checked) checkedItems = JSON.parse(snapshot.checked);
+    } else {
+      // Empty future week
+      plan = emptyPlan();
+      document.getElementById('notes-ta').value = '';
+      document.getElementById('week-label').value = 'Week ' + weekKey.replace('_W',' · W');
+      shopItems = {produce:[],meat:[],dairy:[],dry:[],frozen:[],other:[]};
+      checkedItems = {};
     }
-    if (snapshot.notes !== null) document.getElementById('notes-ta').value = snapshot.notes || '';
-    if (snapshot.week) document.getElementById('week-label').value = snapshot.week;
-    if (snapshot.activedays) activeDays = JSON.parse(snapshot.activedays);
-    if (snapshot.customdays) customDays = JSON.parse(snapshot.customdays);
-    if (snapshot.shop) shopItems = JSON.parse(snapshot.shop);
-    if (snapshot.checked) checkedItems = JSON.parse(snapshot.checked);
   } catch(e) { console.warn('Could not load archived week:', e); }
   renderTable();
   renderBanks();
   renderShop();
   updateMealsDetected();
+}
+
+// ── LOCK ──
+function isPlanLocked() {
+  try { return localStorage.getItem('mealplanner_locked') === '1'; } catch(e) { return false; }
+}
+
+function toggleLock() {
+  const locked = !isPlanLocked();
+  try { localStorage.setItem('mealplanner_locked', locked ? '1' : '0'); } catch(e) {}
+  updateWeekNavUI();
+  renderTable();
 }
 
 function loadLiveWeek() {
@@ -1772,19 +1887,59 @@ function loadLiveWeek() {
 function updateWeekNavUI() {
   const archiveKeys = getArchiveKeys();
   const isLive = viewingWeekKey === null;
-  const idx = isLive ? -1 : archiveKeys.indexOf(viewingWeekKey);
+  const currentKey = getCurrentWeekKey();
+  const activeKey = isLive ? currentKey : viewingWeekKey;
+  const isPast = !isLive && activeKey < currentKey;
+  const locked = typeof isPlanLocked === 'function' ? isPlanLocked() : false;
 
-  document.getElementById('week-prev-btn').disabled = isLive ? archiveKeys.length === 0 : idx === 0;
-  document.getElementById('week-next-btn').disabled = false;
-  if (typeof updateWeekNavButtons === 'function') updateWeekNavButtons();
-  document.getElementById('week-readonly-badge').style.display = isLive ? 'none' : 'inline';
+  // Compute prev/next week keys relative to active
+  function weekKeyOffset(baseKey, offset) {
+    const [yr, wStr] = baseKey.split('_W');
+    const w = parseInt(wStr) + offset;
+    if (w < 1) return (parseInt(yr) - 1) + '_W52';
+    if (w > 52) return (parseInt(yr) + 1) + '_W01';
+    return yr + '_W' + String(w).padStart(2,'0');
+  }
+  function weekLabel(key) {
+    const [yr, wStr] = key.split('_W');
+    return 'W' + parseInt(wStr);
+  }
+
+  const prevKey = weekKeyOffset(activeKey, -1);
+  const nextKey = weekKeyOffset(activeKey, 1);
+
+  const prevBtn = document.getElementById('week-prev-btn');
+  const centerBtn = document.getElementById('week-center-btn');
+  const nextBtn = document.getElementById('week-next-btn');
+
+  if (prevBtn) {
+    prevBtn.textContent = weekLabel(prevKey);
+    prevBtn.className = 'week-nav-btn ' + (prevKey < currentKey ? 'past-week' : prevKey > currentKey ? 'future-week' : 'current-week');
+  }
+  if (centerBtn) {
+    centerBtn.textContent = weekLabel(activeKey);
+    centerBtn.className = 'week-nav-btn current-week';
+    centerBtn.onclick = () => { viewingWeekKey = null; loadLiveWeek(); updateWeekNavUI(); };
+  }
+  if (nextBtn) {
+    nextBtn.textContent = weekLabel(nextKey);
+    nextBtn.className = 'week-nav-btn ' + (nextKey < currentKey ? 'past-week' : nextKey > currentKey ? 'future-week' : 'current-week');
+  }
+
   document.getElementById('restore-week-btn').style.display = isLive ? 'none' : 'inline-block';
-  document.getElementById('week-label').readOnly = !isLive;
 
-  // Make table inputs read-only when viewing past week
+  const weekLabelInput = document.getElementById('week-label');
+  if (weekLabelInput) weekLabelInput.readOnly = isPast;
+
   document.querySelectorAll('.meal-input, .work-select, .flag-select, .day-label-input').forEach(el => {
-    el.disabled = !isLive;
+    el.disabled = isPast || locked;
   });
+
+  const lockBtn = document.getElementById('lock-btn');
+  if (lockBtn) {
+    lockBtn.textContent = locked ? '🔒' : '🔓';
+    lockBtn.classList.toggle('locked', locked);
+  }
 }
 
 function restoreWeek() {
@@ -1871,7 +2026,6 @@ function importWeek() {
     viewingWeekKey = null;
     loadLiveWeek();
     updateWeekNavUI();
-    document.getElementById('import-error').style.display = 'none';
     closeShareModal();
     return;
   } catch(e) {
@@ -1882,51 +2036,6 @@ function importWeek() {
 function toggleDark(on) {
   document.body.classList.toggle('dark', on);
   try { localStorage.setItem('mealplanner_dark', on ? '1' : '0'); } catch(e) {}
-}
-
-
-function toggleLock() {
-  const locked = !isPlanLocked();
-  try { localStorage.setItem('mealplanner_locked', locked ? '1' : '0'); } catch(e) {}
-  const btn = document.getElementById('lock-btn');
-  if (btn) { btn.textContent = locked ? '🔒' : '🔓'; btn.classList.toggle('locked', locked); }
-  document.querySelectorAll('.meal-input, .work-select, .flag-select, .day-label-input').forEach(el => {
-    el.disabled = locked;
-  });
-}
-
-function getOffsetWeekKey(n) {
-  const now = new Date();
-  now.setDate(now.getDate() + n * 7);
-  const jan4 = new Date(now.getFullYear(), 0, 4);
-  const w = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-  return now.getFullYear() + '_W' + String(w).padStart(2, '0');
-}
-
-function updateWeekNavButtons() {
-  const currentKey = getCurrentWeekKey();
-  const activeKey = viewingWeekKey || currentKey;
-  function wkOffset(base, n) {
-    const yr = parseInt(base.split('_W')[0]);
-    const w = parseInt(base.split('_W')[1]) + n;
-    if (w < 1) return (yr-1) + '_W52';
-    if (w > 52) return (yr+1) + '_W01';
-    return yr + '_W' + String(w).padStart(2,'0');
-  }
-  function wkLabel(k) { return 'W' + parseInt(k.split('_W')[1]); }
-  const prevKey = wkOffset(activeKey, -1);
-  const nextKey = wkOffset(activeKey, 1);
-  const pb = document.getElementById('week-prev-btn');
-  const cb = document.getElementById('week-center-btn');
-  const nb = document.getElementById('week-next-btn');
-  if (pb) { pb.textContent = wkLabel(prevKey); pb.className = 'week-nav-btn ' + (prevKey < currentKey ? 'past-week' : prevKey > currentKey ? 'future-week' : 'current-week'); }
-  if (cb) { cb.textContent = wkLabel(activeKey); cb.className = 'week-nav-btn current-week'; }
-  if (nb) { nb.textContent = wkLabel(nextKey); nb.className = 'week-nav-btn ' + (nextKey < currentKey ? 'past-week' : nextKey > currentKey ? 'future-week' : 'current-week'); }
-  const restoreBtn = document.getElementById('restore-week-btn');
-  if (restoreBtn) restoreBtn.style.display = viewingWeekKey ? 'inline-block' : 'none';
-  const locked = isPlanLocked();
-  const lockBtn = document.getElementById('lock-btn');
-  if (lockBtn) { lockBtn.textContent = locked ? '🔒' : '🔓'; lockBtn.classList.toggle('locked', locked); }
 }
 
 init();
