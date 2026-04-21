@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.3.22</title>
+<title>Family Meal Planner v2.3.23</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -38,8 +38,8 @@
   thead tr:last-child { background: #292524; color: #a8a29e; }
   th { padding: 8px 5px; font-size: 11px; text-align: center; }
   th.day-th { width: 15px; padding: 4px 1px; text-align: left; }
-  th.flag-th { width: 40px; font-size: 10px; color: #a8a29e; }
-  th.work-th { width: 40px; font-size: 10px; color: #a8a29e; }
+  th.flag-th { width: 28px; font-size: 10px; color: #a8a29e; }
+  th.work-th { width: 28px; font-size: 10px; color: #a8a29e; }
   th.person-th { font-size: 12px; font-weight: 600; border-left: 1px solid #44403c; }
   th.slot-th { font-size: 9px; width: 45px; }
   th.slot-th.L { font-size: 9px; width: 30px; }
@@ -53,7 +53,7 @@
   .dnd-hint { font-size: 9px; color: #7c3aed; margin-top: 1px; }
   td.flag-cell { padding: 4px 4px; }
   td.work-cell { padding: 4px 4px; }
-  .work-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 2px 3px; font-size: 10px; cursor: pointer; width: 100%; background: white; color: #78716c; }
+  .work-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 1px 1px; font-size: 9px; cursor: pointer; width: 100%; background: white; color: #78716c; }
   .work-select.office { background: #eff6ff; color: #1e3a5f; }
   .work-select.wfh { background: #f0fdf4; color: #166534; }
   .work-select.weekend { background: #fef9c3; color: #92400e; }
@@ -64,7 +64,7 @@
   td.meal-cell.selected .meal-input { color: #0f766e; font-weight: 600; }
   td.meal-cell.pizza-hint { background: #fdf4ff; }
   td.meal-cell.quick-hint { background: #fffbeb; }
-  .flag-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 2px 3px; font-size: 10px; cursor: pointer; width: 100%; }
+  .flag-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 1px 1px; font-size: 9px; cursor: pointer; width: 100%; }
   .meal-input { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 4px; font-size: 11px; background: transparent; outline: none; cursor: text; color: #1c1917; resize: none; overflow: hidden; min-height: 24px; line-height: 1.35; display: block; font-family: inherit; white-space: pre-wrap; word-break: break-word; }
   .meal-input:hover { background: #f5f5f4; }
   .meal-input.active-input { border-color: #fbbf24; }
@@ -391,7 +391,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.3.22</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.3.23</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
