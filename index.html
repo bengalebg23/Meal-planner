@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.3.23</title>
+<title>Family Meal Planner v2.4.14</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -33,16 +33,16 @@
   #legend-hint { font-size: 10px; color: #a8a29e; }
 
   #grid-wrap { overflow-x: auto; padding: 10px 8px 0; }
-  table { border-collapse: collapse; width: 100%; min-width: 1000px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  table { border-collapse: collapse; table-layout: fixed; width: 796px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   thead tr:first-child { background: #1c1917; color: white; }
   thead tr:last-child { background: #292524; color: #a8a29e; }
   th { padding: 8px 5px; font-size: 11px; text-align: center; }
-  th.day-th { width: 15px; padding: 4px 1px; text-align: left; }
-  th.flag-th { width: 28px; font-size: 10px; color: #a8a29e; }
-  th.work-th { width: 28px; font-size: 10px; color: #a8a29e; }
+  th.day-th { width: 60px; padding: 4px 1px; text-align: left; }
+  th.flag-th { width: 40px; font-size: 8px; color: #a8a29e; }
+  th.work-th { width: 28px; font-size: 8px; color: #a8a29e; }
   th.person-th { font-size: 12px; font-weight: 600; border-left: 1px solid #44403c; }
-  th.slot-th { font-size: 9px; width: 45px; }
-  th.slot-th.L { font-size: 9px; width: 30px; }
+  th.slot-th { font-size: 9px; width: 112px; }
+  th.slot-th.L { font-size: 9px; width: 62px !important; }
   th.slot-th.L { border-left: 1px solid #44403c; }
   tbody tr { border-top: 1px solid #e7e5e4; }
   tbody tr:nth-child(odd) { background: #fafaf8; }
@@ -53,7 +53,7 @@
   .dnd-hint { font-size: 9px; color: #7c3aed; margin-top: 1px; }
   td.flag-cell { padding: 4px 4px; }
   td.work-cell { padding: 4px 4px; }
-  .work-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 1px 1px; font-size: 9px; cursor: pointer; width: 100%; background: white; color: #78716c; }
+  .work-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 1px 0; font-size: 8px; cursor: pointer; width: 100%; background: white; color: #78716c; -webkit-appearance: none; appearance: none; text-align: center; }
   .work-select.office { background: #eff6ff; color: #1e3a5f; }
   .work-select.wfh { background: #f0fdf4; color: #166534; }
   .work-select.weekend { background: #fef9c3; color: #92400e; }
@@ -64,7 +64,7 @@
   td.meal-cell.selected .meal-input { color: #0f766e; font-weight: 600; }
   td.meal-cell.pizza-hint { background: #fdf4ff; }
   td.meal-cell.quick-hint { background: #fffbeb; }
-  .flag-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 1px 1px; font-size: 9px; cursor: pointer; width: 100%; }
+  .flag-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 1px 0; font-size: 8px; cursor: pointer; width: 100%; -webkit-appearance: none; appearance: none; text-align: center; }
   .meal-input { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 4px; font-size: 11px; background: transparent; outline: none; cursor: text; color: #1c1917; resize: none; overflow: hidden; min-height: 24px; line-height: 1.35; display: block; font-family: inherit; white-space: pre-wrap; word-break: break-word; }
   .meal-input:hover { background: #f5f5f4; }
   .meal-input.active-input { border-color: #fbbf24; }
@@ -391,7 +391,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.3.23</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.4.14</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -448,15 +448,14 @@ onValue(planRef, (snapshot) => {
       <thead>
         <tr>
           <th class="day-th">DAY</th>
-          <th class="flag-th">FLAG</th>
-          <th class="work-th">WHERE</th>
+          <th class="flag-th">INFO</th>
           <th class="person-th" colspan="2">Reuben</th>
           <th class="person-th" colspan="2">Vivien</th>
           <th class="person-th" colspan="2">Emily</th>
           <th class="person-th" colspan="2">Ben</th>
         </tr>
         <tr>
-          <th></th><th></th><th></th>
+          <th></th><th></th>
           <th class="slot-th L">LUNCH</th><th class="slot-th">TEA</th>
           <th class="slot-th L">LUNCH</th><th class="slot-th">TEA</th>
           <th class="slot-th L">LUNCH</th><th class="slot-th">TEA</th>
@@ -851,6 +850,20 @@ function loadFromStorage() {
   } catch(e) { console.warn('Could not load:', e); }
 }
 
+
+function getDayDate(dayKey) {
+  // Returns e.g. "21/4" for the day in the current week
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=Sun
+  const days = {mon:1,tue:2,wed:3,thu:4,fri:5,sat:6,sun:0};
+  if (!(dayKey in days)) return '';
+  const target = days[dayKey];
+  const diff = target - dayOfWeek;
+  const d = new Date(now);
+  d.setDate(now.getDate() + diff);
+  return d.getDate() + '/' + (d.getMonth()+1);
+}
+
 function init() {
   plan = emptyPlan();
   loadFromStorage();
@@ -911,7 +924,8 @@ function renderTable() {
       tdDay.appendChild(labelInp);
       tdDay.appendChild(delBtn);
     } else {
-      tdDay.innerHTML = day.label + (isDnD ? '<div class="dnd-hint">🍕 Pizza night</div>' : '') + (isSwim ? '<div class="dnd-hint" style="color:#0369a1">⚡ Quick tea</div>' : '');
+      const dayDate = getDayDate(dayKey);
+      tdDay.innerHTML = day.label + (dayDate ? '<div style="font-size:8px;color:#a8a29e;">' + dayDate + '</div>' : '') + (isDnD ? '<div class="dnd-hint">🍕 Pizza night</div>' : '') + (isSwim ? '<div class="dnd-hint" style="color:#0369a1">⚡ Quick tea</div>' : '');
     }
     tr.appendChild(tdDay);
 
@@ -939,25 +953,18 @@ function renderTable() {
       saveToStorage();
     };
     tdFlag.appendChild(sel);
+    // Add work select stacked above flag select
+    const wsel2 = document.createElement("select");
+    const wval2 = plan[dayKey].work || "";
+    wsel2.className = "work-select" + (wval2==="office"?" office":wval2==="wfh"?" wfh":wval2==="weekend"?" weekend":"");
+    wsel2.style.display = "block";
+    wsel2.style.marginBottom = "2px";
+    wsel2.innerHTML = `<option value="">—</option><option value="office"${wval2==="office"?" selected":""}>🏢</option><option value="wfh"${wval2==="wfh"?" selected":""}>🏠</option><option value="weekend"${wval2==="weekend"?" selected":""}>🌤</option>`;
+    wsel2.onchange = () => { plan[dayKey].work = wsel2.value; wsel2.className = "work-select" + (wsel2.value==="office"?" office":wsel2.value==="wfh"?" wfh":wsel2.value==="weekend"?" weekend":""); saveToStorage(); };
+    tdFlag.insertBefore(wsel2, tdFlag.firstChild);
     tr.appendChild(tdFlag);
 
-    // Work cell
-    const tdWork = document.createElement("td");
-    tdWork.className = "work-cell";
-    const wsel = document.createElement("select");
-    const wval = plan[dayKey].work || "";
-    wsel.className = "work-select" + (wval === "office" ? " office" : wval === "wfh" ? " wfh" : wval === "weekend" ? " weekend" : "");
-    wsel.innerHTML = `<option value="">—</option>
-      <option value="office"${wval==="office"?" selected":""}>🏢 Office</option>
-      <option value="wfh"${wval==="wfh"?" selected":""}>🏠 WFH</option>
-      <option value="weekend"${wval==="weekend"?" selected":""}>🌤 Weekend!</option>`;
-    wsel.onchange = () => {
-      plan[dayKey].work = wsel.value;
-      saveToStorage();
-      wsel.className = "work-select" + (wsel.value === "office" ? " office" : wsel.value === "wfh" ? " wfh" : wsel.value === "weekend" ? " weekend" : "");
-    };
-    tdWork.appendChild(wsel);
-    tr.appendChild(tdWork);
+    // Work select now stacked inside flag cell
 
     // Meal cells
     FAMILY.forEach(person => {

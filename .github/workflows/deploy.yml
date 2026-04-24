@@ -1,0 +1,48 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, dev]
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-main:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to root
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git fetch origin gh-pages || true
+          git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
+          git checkout main -- index.html sw.js
+          git add index.html sw.js
+          git commit -m "Deploy main to root" || echo "Nothing to commit"
+          git push origin gh-pages --force
+
+  deploy-dev:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Deploy to /dev subfolder only
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git fetch origin gh-pages || true
+          git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
+          git checkout origin/gh-pages -- index.html sw.js 2>/dev/null || true
+          mkdir -p dev
+          git checkout dev -- index.html sw.js
+          cp index.html dev/index.html
+          cp sw.js dev/sw.js
+          git checkout origin/gh-pages -- index.html sw.js 2>/dev/null || true
+          git add dev/
+          git commit -m "Deploy dev to /dev subfolder" || echo "Nothing to commit"
+          git push origin gh-pages --force
