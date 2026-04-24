@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.3.26</title>
+<title>Family Meal Planner v2.4.14</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -33,16 +33,16 @@
   #legend-hint { font-size: 10px; color: #a8a29e; }
 
   #grid-wrap { overflow-x: auto; padding: 10px 8px 0; }
-  table { border-collapse: collapse; width: 100%; min-width: 1000px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  table { border-collapse: collapse; table-layout: fixed; width: 796px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   thead tr:first-child { background: #1c1917; color: white; }
   thead tr:last-child { background: #292524; color: #a8a29e; }
   th { padding: 8px 5px; font-size: 11px; text-align: center; }
-  th.day-th { width: 15px; padding: 4px 1px; text-align: left; }
-  th.flag-th { width: 44px; font-size: 8px; color: #a8a29e; }
+  th.day-th { width: 60px; padding: 4px 1px; text-align: left; }
+  th.flag-th { width: 40px; font-size: 8px; color: #a8a29e; }
   th.work-th { width: 28px; font-size: 8px; color: #a8a29e; }
   th.person-th { font-size: 12px; font-weight: 600; border-left: 1px solid #44403c; }
-  th.slot-th { font-size: 9px; width: 45px; }
-  th.slot-th.L { font-size: 9px; width: 30px; }
+  th.slot-th { font-size: 9px; width: 112px; }
+  th.slot-th.L { font-size: 9px; width: 62px !important; }
   th.slot-th.L { border-left: 1px solid #44403c; }
   tbody tr { border-top: 1px solid #e7e5e4; }
   tbody tr:nth-child(odd) { background: #fafaf8; }
@@ -391,7 +391,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.3.26</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.4.14</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -455,7 +455,7 @@ onValue(planRef, (snapshot) => {
           <th class="person-th" colspan="2">Ben</th>
         </tr>
         <tr>
-          <th></th><th></th><th></th>
+          <th></th><th></th>
           <th class="slot-th L">LUNCH</th><th class="slot-th">TEA</th>
           <th class="slot-th L">LUNCH</th><th class="slot-th">TEA</th>
           <th class="slot-th L">LUNCH</th><th class="slot-th">TEA</th>
@@ -953,9 +953,18 @@ function renderTable() {
       saveToStorage();
     };
     tdFlag.appendChild(sel);
+    // Add work select stacked above flag select
+    const wsel2 = document.createElement("select");
+    const wval2 = plan[dayKey].work || "";
+    wsel2.className = "work-select" + (wval2==="office"?" office":wval2==="wfh"?" wfh":wval2==="weekend"?" weekend":"");
+    wsel2.style.display = "block";
+    wsel2.style.marginBottom = "2px";
+    wsel2.innerHTML = `<option value="">—</option><option value="office"${wval2==="office"?" selected":""}>🏢</option><option value="wfh"${wval2==="wfh"?" selected":""}>🏠</option><option value="weekend"${wval2==="weekend"?" selected":""}>🌤</option>`;
+    wsel2.onchange = () => { plan[dayKey].work = wsel2.value; wsel2.className = "work-select" + (wsel2.value==="office"?" office":wsel2.value==="wfh"?" wfh":wsel2.value==="weekend"?" weekend":""); saveToStorage(); };
+    tdFlag.insertBefore(wsel2, tdFlag.firstChild);
     tr.appendChild(tdFlag);
 
-    // Work+Flag stacked in one cell - no separate work cell needed
+    // Work select now stacked inside flag cell
 
     // Meal cells
     FAMILY.forEach(person => {
