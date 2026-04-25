@@ -2,13 +2,10 @@ path = '/data/data/com.termux/files/home/meal-planner/index.html'
 with open(path, 'r') as f:
     content = f.read()
 
-old = "    hdr.innerHTML = \"🍽 Meal Bank <button onclick='injectMeal(\"????\")' style='margin-left:8px;background:#dc2626;border:none;color:white;border-radius:12px;padding:1px 8px;font-size:10px;font-weight:700;cursor:pointer;'>????</button>\";"
-new = '    hdr.innerHTML = `🍽 Meal Bank <button onclick="injectMeal(\'????\')" style="margin-left:8px;background:#dc2626;border:none;color:white;border-radius:12px;padding:1px 8px;font-size:10px;font-weight:700;cursor:pointer;">????</button>`;'
+content = content.replace('Clear all', 'Clear week')
+content = content.replace('Clear the whole plan and shopping list?', 'Clear this week\'s plan and shopping list?')
+content = content.replace('v2.5.7', 'v2.5.8')
 
-if old in content:
-    content = content.replace(old, new)
-    with open(path, 'w') as f:
-        f.write(content)
-    print("Done")
-else:
-    print("MISS")
+with open(path, 'w') as f:
+    f.write(content)
+print("Done")

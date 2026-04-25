@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.5.7</title>
+<title>Family Meal Planner v2.5.8</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -391,7 +391,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.5.7</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.5.8</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -400,7 +400,7 @@ onValue(planRef, (snapshot) => {
       </label>
     </div>
     <button class="hbtn share-btn" onclick="openShareModal()">↗ Share</button>
-    <button class="hbtn hbtn-clear" onclick="clearAll()">Clear all</button>
+    <button class="hbtn hbtn-clear" onclick="clearAll()">Clear week</button>
     <button class="hbtn hbtn-print" onclick="window.print()">🖨 Print</button>
   </div>
 </div>
@@ -1203,7 +1203,7 @@ function getPlannedMeals() {
 }
 
 function clearAll() {
-  if (!confirm("Clear the whole plan and shopping list?")) return;
+  if (!confirm("Clear this week's plan and shopping list?")) return;
   plan = emptyPlan();
   shopItems = {produce:[],meat:[],dairy:[],dry:[],frozen:[],other:[]};
   checkedItems = {};
