@@ -1,5 +1,5 @@
 # Meal Planner PWA - Handoff Document
-Last updated: 2026-04-21
+Last updated: 2026-04-24
 
 ## Live URLs
 Production: https://bengalebg23.github.io/Meal-planner/
@@ -8,7 +8,7 @@ GitHub repo: https://github.com/bengalebg23/Meal-planner.git
 
 ## Current Version
 Production (main): v2.5.0
-Dev branch: v2.5.0 (in sync)
+Dev branch: v2.5.0 (in sync with main)
 
 ## Tech Stack
 - Single HTML file index.html + sw.js service worker
@@ -31,13 +31,30 @@ Swimming days: quick tea hint on tea cell
 
 ## Column Layout (v2.5.0)
 Day: 60px
-INFO (Flag + Work stacked): 40px
+INFO (Flag + Work stacked vertically): 40px
 Lunch slots: 62px
 Tea slots: 112px
 Table total width: 796px, table-layout: fixed
 day-label-input: 30px, font 10px
 Flag/work selects: -webkit-appearance none, font 8px
 Del day button: font 9px, display block
+
+## App Features
+- Meal plan grid: 4 people x Lunch/Tea x 7 days
+- Meal bank (Everyone/Adults/Kids sections)
+- Lunch options sidebar
+- Lock button to freeze meal plan
+- Three-week navigation (W15 W16 W17)
+- Week archive by ISO week key e.g. 2026_W16
+- Share modal exports MEALPLAN:base64 for import
+- Shopping tab with Asda order picker
+- Recipes tab with ClaudeRecipe / GaleRecipe tagging
+- Dark mode toggle
+- Firebase sync indicator
+- Version badge white large top right
+- Date shown next to day label e.g. Mon 20/4
+- Short day names Mon/Tue/Wed/Thu/Fri/Sat/Sun
+- INFO column: Flag + Work select stacked vertically
 
 ## Termux Aliases
 mp: git add -A, commit, push to dev
@@ -49,6 +66,7 @@ mphandoff: push HANDOFF.md to both dev and main
 dev: test at bengalebg23.github.io/Meal-planner/dev/
 main: live at bengalebg23.github.io/Meal-planner/
 Always work on dev, test, then mplive when happy
+mplive prints reminder to update HANDOFF.md
 
 ## Deployment Method
 NEVER use downloaded files from Claude - always patch phone directly via Python.
@@ -90,9 +108,9 @@ mp
 - Firebase only syncs current week, not future planned weeks
 
 ## Version History
-v2.3.6: Last stable before column work (still on main as fallback)
-v2.4.0-v2.4.14: Column sizing iterations, INFO column merge
-v2.5.0: Final column sizing, INFO column, table-layout fixed
+v2.3.6: Last stable before major column work
+v2.4.0-v2.4.14: INFO column merge, column sizing iterations
+v2.5.0: CURRENT - Final column sizing (Day 60, Info 40, Lunch 62, Tea 112), table-layout fixed, INFO column (Flag+Work stacked)
 
 ## New Chat Prompt
 I'm working on a family meal planner PWA. Full context is at https://raw.githubusercontent.com/bengalebg23/Meal-planner/main/HANDOFF.md - please read that first, then I'll tell you what I need next.
