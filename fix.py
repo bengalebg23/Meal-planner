@@ -1,17 +1,23 @@
-import subprocess
-
-# Update mp alias to include code dump
-bashrc = '/data/data/com.termux/files/home/.bashrc'
-with open(bashrc, 'r') as f:
+path = '/data/data/com.termux/files/home/meal-planner/index.html'
+with open(path, 'r') as f:
     content = f.read()
 
-old = "alias mp='cd ~/meal-planner && git add -A && git commit -m \"update\" && git push origin dev'"
-new = "alias mp='cd ~/meal-planner && cp index.html code_dump.txt && git add -A && git commit -m \"update\" && git push origin dev'"
+old_bank = '      <div class="bank-header" id="meal-bank-header">🍽 Meal Bank</div>'
+new_bank = '      <div class="bank-header" id="meal-bank-header">🍽 Meal Bank <button onclick="injectMeal(\'????\')" style="margin-left:8px;background:#dc2626;border:none;color:white;border-radius:12px;padding:1px 8px;font-size:10px;font-weight:700;cursor:pointer;">????</button></div>'
 
-if old in content:
-    content = content.replace(old, new)
-    with open(bashrc, 'w') as f:
+old_lunch = '        <div class="bank-header">🥪 Lunch Options</div>'
+new_lunch = '        <div class="bank-header">🥪 Lunch Options <button onclick="injectMeal(\'????\')" style="margin-left:8px;background:#dc2626;border:none;color:white;border-radius:12px;padding:1px 8px;font-size:10px;font-weight:700;cursor:pointer;">????</button></div>'
+
+old_v = 'v2.5.5'
+new_v = 'v2.5.6'
+
+hits = [old_bank in content, old_lunch in content]
+if all(hits):
+    content = content.replace(old_bank, new_bank)
+    content = content.replace(old_lunch, new_lunch)
+    content = content.replace(old_v, new_v)
+    with open(path, 'w') as f:
         f.write(content)
-    print("mp alias updated")
+    print("Done")
 else:
-    print("MISS - mp alias not found")
+    print("MISS - bank header:", hits[0], "lunch header:", hits[1])
