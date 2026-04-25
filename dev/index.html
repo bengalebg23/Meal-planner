@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.5.1</title>
+<title>Family Meal Planner v2.5.2</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -391,7 +391,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.5.1</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.5.2</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -990,6 +990,8 @@ function renderTable() {
           saveToStorage();
         };
         setTimeout(() => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 'px'; }, 0);
+        // cellKey must be declared before onfocus closure
+        const cellKey = dayKey + "|" + person + "|" + slot;
         inp.onfocus = () => {
           if (multiSelected.size > 0) {
             if (multiSelected.has(cellKey)) {
@@ -1009,7 +1011,6 @@ function renderTable() {
           }
         };
         // Double-tap to toggle multi-select
-        const cellKey = dayKey + "|" + person + "|" + slot;
         td.addEventListener("touchend", e => {
           const now = Date.now();
           const last = lastTap[cellKey] || 0;
