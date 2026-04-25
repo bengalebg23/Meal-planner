@@ -2,52 +2,20 @@ path = '/data/data/com.termux/files/home/meal-planner/index.html'
 with open(path, 'r') as f:
     content = f.read()
 
-old = """        inp.onfocus = () => {
-          if (multiSelected.size > 0) {
-            if (multiSelected.has(cellKey)) {
-              multiSelected.delete(cellKey);
-            } else {
-              multiSelected.add(cellKey);
-            }
-            inp.blur();
-            updateFloating();
-            updateBankHighlight();
-            renderTableHighlights();
-          } else {
-            activeBank = {day: dayKey, person, slot};
-            updateFloating();
-            updateBankHighlight();
-            updateTableHighlight();
-          }
-        };
-        // Double-tap to toggle multi-select
-        const cellKey = dayKey + "|" + person + "|" + slot;"""
+old = """function renderTableHighlights() {
+  document.querySelectorAll(".meal-cell").forEach(td => {
+    const inp = td.querySelector("input");
+    if (!inp) return;
+    const key = inp.dataset.cellkey;"""
 
-new = """        // cellKey must be declared before onfocus closure
-        const cellKey = dayKey + "|" + person + "|" + slot;
-        inp.onfocus = () => {
-          if (multiSelected.size > 0) {
-            if (multiSelected.has(cellKey)) {
-              multiSelected.delete(cellKey);
-            } else {
-              multiSelected.add(cellKey);
-            }
-            inp.blur();
-            updateFloating();
-            updateBankHighlight();
-            renderTableHighlights();
-          } else {
-            activeBank = {day: dayKey, person, slot};
-            updateFloating();
-            updateBankHighlight();
-            updateTableHighlight();
-          }
-        };
-        // Double-tap to toggle multi-select"""
+new = """function renderTableHighlights() {
+  document.querySelectorAll(".meal-cell").forEach(td => {
+    const inp = td.querySelector("textarea");
+    if (!inp) return;
+    const key = inp.dataset.cellkey;"""
 
-# Version bump
-old_v = 'v2.5.1'
-new_v = 'v2.5.2'
+old_v = 'v2.5.2'
+new_v = 'v2.5.3'
 
 if old in content:
     content = content.replace(old, new)
@@ -56,4 +24,4 @@ if old in content:
         f.write(content)
     print("Done")
 else:
-    print("MISS - old not found")
+    print("MISS")
