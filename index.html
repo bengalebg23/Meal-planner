@@ -1127,7 +1127,7 @@ function renderBanks() {
     const dayLabel = DAYS.find(d => d.key === activeBank.day)?.label || "";
     hdr.innerHTML = `🍽 Meal Bank <span>→ tap to fill ${activeBank.person} ${activeBank.slot === "L" ? "lunch" : "tea"} on ${dayLabel}</span>`;
   } else {
-    hdr.innerHTML = "🍽 Meal Bank <button onclick='injectMeal("????")' style='margin-left:8px;background:#dc2626;border:none;color:white;border-radius:12px;padding:1px 8px;font-size:10px;font-weight:700;cursor:pointer;'>????</button>";
+    hdr.innerHTML = `🍽 Meal Bank <button onclick="injectMeal('????')" style="margin-left:8px;background:#dc2626;border:none;color:white;border-radius:12px;padding:1px 8px;font-size:10px;font-weight:700;cursor:pointer;">????</button>`;
   }
 }
 
