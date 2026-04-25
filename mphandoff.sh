@@ -10,6 +10,6 @@ TS=$(date +%s)
 echo ""
 echo "════ NEW CHAT PROMPT — copy this ════"
 echo "I'm working on a family meal planner PWA. Please fetch these for context:"
-echo "https://cdn.jsdelivr.net/gh/bengalebg23/Meal-planner@main/HANDOFF.md?t=$TS"
-echo "https://cdn.jsdelivr.net/gh/bengalebg23/Meal-planner@main/code_dump_${VERSION}.txt?t=$TS"
+echo "https://raw.githubusercontent.com/bengalebg23/Meal-planner/main/HANDOFF.md?t=$TS"
+echo "https://raw.githubusercontent.com/bengalebg23/Meal-planner/main/code_dump_${VERSION}.txt?t=$TS"
 echo "═════════════════════════════════════"
