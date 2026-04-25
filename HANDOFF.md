@@ -113,4 +113,4 @@ v2.4.0-v2.4.14: INFO column merge, column sizing iterations
 v2.5.0: CURRENT - Final column sizing (Day 60, Info 40, Lunch 62, Tea 112), table-layout fixed, INFO column (Flag+Work stacked)
 
 ## New Chat Prompt
-I'm working on a family meal planner PWA. Full context is at https://raw.githubusercontent.com/bengalebg23/Meal-planner/main/HANDOFF.md?v=2.5.0 - please read that first, then I'll tell you what I need next.
+I'm working on a family meal planner PWA. Full context is at https://cdn.jsdelivr.net/gh/bengalebg23/Meal-planner@main/HANDOFF.md?t=TIMESTAMP - please read that first, then I'll tell you what I need next.
