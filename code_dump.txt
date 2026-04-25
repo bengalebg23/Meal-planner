@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.5.4</title>
+<title>Family Meal Planner v2.5.7</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -391,7 +391,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.5.4</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.5.7</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -1127,7 +1127,7 @@ function renderBanks() {
     const dayLabel = DAYS.find(d => d.key === activeBank.day)?.label || "";
     hdr.innerHTML = `🍽 Meal Bank <span>→ tap to fill ${activeBank.person} ${activeBank.slot === "L" ? "lunch" : "tea"} on ${dayLabel}</span>`;
   } else {
-    hdr.innerHTML = "🍽 Meal Bank";
+    hdr.innerHTML = '🍽 Meal Bank <button onclick="injectMeal('????')" style="margin-left:8px;background:#dc2626;border:none;color:white;border-radius:12px;padding:1px 8px;font-size:10px;font-weight:700;cursor:pointer;">????</button>';
   }
 }
 
