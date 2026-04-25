@@ -468,12 +468,12 @@ onValue(planRef, (snapshot) => {
 
   <div id="banks">
     <div class="bank-card">
-      <div class="bank-header" id="meal-bank-header">🍽 Meal Bank <button onclick="injectMeal('????')" style="margin-left:8px;background:#dc2626;border:none;color:white;border-radius:12px;padding:1px 8px;font-size:10px;font-weight:700;cursor:pointer;">????</button></div>
+      <div class="bank-header" id="meal-bank-header">🍽 Meal Bank</div>
       <div id="meal-bank-pills"></div>
     </div>
     <div id="right-banks">
       <div class="bank-card">
-        <div class="bank-header">🥪 Lunch Options <button onclick="injectMeal('????')" style="margin-left:8px;background:#dc2626;border:none;color:white;border-radius:12px;padding:1px 8px;font-size:10px;font-weight:700;cursor:pointer;">????</button></div>
+        <div class="bank-header">🥪 Lunch Options</div>
         <div id="lunch-grid">
           <div class="lunch-col">
             <div class="lunch-col-header" style="background:#fffbeb;color:#b45309">⚡ Quick</div>
