@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.5.3</title>
+<title>Family Meal Planner v2.5.4</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -391,7 +391,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.5.3</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.5.4</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -582,7 +582,7 @@ const VIV_LUNCHES = ["Tortilla","Avo toast","Peanut toast","Crumpets","Sausage r
 const MEAL_BANK_SECTIONS = [
   {
     key:"all", label:"👨‍👩‍👧‍👦 Everyone", color:"#1c1917", bg:"#f5f5f4",
-    items:["Karen's","Nursery","MIRA","Spaghetti Bolognese","Sausage potato bean","Fish pie","Lasagne","Fish cakes + wedges","Stir fry","Tinga + rice","Cottage pie","Chicken & leek bake","Burgers","Sausage orzo","One pot garlic chicken","Teriyaki skewers","Chilli","Pizza","Roast","Fajitas"],
+    items:["Karen's","Nursery","MIRA","Spaghetti Bolognese","Sausage potato bean","Fish pie","Lasagne","Fish cakes + wedges","Stir fry","Tinga + rice","Cottage pie","Chicken & leek bake","Burgers","Sausage orzo","One pot garlic chicken","Teriyaki skewers","Chilli","Pizza","Roast","Fajitas","Tortellini"],
   },
   {
     key:"adults", label:"🧑 Adults only", color:"#7c3aed", bg:"#ede9fe",
@@ -633,6 +633,7 @@ const DEFAULT_RECIPES = {
   "Pizza": { tag: "ClaudeRecipe", ingredients: ["Ready-made pizza bases or dough","Tomato passata","Mozzarella, torn","Choice of toppings"], notes: "Friday night favourite. Let the kids choose toppings." },
   "Roast": { tag: "ClaudeRecipe", ingredients: ["1.5kg joint of meat (beef, chicken, pork or lamb)","Roast potatoes","Seasonal veg (carrots, parsnips, broccoli)","Gravy","Yorkshire puddings (if beef)"], notes: "Sunday classic." },
   "Fajita + nachos": { tag: "ClaudeRecipe", ingredients: ["600g chicken breast, sliced","2 peppers, sliced","frozen sliced onion","2 tbsp fajita seasoning","Flour tortillas","Sour cream","Guacamole","Grated cheddar","Nachos","Salsa"], notes: "Adults only. Let everyone build their own." },
+  "Tortellini": { tag: "ClaudeRecipe", ingredients: ["500g fresh tortellini (cheese or meat filled)","1 tin chopped tomatoes","150ml double cream","2 cloves garlic, crushed","1 tsp mixed herbs","Salt and pepper","Parmesan to serve"], notes: "Fry garlic in olive oil for 1 min. Add chopped tomatoes, herbs, salt and pepper and simmer for 10 mins. Stir in cream and simmer for 2 more mins. Cook tortellini per packet (usually 3–4 mins), drain and toss in the sauce. Serve with parmesan." },
   "Loaded nachos": { tag: "ClaudeRecipe", ingredients: ["200g tortilla chips","400g pulled chicken or beef mince","400g tinned black beans","100g cheddar, grated","Jalapeños","Sour cream","Guacamole","Salsa"], notes: "Adults only." },
   "Sourdough chicken kievs": { tag: "ClaudeRecipe", ingredients: ["4 chicken breasts","100g butter, softened","frozen garlic","Handful parsley, chopped","Sourdough breadcrumbs","2 eggs, beaten","Plain flour"], notes: "Make ahead and chill before baking." },
   "Mushroom burgers": { tag: "ClaudeRecipe", ingredients: ["4 large portobello mushrooms","Olive oil","Burger buns","Halloumi or cheese slices","Lettuce, tomato, red onion","Burger sauce or mayo"], notes: "Adults only." },
