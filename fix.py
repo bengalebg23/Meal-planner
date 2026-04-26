@@ -2,50 +2,57 @@ path = '/data/data/com.termux/files/home/meal-planner/index.html'
 with open(path, 'r') as f:
     content = f.read()
 
-# 1. Add the type-in bar HTML after the grid-wrap div
-old1 = '  <div id="banks">'
-new1 = '''  <div id="type-in-bar" style="padding:6px 8px 0;">
-    <div style="display:flex;gap:6px;align-items:center;">
-      <input id="type-in-input" type="text" placeholder="Type a meal name then tap a cell..." style="flex:1;border:1px solid #e7e5e4;border-radius:8px;padding:8px 11px;font-size:12px;outline:none;font-family:inherit;" />
-      <button onclick="typeInConfirm()" style="background:#1c1917;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;">Fill</button>
-    </div>
-  </div>
-  <div id="banks">'''
+# 1. Wire fbSubscribeWeek into loadLiveWeek
+old1 = '''function loadLiveWeek() {
+  plan = emptyPlan();
+  loadFromStorage();
+  if (selectedOrderIndex === null) loadBaselineIntoShop();
+  else loadSelectedOrderIntoShop();
+  renderTable();
+  renderBanks();
+  renderShop();
+  updateMealsDetected();
+}'''
 
-# 2. Remove "New - type in" from meal bank
-old2 = '"Roast","Fajitas","Tortellini","????","New - type in"]'
-new2 = '"Roast","Fajitas","Tortellini","????"]'
+new1 = '''function loadLiveWeek() {
+  plan = emptyPlan();
+  loadFromStorage();
+  if (selectedOrderIndex === null) loadBaselineIntoShop();
+  else loadSelectedOrderIntoShop();
+  renderTable();
+  renderBanks();
+  renderShop();
+  updateMealsDetected();
+  const weekKey = localStorage.getItem('mealplanner_week');
+  if (weekKey && window.fbSubscribeWeek) window.fbSubscribeWeek(weekKey);
+}'''
 
-# 3. Remove the "New - type in" handler from injectMeal
-old3 = '''function injectMeal(text) {
-  if (text === "New - type in") {
-    if (multiSelected.size > 0) { multiSelected.clear(); updateFloating(); renderTable(); renderBanks(); }
-    else if (activeBank) {
-      const key = `${activeBank.day}|${activeBank.person}|${activeBank.slot}`;
-      const inp = document.querySelector(`textarea[data-cellkey="${key}"]`);
-      activeBank = null;
-      document.getElementById("floating-bar").classList.remove("visible");
-      if (inp) { inp.focus(); inp.setSelectionRange(0, inp.value.length); }
-    }
-    return;
-  }'''
-new3 = 'function injectMeal(text) {'
+# 2. Wire fbSubscribeWeek into navWeek when loading archived week
+old2 = '''    if (dir === 1 && newKey === currentKey) { viewingWeekKey = null; loadLiveWeek(); }
+    else { viewingWeekKey = newKey; loadArchivedWeek(viewingWeekKey); }'''
 
-# 4. Add typeInConfirm function before injectMeal
-old4 = 'function injectMeal(text) {'
-new4 = '''function typeInConfirm() {
-  const val = document.getElementById("type-in-input").value.trim();
-  if (!val) return;
-  if (multiSelected.size > 0 || activeBank) {
-    injectMeal(val);
-    document.getElementById("type-in-input").value = "";
-  }
-}
+new2 = '''    if (dir === 1 && newKey === currentKey) { viewingWeekKey = null; loadLiveWeek(); }
+    else { viewingWeekKey = newKey; loadArchivedWeek(viewingWeekKey); if (window.fbSubscribeWeek) window.fbSubscribeWeek(newKey); }'''
 
-function injectMeal(text) {'''
+# 3. Wire fbSubscribeWeek for the back-nav case too
+old3 = '''      viewingWeekKey = archiveKeys[archiveKeys.length - 1];
+      loadArchivedWeek(viewingWeekKey);'''
 
-old_v = 'v2.5.16'
-new_v = 'v2.5.17'
+new3 = '''      viewingWeekKey = archiveKeys[archiveKeys.length - 1];
+      loadArchivedWeek(viewingWeekKey);
+      if (window.fbSubscribeWeek) window.fbSubscribeWeek(viewingWeekKey);'''
+
+# 4. Wire fbSubscribeWeek for forward-nav into future week
+old4 = '''      viewingWeekKey = getOffsetWeekKey(1);
+      loadArchivedWeek(viewingWeekKey);'''
+
+new4 = '''      viewingWeekKey = getOffsetWeekKey(1);
+      loadArchivedWeek(viewingWeekKey);
+      if (window.fbSubscribeWeek) window.fbSubscribeWeek(viewingWeekKey);'''
+
+# 5. Version bump to v3.0.0
+old_v = 'v2.5.19'
+new_v = 'v3.0.0'
 
 hits = [old1 in content, old2 in content, old3 in content, old4 in content]
 print("Hits:", hits)
@@ -55,7 +62,7 @@ if all(hits):
     content = content.replace(old3, new3)
     content = content.replace(old4, new4)
     content = content.replace(old_v, new_v)
-    content = content.replace('meal-planner-v2.5.16', 'meal-planner-v2.5.17')
+    content = content.replace('meal-planner-v2.5.19', 'meal-planner-v3.0.0')
     with open(path, 'w') as f:
         f.write(content)
     print("Done")
