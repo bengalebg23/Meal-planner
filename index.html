@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.5.17</title>
+<title>Family Meal Planner v2.5.18</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -394,7 +394,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.5.17</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.5.18</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -473,6 +473,7 @@ onValue(planRef, (snapshot) => {
     <div style="display:flex;gap:6px;align-items:center;">
       <input id="type-in-input" type="text" placeholder="Type a meal name then tap a cell..." style="flex:1;border:1px solid #e7e5e4;border-radius:8px;padding:8px 11px;font-size:12px;outline:none;font-family:inherit;" />
       <button onclick="typeInConfirm()" style="background:#1c1917;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;">Fill</button>
+      <button onclick="injectMeal('')" style="background:#e7e5e4;color:#1c1917;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;">Clear</button>
     </div>
   </div>
   <div id="banks">
