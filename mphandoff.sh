@@ -5,7 +5,11 @@ cp index.html code_dump_${VERSION}.txt
 git add -A
 git commit -m "Update HANDOFF.md + code dump ${VERSION}" 2>/dev/null
 git push origin dev
+# Merge to main
+git checkout main
+git merge dev
 git push origin main
+git checkout dev
 TS=$(date +%s)
 echo ""
 echo "════ NEW CHAT PROMPT — copy this ════"
