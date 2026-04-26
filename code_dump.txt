@@ -1747,9 +1747,11 @@ function navWeek(dir) {
     if (dir === -1 && archiveKeys.length > 0) {
       viewingWeekKey = archiveKeys[archiveKeys.length - 1];
       loadArchivedWeek(viewingWeekKey);
+      if (window.fbSubscribeWeek) window.fbSubscribeWeek(viewingWeekKey);
     } else if (dir === 1) {
       viewingWeekKey = getOffsetWeekKey(1);
       loadArchivedWeek(viewingWeekKey);
+      if (window.fbSubscribeWeek) window.fbSubscribeWeek(viewingWeekKey);
     }
   } else {
     const yr = parseInt(viewingWeekKey.split('_W')[0]);
@@ -1759,7 +1761,7 @@ function navWeek(dir) {
     else if (w > 52) newKey = (yr+1) + '_W01';
     else newKey = yr + '_W' + String(w).padStart(2,'0');
     if (dir === 1 && newKey === currentKey) { viewingWeekKey = null; loadLiveWeek(); }
-    else { viewingWeekKey = newKey; loadArchivedWeek(viewingWeekKey); }
+    else { viewingWeekKey = newKey; loadArchivedWeek(viewingWeekKey); if (window.fbSubscribeWeek) window.fbSubscribeWeek(newKey); }
   }
   updateWeekNavButtons();
   updateWeekNavUI();
@@ -1811,6 +1813,8 @@ function loadLiveWeek() {
   renderBanks();
   renderShop();
   updateMealsDetected();
+  const weekKey = localStorage.getItem('mealplanner_week');
+  if (weekKey && window.fbSubscribeWeek) window.fbSubscribeWeek(weekKey);
 }
 
 function updateWeekNavUI() {
