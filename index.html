@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.1.2</title>
+<title>Family Meal Planner v3.1.3</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -77,16 +77,16 @@
   .meal-input.unsure { color: #dc2626; font-weight: 700; }
   td.meal-cell.unsure { background: #fee2e2 !important; }
 
-  #meal-filters { padding: 8px 8px 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-  .filter-group { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 3px; background: white; border-radius: 8px; padding: 7px 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-  .filter-group-label { font-size: 9px; font-weight: 700; color: #a8a29e; text-transform: uppercase; letter-spacing: 0.5px; width: 100%; margin-bottom: 2px; }
-  .filter-btn { border-radius: 20px; padding: 4px 11px; font-size: 11px; cursor: pointer; border: 1px solid #e7e5e4; background: #f5f5f4; color: #78716c; }
+  #meal-filters { padding: 8px 8px 0; display: flex; flex-wrap: wrap; gap: 4px; }
+  .filter-group { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+  .filter-group-label { font-size: 9px; font-weight: 700; color: #a8a29e; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 2px; white-space: nowrap; }
+  .filter-btn { border-radius: 20px; padding: 0 10px; font-size: 11px; cursor: pointer; border: 1px solid #e7e5e4; background: #f5f5f4; color: #78716c; height: 26px; line-height: 26px; white-space: nowrap; }
   .filter-btn.active { background: #1c1917; color: white; border-color: #1c1917; }
   #unified-bank { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; margin: 8px 8px 0; }
   #unified-bank-header { background: #292524; color: white; padding: 8px 13px; font-size: 12px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
   #unified-bank-header span { font-size: 9px; color: #a8a29e; margin-left: 5px; font-weight: 400; }
   #unified-bank-pills { padding: 9px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-  .upill { border-radius: 20px; padding: 4px 11px; font-size: 12px; cursor: default; border: 1px solid #e7e5e4; background: #f5f5f4; color: #1c1917; }
+  .upill { border-radius: 20px; padding: 0 11px; font-size: 12px; cursor: default; border: 1px solid #e7e5e4; background: #f5f5f4; color: #1c1917; height: 30px; line-height: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
   .upill.active-bank { cursor: pointer; }
   .upill.active-bank:hover { opacity: 0.85; }
   #banks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 8px 0; }
@@ -406,7 +406,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.1.2</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.1.3</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
