@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.0.3</title>
+<title>Family Meal Planner v3.1.0</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -77,6 +77,18 @@
   .meal-input.unsure { color: #dc2626; font-weight: 700; }
   td.meal-cell.unsure { background: #fee2e2 !important; }
 
+  #meal-filters { padding: 8px 8px 0; display: flex; flex-wrap: wrap; gap: 5px; }
+  .filter-group { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 3px; }
+  .filter-group-label { font-size: 9px; font-weight: 700; color: #a8a29e; text-transform: uppercase; letter-spacing: 0.5px; width: 100%; margin-bottom: 2px; }
+  .filter-btn { border-radius: 20px; padding: 4px 11px; font-size: 11px; cursor: pointer; border: 1px solid #e7e5e4; background: #f5f5f4; color: #78716c; }
+  .filter-btn.active { background: #1c1917; color: white; border-color: #1c1917; }
+  #unified-bank { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; margin: 8px 8px 0; }
+  #unified-bank-header { background: #292524; color: white; padding: 8px 13px; font-size: 12px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  #unified-bank-header span { font-size: 9px; color: #a8a29e; margin-left: 5px; font-weight: 400; }
+  #unified-bank-pills { padding: 9px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .upill { border-radius: 20px; padding: 4px 11px; font-size: 12px; cursor: default; border: 1px solid #e7e5e4; background: #f5f5f4; color: #1c1917; }
+  .upill.active-bank { cursor: pointer; }
+  .upill.active-bank:hover { opacity: 0.85; }
   #banks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 8px 0; }
   .bank-card { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
   .bank-header { background: #292524; color: white; padding: 8px 13px; font-size: 12px; font-weight: 700; }
@@ -394,7 +406,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.0.3</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.1.0</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -469,6 +481,11 @@ onValue(planRef, (snapshot) => {
     </table>
   </div>
 
+  <div id="meal-filters"></div>
+  <div id="unified-bank">
+    <div id="unified-bank-header">🍽 Meal Bank <span id="unified-bank-hint"></span></div>
+    <div id="unified-bank-pills"></div>
+  </div>
   <div id="type-in-bar" style="padding:6px 8px 0;">
     <div style="display:flex;gap:6px;align-items:center;">
       <input id="type-in-input" type="text" placeholder="Type a meal name then tap a cell..." style="flex:1;border:1px solid #e7e5e4;border-radius:8px;padding:8px 11px;font-size:12px;outline:none;font-family:inherit;" />
@@ -476,7 +493,7 @@ onValue(planRef, (snapshot) => {
       <button onclick="injectMeal('')" style="background:#e7e5e4;color:#1c1917;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;">Clear</button>
     </div>
   </div>
-  <div id="banks">
+  <div id="banks" style="display:none">
     <div class="bank-card">
       <div class="bank-header" id="meal-bank-header">🍽 Meal Bank</div>
       <div id="meal-bank-pills"></div>
@@ -603,6 +620,82 @@ const MEAL_BANK_SECTIONS = [
     items:["Chicken Alfredo","Pitta pizza","Fish fingers + wedges","Porridge fingers","Mac & cheese","Pasta sauce","Snack Attack","Dairylea Dunker","Tortellini"],
   },
 ];
+
+// Unified meal bank with tags
+const UNIFIED_MEALS = [
+  {name:"Spaghetti Bolognese", tags:["tea","beef","everyone","medium","pasta"]},
+  {name:"Sausage potato bean", tags:["tea","pork","everyone","medium","one-pot"]},
+  {name:"Fish pie", tags:["tea","fish","everyone","slow","bake"]},
+  {name:"Lasagne", tags:["tea","beef","everyone","slow","pasta","freezable"]},
+  {name:"Fish cakes + wedges", tags:["tea","fish","everyone","medium"]},
+  {name:"Stir fry", tags:["tea","chicken","everyone","quick"]},
+  {name:"Tinga + rice", tags:["tea","chicken","everyone","medium","rice"]},
+  {name:"Cottage pie", tags:["tea","beef","everyone","slow","bake"]},
+  {name:"Chicken & leek bake", tags:["tea","chicken","everyone","medium","bake"]},
+  {name:"Burgers", tags:["tea","beef","everyone","quick"]},
+  {name:"Sausage orzo", tags:["tea","pork","everyone","medium","pasta","one-pot"]},
+  {name:"One pot garlic chicken", tags:["tea","chicken","everyone","medium","one-pot"]},
+  {name:"Teriyaki skewers", tags:["tea","chicken","everyone","medium","rice"]},
+  {name:"Chilli", tags:["tea","beef","everyone","medium","one-pot","freezable"]},
+  {name:"Pizza", tags:["tea","everyone","quick"]},
+  {name:"Roast", tags:["tea","everyone","slow"]},
+  {name:"Fajitas", tags:["tea","chicken","everyone","quick"]},
+  {name:"Tortellini", tags:["tea","everyone","quick","pasta"]},
+  {name:"Pulled pork fajitas", tags:["tea","pork","everyone","slow","freezable"]},
+  {name:"Tuna pasta", tags:["tea","fish","everyone","quick","pasta"]},
+  {name:"Mozzarella melts", tags:["tea","everyone","quick"]},
+  {name:"Sausage and veg and potatoes", tags:["tea","pork","everyone","medium","one-tray"]},
+  {name:"Fish fingers and veg and beans", tags:["tea","fish","everyone","quick"]},
+  {name:"Laksa", tags:["tea","chicken","adults","medium"]},
+  {name:"Thai curry", tags:["tea","chicken","adults","medium","curry"]},
+  {name:"Indian curry", tags:["tea","chicken","adults","medium","curry"]},
+  {name:"Fajita + nachos", tags:["tea","chicken","adults","quick"]},
+  {name:"Loaded nachos", tags:["tea","beef","adults","quick"]},
+  {name:"Sourdough chicken kievs", tags:["tea","chicken","adults","medium"]},
+  {name:"Mushroom burgers", tags:["tea","veggie","adults","quick"]},
+  {name:"Spinach ricotta pasta bake", tags:["tea","veggie","adults","medium","pasta","bake"]},
+  {name:"Greek feta salad", tags:["tea","veggie","adults","quick","salad"]},
+  {name:"Aioli roast veg + chorizo + potato", tags:["tea","pork","adults","medium","one-tray"]},
+  {name:"Chicken Alfredo", tags:["tea","chicken","kids","quick","pasta"]},
+  {name:"Pitta pizza", tags:["tea","kids","quick"]},
+  {name:"Fish fingers + wedges", tags:["tea","fish","kids","quick"]},
+  {name:"Porridge fingers", tags:["tea","kids","quick"]},
+  {name:"Mac & cheese", tags:["tea","veggie","kids","medium","pasta"]},
+  {name:"Pasta sauce", tags:["tea","veggie","kids","quick","pasta"]},
+  {name:"Snack Attack", tags:["tea","kids","quick"]},
+  {name:"Dairylea Dunker", tags:["tea","kids","quick"]},
+  {name:"Karen's", tags:["lunch","tea","everyone"]},
+  {name:"Nursery", tags:["lunch","tea","everyone"]},
+  {name:"MIRA", tags:["lunch","tea","everyone"]},
+  {name:"????", tags:["lunch","tea","everyone"]},
+  {name:"Sandwich", tags:["lunch","everyone","quick"]},
+  {name:"Salad pot", tags:["lunch","adults","quick","salad"]},
+  {name:"Pasta and sauce", tags:["lunch","everyone","quick","pasta"]},
+  {name:"Pinwheels", tags:["lunch","everyone","quick"]},
+  {name:"Quiche", tags:["lunch","everyone","medium"]},
+  {name:"Soup", tags:["lunch","everyone","quick"]},
+  {name:"Fish finger sandwiches", tags:["lunch","fish","everyone","quick"]},
+  {name:"Pâté", tags:["lunch","adults","quick"]},
+  {name:"Soup + pâté", tags:["lunch","adults","quick"]},
+  {name:"Pizza pockets", tags:["lunch","kids","quick"]},
+  {name:"Omelette", tags:["lunch","egg","everyone","quick"]},
+  {name:"Scrambled eggs", tags:["lunch","egg","everyone","quick"]},
+  {name:"Tortilla", tags:["lunch","kids","quick"]},
+  {name:"PB toast", tags:["lunch","kids","quick"]},
+  {name:"Avo toast", tags:["lunch","everyone","quick"]},
+  {name:"Crumpets", tags:["lunch","kids","quick"]},
+  {name:"Pitta pizza", tags:["lunch","kids","quick"]},
+];
+
+const FILTER_GROUPS = [
+  {key:"when",   label:"When",    filters:["lunch","tea"]},
+  {key:"who",    label:"Who",     filters:["everyone","adults","kids"]},
+  {key:"protein",label:"Protein", filters:["beef","chicken","pork","fish","veggie","egg"]},
+  {key:"effort", label:"Effort",  filters:["quick","medium","slow"]},
+  {key:"style",  label:"Style",   filters:["pasta","rice","curry","bake","one-pot","one-tray","salad","freezable"]},
+];
+
+let activeFilters = new Set();
 const SHOP_CATS = [
   {key:"produce",label:"🥦 Fruit & Veg",color:"#166534",bg:"#f0fdf4"},
   {key:"meat",label:"🥩 Meat & Fish",color:"#991b1b",bg:"#fef2f2"},
@@ -1094,6 +1187,68 @@ function updateTableHighlight() {
   renderTable();
 }
 
+function renderFilters() {
+  const div = document.getElementById("meal-filters");
+  div.innerHTML = "";
+  FILTER_GROUPS.forEach(group => {
+    const grp = document.createElement("div");
+    grp.className = "filter-group";
+    const lbl = document.createElement("div");
+    lbl.className = "filter-group-label";
+    lbl.textContent = group.label;
+    grp.appendChild(lbl);
+    group.filters.forEach(f => {
+      const btn = document.createElement("button");
+      btn.className = "filter-btn" + (activeFilters.has(f) ? " active" : "");
+      btn.textContent = f;
+      btn.onclick = () => {
+        if (activeFilters.has(f)) activeFilters.delete(f);
+        else activeFilters.add(f);
+        renderFilters();
+        renderUnifiedBank();
+      };
+      grp.appendChild(btn);
+    });
+    div.appendChild(grp);
+  });
+}
+
+function getFilteredMeals() {
+  if (activeFilters.size === 0) return UNIFIED_MEALS;
+  return UNIFIED_MEALS.filter(m => [...activeFilters].every(f => m.tags.includes(f)));
+}
+
+function renderUnifiedBank() {
+  const pillsDiv = document.getElementById("unified-bank-pills");
+  pillsDiv.innerHTML = "";
+  const hint = document.getElementById("unified-bank-hint");
+  const isActive = activeBank || multiSelected.size > 0;
+
+  // Update header
+  const hdr = document.getElementById("unified-bank-header");
+  if (activeBank) {
+    const dayLabel = DAYS.find(d => d.key === activeBank.day)?.label || "";
+    hdr.innerHTML = `🍽 Meal Bank <span>→ tap to fill ${activeBank.person} ${activeBank.slot === "L" ? "lunch" : "tea"} on ${dayLabel}</span>`;
+  } else if (multiSelected.size > 0) {
+    hdr.innerHTML = `🍽 Meal Bank <span>→ tap to fill ${multiSelected.size} cells</span>`;
+  } else {
+    hdr.innerHTML = "🍽 Meal Bank";
+  }
+
+  const meals = getFilteredMeals();
+  if (meals.length === 0) {
+    pillsDiv.innerHTML = '<div style="padding:8px;font-size:11px;color:#a8a29e;">No meals match these filters</div>';
+    return;
+  }
+  meals.forEach(m => {
+    const btn = document.createElement("button");
+    btn.className = "upill" + (isActive ? " active-bank" : "");
+    btn.textContent = m.name;
+    if (isActive) btn.onclick = () => injectMeal(m.name);
+    pillsDiv.appendChild(btn);
+  });
+}
+
 function renderBanks() {
   // Meal bank pills - sectioned
   const pillsDiv = document.getElementById("meal-bank-pills");
@@ -1145,6 +1300,8 @@ function renderBanks() {
   } else {
     hdr.innerHTML = "🍽 Meal Bank";
   }
+  renderFilters();
+  renderUnifiedBank();
 }
 
 function updateBankHighlight() {
