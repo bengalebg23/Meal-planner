@@ -2,32 +2,73 @@ path = '/data/data/com.termux/files/home/meal-planner/index.html'
 with open(path, 'r') as f:
     content = f.read()
 
-# Add dark mode for new elements
-old = '''  body.dark .recipe-toggle { color: #78716c; }
+old = '''function addCustomDay() {
+  // Find the day before the first active day
+  const STD_DAYS = ["sun","mon","tue","wed","thu","fri","sat"];
+  const firstKey = activeDays[0];
+  const firstStd = STD_DAYS.indexOf(firstKey);
+  let newLabel = "Day";
+  let newKey = "custom_" + Date.now();
+  
+  if (firstStd > 0) {
+    // Previous standard day exists
+    const prevDay = STD_DAYS[firstStd - 1];
+    const stdDay = DAYS.find(d => d.key === prevDay);
+    if (stdDay && !activeDays.includes(prevDay)) {
+      // Use the standard day key directly
+      newKey = prevDay;
+      newLabel = stdDay.label;
+      activeDays.unshift(newKey);
+      ensureDayInPlan(newKey);
+      saveToStorage();
+      renderTable();
+      return;
+    }
+  }
+  // Fall back to custom day
+  customDays[newKey] = {key: newKey, label: newLabel, isWeekday: false};
+  activeDays.unshift(newKey);
+  ensureDayInPlan(newKey);
+  saveToStorage();
+  renderTable();
+}'''
 
-  @media print {'''
+new = '''function addCustomDay() {
+  const STD_DAYS = ["sun","mon","tue","wed","thu","fri","sat"];
+  // Find the earliest standard day in activeDays
+  let earliestStdIdx = -1;
+  for (const key of activeDays) {
+    const idx = STD_DAYS.indexOf(key);
+    if (idx !== -1) { earliestStdIdx = idx; break; }
+  }
+  if (earliestStdIdx > 0) {
+    // Try to add the previous standard day
+    const prevDay = STD_DAYS[earliestStdIdx - 1];
+    const stdDay = DAYS.find(d => d.key === prevDay);
+    if (stdDay && !activeDays.includes(prevDay)) {
+      activeDays.unshift(prevDay);
+      ensureDayInPlan(prevDay);
+      saveToStorage();
+      renderTable();
+      return;
+    }
+  }
+  // Fall back to custom day
+  const newKey = "custom_" + Date.now();
+  customDays[newKey] = {key: newKey, label: "New day", isWeekday: false};
+  activeDays.unshift(newKey);
+  ensureDayInPlan(newKey);
+  saveToStorage();
+  renderTable();
+}'''
 
-new = '''  body.dark .recipe-toggle { color: #78716c; }
-  body.dark #meal-filters { background: transparent; }
-  body.dark .filter-group-label { color: #78716c; }
-  body.dark .filter-btn { background: #292524; border-color: #44403c; color: #a8a29e; }
-  body.dark .filter-btn.active { background: #e2e0dd; color: #1c1917; border-color: #e2e0dd; }
-  body.dark #unified-bank { background: #1c1917; }
-  body.dark #unified-bank-header { background: #0f0e0d; }
-  body.dark .upill { background: #292524; border-color: #44403c; color: #e2e0dd; }
-  body.dark #type-in-bar input { background: #292524; border-color: #44403c; color: #e2e0dd; }
-  body.dark #type-in-bar button:first-of-type { background: #e2e0dd; color: #1c1917; }
-  body.dark #type-in-bar button:last-of-type { background: #44403c; color: #a8a29e; }
-
-  @media print {'''
-
-old_v = 'v3.1.9'
-new_v = 'v3.2.0'
+old_v = 'v3.2.0'
+new_v = 'v3.2.1'
 
 if old in content:
     content = content.replace(old, new)
     content = content.replace(old_v, new_v)
-    content = content.replace('meal-planner-v3.1.9', 'meal-planner-v3.2.0')
+    content = content.replace('meal-planner-v3.2.0', 'meal-planner-v3.2.1')
     with open(path, 'w') as f:
         f.write(content)
     print("Done")
