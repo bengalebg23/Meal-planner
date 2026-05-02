@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.1.5</title>
+<title>Family Meal Planner v3.1.6</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -409,7 +409,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.1.5</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.1.6</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -987,13 +987,23 @@ function loadFromStorage() {
 
 
 function getWeekOffset() {
-  // Returns how many weeks we are from current week based on viewingWeekKey
   if (!viewingWeekKey) return 0;
   const cur = getCurrentWeekKey();
   if (!cur) return 0;
-  const [cy, cw] = cur.split('_W').map(Number);
-  const [vy, vw] = viewingWeekKey.split('_W').map(Number);
-  return (vy - cy) * 52 + (vw - cw);
+  // Parse week keys to actual Monday dates and diff in weeks
+  function weekKeyToMonday(key) {
+    const [y, w] = key.split('_W').map(Number);
+    // ISO week 1 is the week containing the first Thursday of the year
+    const jan4 = new Date(y, 0, 4);
+    const startOfWeek1 = new Date(jan4);
+    startOfWeek1.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7));
+    const d = new Date(startOfWeek1);
+    d.setDate(d.getDate() + (w - 1) * 7);
+    return d;
+  }
+  const curDate = weekKeyToMonday(cur);
+  const viewDate = weekKeyToMonday(viewingWeekKey);
+  return Math.round((viewDate - curDate) / (7 * 24 * 60 * 60 * 1000));
 }
 
 function getDayDate(dayKey) {

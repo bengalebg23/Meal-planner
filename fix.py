@@ -2,67 +2,43 @@ path = '/data/data/com.termux/files/home/meal-planner/index.html'
 with open(path, 'r') as f:
     content = f.read()
 
-# Fix 1: Week nav full width + flash animation CSS
-old_css = '''  /* Week navigation */
-  #week-nav { display: flex; align-items: center; gap: 0; margin-top: 3px; width: 100%; }
-  .week-nav-btn { background: none; border: none; color: #78716c; font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 0; border-radius: 6px; transition: all 0.15s; flex: 1; text-align: center; }
-  .week-nav-btn:hover { background: #44403c; color: white; }
-  .week-nav-btn.current-week { background: white; color: #1c1917; font-size: 14px; font-weight: 800; }
-  .week-nav-btn.future-week { color: #93c5fd; }
-  .week-nav-btn.past-week { color: #78716c; }'''
+old = '''function getWeekOffset() {
+  // Returns how many weeks we are from current week based on viewingWeekKey
+  if (!viewingWeekKey) return 0;
+  const cur = getCurrentWeekKey();
+  if (!cur) return 0;
+  const [cy, cw] = cur.split('_W').map(Number);
+  const [vy, vw] = viewingWeekKey.split('_W').map(Number);
+  return (vy - cy) * 52 + (vw - cw);
+}'''
 
-new_css = '''  /* Week navigation */
-  #week-nav { display: flex; align-items: center; gap: 0; margin-top: 3px; width: 100vw; margin-left: -18px; }
-  .week-nav-btn { background: none; border: none; color: #78716c; font-size: 12px; font-weight: 600; cursor: pointer; padding: 8px 0; border-radius: 0; transition: all 0.15s; flex: 1; text-align: center; }
-  .week-nav-btn:hover { background: #44403c; color: white; }
-  .week-nav-btn.current-week { background: white; color: #1c1917; font-size: 14px; font-weight: 800; }
-  .week-nav-btn.future-week { color: #93c5fd; }
-  .week-nav-btn.past-week { color: #78716c; }
-  @keyframes weekFlash { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
-  #grid-wrap.flashing { animation: weekFlash 0.2s ease; }'''
+new = '''function getWeekOffset() {
+  if (!viewingWeekKey) return 0;
+  const cur = getCurrentWeekKey();
+  if (!cur) return 0;
+  // Parse week keys to actual Monday dates and diff in weeks
+  function weekKeyToMonday(key) {
+    const [y, w] = key.split('_W').map(Number);
+    // ISO week 1 is the week containing the first Thursday of the year
+    const jan4 = new Date(y, 0, 4);
+    const startOfWeek1 = new Date(jan4);
+    startOfWeek1.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7));
+    const d = new Date(startOfWeek1);
+    d.setDate(d.getDate() + (w - 1) * 7);
+    return d;
+  }
+  const curDate = weekKeyToMonday(cur);
+  const viewDate = weekKeyToMonday(viewingWeekKey);
+  return Math.round((viewDate - curDate) / (7 * 24 * 60 * 60 * 1000));
+}'''
 
-# Fix 2: Filter layout - When left, Who right
-old_filters_css = '  #meal-filters { padding: 8px 8px 0; display: flex; flex-wrap: wrap; gap: 4px; }\n  .filter-group { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }'
-new_filters_css = '  #meal-filters { padding: 8px 8px 0; display: flex; flex-wrap: wrap; gap: 4px; justify-content: space-between; }\n  .filter-group { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }\n  .filter-group.push-right { margin-left: auto; }'
+old_v = 'v3.1.5'
+new_v = 'v3.1.6'
 
-# Fix 3: Add flash + date refresh to navWeek
-old_nav = '''function navWeek(dir) {
-  saveCurrentToArchive();'''
-
-new_nav = '''function navWeek(dir) {
-  // Flash the grid
-  const grid = document.getElementById('grid-wrap');
-  if (grid) { grid.classList.remove('flashing'); void grid.offsetWidth; grid.classList.add('flashing'); setTimeout(() => grid.classList.remove('flashing'), 200); }
-  saveCurrentToArchive();'''
-
-# Fix 4: renderTable already calls getDayDate which uses getWeekOffset — 
-# but we need to ensure renderTable is called after viewingWeekKey is set in navWeek
-# The existing code already calls loadArchivedWeek/loadLiveWeek which call renderTable
-# So the fix is just making sure getDayDate is called AFTER viewingWeekKey is updated
-# which it already is. The real issue is getDayDate uses `now` not the viewed week date.
-# getWeekOffset fix was in previous patch - just need to make sure it's applied.
-
-# Fix 5: Push 'Who' group right in renderFilters
-old_render_filters = '''  FILTER_GROUPS.forEach(group => {
-    const grp = document.createElement("div");
-    grp.className = "filter-group";'''
-
-new_render_filters = '''  FILTER_GROUPS.forEach(group => {
-    const grp = document.createElement("div");
-    grp.className = "filter-group" + (group.key === "who" ? " push-right" : "");'''
-
-old_v = 'v3.1.4'
-new_v = 'v3.1.5'
-
-hits = [old_css in content, old_filters_css in content, old_nav in content, old_render_filters in content]
-print("Hits:", hits)
-if all(hits):
-    content = content.replace(old_css, new_css)
-    content = content.replace(old_filters_css, new_filters_css)
-    content = content.replace(old_nav, new_nav)
-    content = content.replace(old_render_filters, new_render_filters)
+if old in content:
+    content = content.replace(old, new)
     content = content.replace(old_v, new_v)
-    content = content.replace('meal-planner-v3.1.4', 'meal-planner-v3.1.5')
+    content = content.replace('meal-planner-v3.1.5', 'meal-planner-v3.1.6')
     with open(path, 'w') as f:
         f.write(content)
     print("Done")
