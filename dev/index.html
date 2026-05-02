@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.1.9</title>
+<title>Family Meal Planner v3.2.0</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -348,6 +348,16 @@
   body.dark .recipe-ingredients-label { color: #78716c; }
   body.dark .recipe-notes-label { color: #78716c; }
   body.dark .recipe-toggle { color: #78716c; }
+  body.dark #meal-filters { background: transparent; }
+  body.dark .filter-group-label { color: #78716c; }
+  body.dark .filter-btn { background: #292524; border-color: #44403c; color: #a8a29e; }
+  body.dark .filter-btn.active { background: #e2e0dd; color: #1c1917; border-color: #e2e0dd; }
+  body.dark #unified-bank { background: #1c1917; }
+  body.dark #unified-bank-header { background: #0f0e0d; }
+  body.dark .upill { background: #292524; border-color: #44403c; color: #e2e0dd; }
+  body.dark #type-in-bar input { background: #292524; border-color: #44403c; color: #e2e0dd; }
+  body.dark #type-in-bar button:first-of-type { background: #e2e0dd; color: #1c1917; }
+  body.dark #type-in-bar button:last-of-type { background: #44403c; color: #a8a29e; }
 
   @media print {
     #header-btns, #tabs, #legend, #banks, #generate-wrap, #floating-bar, #shop-summary-btns, #manual-add { display: none !important; }
@@ -409,7 +419,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.1.9</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.2.0</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
