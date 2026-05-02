@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v2.5.18</title>
+<title>Family Meal Planner v3.0.2</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -394,7 +394,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v2.5.18</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.0.2</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -586,17 +586,17 @@ const DAYS = [
 ];
 let activeDays = DAYS.map(d => d.key);
 let customDays = {};
-const QUICK_LUNCHES = ["Karen's","Nursery","School","MIRA","Salad pot","Chicken","Peppers","Skewers","Garlic bites","Ravioli","Pâté","Soup + pâté","Sandwiches","PB toast","Avo toast"];
+const QUICK_LUNCHES = ["Karen's","Nursery","School","MIRA","Salad pot","Chicken","Peppers","Skewers","Garlic bites","Ravioli","Pâté","Soup + pâté","Sandwiches","PB toast","Avo toast","Pasta and sauce","Pinwheels","Quiche","Soup","Fish finger sandwiches"];
 const COOKED_LUNCHES = ["Pizza pockets","Saus + bean","Noodles","Pasta sauce","Tuna toastie","Chicken bake","Porridge fingers","Omelette","Scrambled eggs"];
 const VIV_LUNCHES = ["Tortilla","Avo toast","Peanut toast","Crumpets","Sausage roll","Pitta pizza","Philly bagel","Crackers + hummus","Melon","Banana"];
 const MEAL_BANK_SECTIONS = [
   {
     key:"all", label:"👨‍👩‍👧‍👦 Everyone", color:"#1c1917", bg:"#f5f5f4",
-    items:["Karen's","Nursery","MIRA","Spaghetti Bolognese","Sausage potato bean","Fish pie","Lasagne","Fish cakes + wedges","Stir fry","Tinga + rice","Cottage pie","Chicken & leek bake","Burgers","Sausage orzo","One pot garlic chicken","Teriyaki skewers","Chilli","Pizza","Roast","Fajitas","Tortellini","????"],
+    items:["Karen's","Nursery","MIRA","Spaghetti Bolognese","Sausage potato bean","Fish pie","Lasagne","Fish cakes + wedges","Stir fry","Tinga + rice","Cottage pie","Chicken & leek bake","Burgers","Sausage orzo","One pot garlic chicken","Teriyaki skewers","Chilli","Pizza","Roast","Fajitas","Tortellini","????","Pulled pork fajitas","Tuna pasta","Mozzarella melts","Sausage and veg and potatoes","Fish fingers and veg and beans"],
   },
   {
     key:"adults", label:"🧑 Adults only", color:"#7c3aed", bg:"#ede9fe",
-    items:["Laksa","Thai curry","Fajita + nachos","Loaded nachos","Sourdough chicken kievs","Mushroom burgers","Spinach ricotta pasta bake","Greek feta salad","Aioli roast veg + chorizo + potato"],
+    items:["Laksa","Thai curry","Indian curry","Fajita + nachos","Loaded nachos","Sourdough chicken kievs","Mushroom burgers","Spinach ricotta pasta bake","Greek feta salad","Aioli roast veg + chorizo + potato"],
   },
   {
     key:"kids", label:"🧒 Kids", color:"#0369a1", bg:"#e0f2fe",
@@ -1252,6 +1252,15 @@ function switchTab(tab) {
   if (tab === "recipes") renderRecipes();
 }
 
+function getApiKey() {
+  let key = localStorage.getItem('mealplanner_apikey');
+  if (!key) {
+    key = prompt('Enter your Anthropic API key (stored locally on this device only):');
+    if (key) localStorage.setItem('mealplanner_apikey', key.trim());
+  }
+  return key;
+}
+
 async function generateShoppingList() {
   const meals = getPlannedMeals();
   if (meals.length === 0) { alert("Fill in some meals first!"); return; }
@@ -1281,7 +1290,7 @@ Respond ONLY with valid JSON, no markdown, no preamble:
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
+      headers: {"Content-Type": "application/json", "x-api-key": getApiKey(), "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true"},
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 1000,
