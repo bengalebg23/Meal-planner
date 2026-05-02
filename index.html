@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.1.6</title>
+<title>Family Meal Planner v3.1.9</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -409,7 +409,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.1.6</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.1.9</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -1015,7 +1015,7 @@ function getDayDate(dayKey) {
   const diff = target - dayOfWeek;
   const d = new Date(now);
   d.setDate(now.getDate() + diff + (getWeekOffset() * 7));
-  return d.getDate() + '/' + (d.getMonth()+1);
+  return d.getDate() + '/' + (d.getMonth()+1) + '(' + getWeekOffset() + ')';
 }
 
 function init() {
@@ -1989,7 +1989,14 @@ function navWeek(dir) {
 function loadArchivedWeek(weekKey) {
   try {
     const raw = localStorage.getItem('mealplanner_archive_' + weekKey);
-    if (!raw) return;
+    if (!raw) {
+      plan = emptyPlan();
+      renderTable();
+      renderBanks();
+      renderShop();
+      updateMealsDetected();
+      return;
+    }
     const snapshot = JSON.parse(raw);
     // Load into app state
     if (snapshot.plan) {
