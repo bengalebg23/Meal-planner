@@ -2,48 +2,54 @@ path = '/data/data/com.termux/files/home/meal-planner/index.html'
 with open(path, 'r') as f:
     content = f.read()
 
-# Fix 1: Remove debug (offset) from getDayDate
-old1 = "  return d.getDate() + '/' + (d.getMonth()+1) + '(' + getWeekOffset() + ')';"
-new1 = "  return d.getDate() + '/' + (d.getMonth()+1);"
+old = '''function getCurrentWeekKey() {
+  // ISO week number based key e.g. "2026_W16"
+  const now = new Date();
+  const jan4 = new Date(now.getFullYear(), 0, 4);
+  const weekNum = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  return `${now.getFullYear()}_W${String(weekNum).padStart(2,'0')}`;
+}'''
 
-# Fix 2: Restructure custom day cell layout - date left, delete right
-old2 = '''      tdDay.appendChild(labelInp);
-      // Show date below label if dateOffset is stored
-      if (customDays[dayKey]?.dateOffset !== undefined) {
-        const d = new Date();
-        d.setDate(d.getDate() + customDays[dayKey].dateOffset + (getWeekOffset() * 7));
-        const dateDiv = document.createElement("div");
-        dateDiv.style.cssText = "font-size:8px;color:#a8a29e;text-align:center;";
-        dateDiv.textContent = d.getDate() + "/" + (d.getMonth()+1);
-        tdDay.appendChild(dateDiv);
-      }
-      tdDay.appendChild(delBtn);'''
+new = '''function getCurrentWeekKey() {
+  // Proper ISO 8601 week number
+  const now = new Date();
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const dayNum = d.getUTCDay() || 7; // Mon=1, Sun=7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum); // nearest Thursday
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}_W${String(weekNum).padStart(2,'0')}`;
+}'''
 
-new2 = '''      const topRow = document.createElement("div");
-      topRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;";
-      topRow.appendChild(labelInp);
-      topRow.appendChild(delBtn);
-      tdDay.appendChild(topRow);
-      // Show date below label if dateOffset is stored
-      if (customDays[dayKey] && customDays[dayKey].dateOffset !== undefined) {
-        const d = new Date();
-        d.setDate(d.getDate() + customDays[dayKey].dateOffset + (getWeekOffset() * 7));
-        const dateDiv = document.createElement("div");
-        dateDiv.style.cssText = "font-size:8px;color:#a8a29e;";
-        dateDiv.textContent = d.getDate() + "/" + (d.getMonth()+1);
-        tdDay.appendChild(dateDiv);
-      }'''
+old2 = '''function getOffsetWeekKey(n) {
+  const now = new Date();
+  now.setDate(now.getDate() + n * 7);
+  const jan4 = new Date(now.getFullYear(), 0, 4);
+  const w = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  return now.getFullYear() + '_W' + String(w).padStart(2, '0');
+}'''
 
-old_v = 'v3.2.6'
-new_v = 'v3.2.7'
+new2 = '''function getOffsetWeekKey(n) {
+  const now = new Date();
+  now.setDate(now.getDate() + n * 7);
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const w = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}_W${String(w).padStart(2,'0')}`;
+}'''
 
-hits = [old1 in content, old2 in content]
+old_v = 'v3.2.7'
+new_v = 'v3.2.8'
+
+hits = [old in content, old2 in content]
 print("Hits:", hits)
 if all(hits):
-    content = content.replace(old1, new1)
+    content = content.replace(old, new)
     content = content.replace(old2, new2)
     content = content.replace(old_v, new_v)
-    content = content.replace('meal-planner-v3.2.6', 'meal-planner-v3.2.7')
+    content = content.replace('meal-planner-v3.2.7', 'meal-planner-v3.2.8')
     with open(path, 'w') as f:
         f.write(content)
     print("Done")

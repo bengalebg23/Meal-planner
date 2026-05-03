@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.2.7</title>
+<title>Family Meal Planner v3.2.8</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -419,7 +419,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.2.7</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.2.8</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -1952,11 +1952,14 @@ document.addEventListener("click", e => {
 let viewingWeekKey = null; // null = current live week
 
 function getCurrentWeekKey() {
-  // ISO week number based key e.g. "2026_W16"
+  // Proper ISO 8601 week number
   const now = new Date();
-  const jan4 = new Date(now.getFullYear(), 0, 4);
-  const weekNum = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-  return `${now.getFullYear()}_W${String(weekNum).padStart(2,'0')}`;
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const dayNum = d.getUTCDay() || 7; // Mon=1, Sun=7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum); // nearest Thursday
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}_W${String(weekNum).padStart(2,'0')}`;
 }
 
 function getArchiveKeys() {
@@ -2202,9 +2205,12 @@ function toggleLock() {
 function getOffsetWeekKey(n) {
   const now = new Date();
   now.setDate(now.getDate() + n * 7);
-  const jan4 = new Date(now.getFullYear(), 0, 4);
-  const w = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-  return now.getFullYear() + '_W' + String(w).padStart(2, '0');
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const w = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}_W${String(w).padStart(2,'0')}`;
 }
 
 function updateWeekNavButtons() {
