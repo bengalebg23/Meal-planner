@@ -3,32 +3,6 @@ with open(path, 'r') as f:
     content = f.read()
 
 old = '''function addCustomDay() {
-  // Week order for prepending: going back from Mon means Sun, Sat, Fri...
-  const WEEK_ORDER = ["mon","tue","wed","thu","fri","sat","sun"];
-  // Find the earliest day in activeDays that is a standard weekday
-  let earliestIdx = -1;
-  for (const key of activeDays) {
-    const idx = WEEK_ORDER.indexOf(key);
-    if (idx !== -1) { earliestIdx = idx; break; }
-  }
-  if (earliestIdx > 0) {
-    // Previous day in week order
-    const prevDay = WEEK_ORDER[earliestIdx - 1];
-    const stdDay = DAYS.find(d => d.key === prevDay);
-    if (stdDay && !activeDays.includes(prevDay)) {
-      activeDays.unshift(prevDay);
-      ensureDayInPlan(prevDay);
-      saveToStorage();
-      renderTable();
-      return;
-    }
-  }
-  // Fall back to custom day
-  const newKey = "custom_" + Date.now();
-  customDays[newKey] = {key: newKey, label: "New day", isWeekday: false};
-  activeDays.unshift(newKey);'''
-
-new = '''function addCustomDay() {
   // Full week in calendar order, wrapping Sun before Mon
   const WEEK_ORDER = ["sun","mon","tue","wed","thu","fri","sat"];
   // Find the first standard day in activeDays
@@ -58,13 +32,43 @@ new = '''function addCustomDay() {
   customDays[newKey] = {key: newKey, label: "New day", isWeekday: false};
   activeDays.unshift(newKey);'''
 
-old_v = 'v3.2.2'
-new_v = 'v3.2.3'
+new = '''function addCustomDay() {
+  // Work out the date of the first day currently showing
+  const DAY_NAMES = ["sun","mon","tue","wed","thu","fri","sat"];
+  const DAY_LABELS = {sun:"Sun",mon:"Mon",tue:"Tue",wed:"Wed",thu:"Thu",fri:"Fri",sat:"Sat"};
+  const firstKey = activeDays[0];
+  const firstStdIdx = DAY_NAMES.indexOf(firstKey);
+  
+  // Get the actual date of the first row
+  const weekOffset = getWeekOffset();
+  const now = new Date();
+  let firstDate = null;
+  if (firstStdIdx !== -1) {
+    const todayIdx = now.getDay(); // 0=Sun
+    const diff = firstStdIdx - todayIdx;
+    firstDate = new Date(now);
+    firstDate.setDate(now.getDate() + diff + (weekOffset * 7));
+  }
+  
+  // Previous day
+  const newKey = "custom_" + Date.now();
+  let newLabel = "Day";
+  if (firstDate) {
+    const prevDate = new Date(firstDate);
+    prevDate.setDate(firstDate.getDate() - 1);
+    const prevDayIdx = prevDate.getDay();
+    newLabel = DAY_LABELS[DAY_NAMES[prevDayIdx]] + " " + prevDate.getDate() + "/" + (prevDate.getMonth()+1);
+  }
+  customDays[newKey] = {key: newKey, label: newLabel, isWeekday: false};
+  activeDays.unshift(newKey);'''
+
+old_v = 'v3.2.3'
+new_v = 'v3.2.4'
 
 if old in content:
     content = content.replace(old, new)
     content = content.replace(old_v, new_v)
-    content = content.replace('meal-planner-v3.2.2', 'meal-planner-v3.2.3')
+    content = content.replace('meal-planner-v3.2.3', 'meal-planner-v3.2.4')
     with open(path, 'w') as f:
         f.write(content)
     print("Done")
