@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.2.9</title>
+<title>Family Meal Planner v3.3.0</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -414,12 +414,14 @@ onValue(planRef, (snapshot) => {
       <button class="week-nav-btn current-week" id="week-center-btn" onclick="navWeek(0)">W16</button>
       <button class="week-nav-btn" id="week-next-btn" onclick="navWeek(1)">W17</button>
     </div>
+    <input id="week-label" type="text" placeholder="Week name (optional)" oninput="saveToStorage()" style="background:transparent;border:none;color:white;font-size:13px;font-weight:600;outline:none;width:100%;margin-top:2px;padding:2px 0;" />
+    <span id="week-readonly-badge">read-only</span>
     <button id="restore-week-btn" onclick="restoreWeek()">↩ Restore to current</button>
   </div>
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.2.9</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.0</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -672,7 +674,7 @@ const UNIFIED_MEALS = [
   {name:"Marry me chicken", tags:["tea","chicken","adults","medium"]},
   {name:"Marry me salmon", tags:["tea","fish","adults","medium"]},
   {name:"Chicken Alfredo", tags:["tea","chicken","kids","quick","pasta"]},
-  {name:"Pitta pizza", tags:["tea","kids","quick"]},
+  {name:"Pitta pizza", tags:["lunch","tea","kids","quick"]},
   {name:"Fish fingers + wedges", tags:["tea","fish","kids","quick"]},
   {name:"Porridge fingers", tags:["tea","kids","quick"]},
   {name:"Mac & cheese", tags:["tea","veggie","kids","medium","pasta"]},
@@ -699,7 +701,6 @@ const UNIFIED_MEALS = [
   {name:"PB toast", tags:["lunch","kids","quick"]},
   {name:"Avo toast", tags:["lunch","everyone","quick"]},
   {name:"Crumpets", tags:["lunch","kids","quick"]},
-  {name:"Pitta pizza", tags:["lunch","kids","quick"]},
 ];
 
 const FILTER_GROUPS = [
@@ -741,7 +742,6 @@ const DEFAULT_RECIPES = {
   "Stir fry": { tag: "ClaudeRecipe", ingredients: ["400g chicken breast or tofu, sliced","3 tbsp soy sauce","1 tbsp sesame oil","1 tbsp oyster sauce","300g stir fry veg mix","frozen garlic","1 inch fresh ginger","Noodles or rice"], notes: "" },
   "Tinga + rice": { tag: "ClaudeRecipe", ingredients: ["600g chicken thighs","passata","2 chipotle peppers in adobo","frozen sliced onion","frozen garlic","1 tsp oregano","Basmati rice","Sour cream & coriander to serve"], notes: "Shred chicken in sauce. Good in tacos too." },
   "Cottage pie": { tag: "ClaudeRecipe", ingredients: ["500g beef mince","frozen diced onion","2 carrots, diced","2 celery sticks, diced","400ml beef stock","2 tbsp Worcestershire sauce","2 tbsp tomato purée","800g potatoes, mashed","50g butter","Cheddar for topping"], notes: "" },
-  "Chicken & leek bake": { tag: "ClaudeRecipe", ingredients: ["6 chicken thighs","3 leeks, sliced","200ml double cream","200ml chicken stock","frozen garlic","Thyme"], notes: "" },
   "Burgers": { tag: "ClaudeRecipe", ingredients: ["500g beef mince","1 egg","Breadcrumbs","Salt & pepper","Burger buns","Lettuce, tomato, cheese","Ketchup & mayo"], notes: "Shape into 4 patties. Kids love these." },
   "Sausage orzo": { tag: "ClaudeRecipe", ingredients: ["6 sausages, skins removed","frozen diced onion","frozen garlic","passata","300g orzo","600ml chicken stock","Large handful spinach","Parmesan"], notes: "One pot. Add stock gradually like risotto. 💡 Works really well with red sauce instead of plain passata — roast veg, garlic and mixed herbs blended with passata." },
   "One pot garlic chicken": { tag: "ClaudeRecipe", ingredients: ["8 chicken thighs, bone-in","frozen garlic","300ml white wine or chicken stock","400g new potatoes","Fresh thyme & rosemary","Lemon, sliced"], notes: "Roast at 200°C for 45 mins." },
@@ -766,7 +766,6 @@ const DEFAULT_RECIPES = {
   "Porridge fingers": { tag: "ClaudeRecipe", ingredients: ["150g porridge oats","200ml milk","1 banana, mashed","1 egg","1 tsp cinnamon","1 tbsp honey"], notes: "Great for Vivien. Bake at 180°C for 20 mins." },
   "Mac & cheese": { tag: "ClaudeRecipe", ingredients: ["300g macaroni","40g butter","40g plain flour","500ml milk","150g cheddar, grated","1 tsp mustard","Salt & pepper","Breadcrumbs for topping"], notes: "Kids' favourite. Can add hidden veg." },
   "Pasta sauce": { tag: "ClaudeRecipe", ingredients: ["400g pasta","400g passata","frozen diced onion","frozen garlic","1 tsp mixed herbs","Parmesan to serve"], notes: "Simple base. Add mince, veg or tuna as needed." },
-  "Tortellini": { tag: "ClaudeRecipe", ingredients: ["300g fresh tortellini (cheese or ham & cheese)","Butter","Parmesan to serve","Handful frozen peas (optional)"], notes: "Quick kids' tea. Cook tortellini per packet, toss in butter and parmesan. Peas add colour and veg without fuss. Can serve with a simple tomato sauce on the side if needed." },
   "Pulled pork fajitas": { tag: "ClaudeRecipe", ingredients: ["1kg pork shoulder","2 tbsp fajita seasoning","1 tbsp smoked paprika","1 tbsp brown sugar","200ml chicken stock","Flour tortillas","Sour cream","Grated cheddar","Slaw (cabbage, carrot, mayo)","Salsa"], notes: "Slow cooker: rub pork with seasoning, cook on low 8hrs or high 4hrs. Shred with forks. Serve in tortillas with slaw. Great for batch cooking — freezes well." },
   "Tuna pasta": { tag: "ClaudeRecipe", ingredients: ["400g pasta (penne or fusilli)","2 tins tuna chunks, drained","200g crème fraîche","100g frozen sweetcorn","100g frozen peas","frozen garlic","1 tsp mixed herbs","Parmesan to serve","Salt & pepper"], notes: "Cook pasta, drain reserving a cup of water. Fry garlic, add crème fraîche, tuna, sweetcorn and peas. Toss with pasta, loosen with pasta water if needed. Kids love this." },
   "Mozzarella melts": { tag: "ClaudeRecipe", ingredients: ["4 thick slices sourdough or ciabatta","2 balls mozzarella, sliced","4 tomatoes, sliced","Fresh basil","Olive oil","Salt & pepper","Optional: ham or pesto"], notes: "Top bread with tomato, mozzarella and basil. Drizzle with olive oil. Grill for 5-7 mins until bubbling. Quick and popular with kids." },
@@ -1066,7 +1065,7 @@ function renderTable() {
   const addTr = document.createElement("tr");
   addTr.className = "add-day-row";
   const addTd = document.createElement("td");
-  addTd.colSpan = 11;
+  addTd.colSpan = 10;
   const addBtn = document.createElement("button");
   addBtn.className = "add-day-btn";
   addBtn.textContent = "+ Add day at top";
@@ -1257,7 +1256,7 @@ function renderTableHighlights() {
 function updateTableHighlight() {
   document.querySelectorAll(".meal-cell").forEach(td => {
     td.classList.remove("active");
-    const inp = td.querySelector("input");
+    const inp = td.querySelector("textarea");
     if (inp) inp.classList.remove("active-input");
   });
   if (!activeBank) return;
@@ -2013,8 +2012,13 @@ function navWeek(dir) {
     const yr = parseInt(viewingWeekKey.split('_W')[0]);
     const w = parseInt(viewingWeekKey.split('_W')[1]) + dir;
     let newKey;
-    if (w < 1) newKey = (yr-1) + '_W52';
-    else if (w > 52) newKey = (yr+1) + '_W01';
+    function _isoMax(y) {
+      const d = new Date(Date.UTC(y, 0, 1)).getUTCDay();
+      const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+      return (d === 4 || (d === 3 && leap)) ? 53 : 52;
+    }
+    if (w < 1) { const py = yr-1; newKey = py + '_W' + String(_isoMax(py)).padStart(2,'0'); }
+    else if (w > _isoMax(yr)) newKey = (yr+1) + '_W01';
     else newKey = yr + '_W' + String(w).padStart(2,'0');
     if (dir === 1 && newKey === currentKey) { viewingWeekKey = null; loadLiveWeek(); }
     else { viewingWeekKey = newKey; loadArchivedWeek(viewingWeekKey); if (window.fbSubscribeWeek) window.fbSubscribeWeek(newKey); }
@@ -2220,11 +2224,20 @@ function getOffsetWeekKey(n) {
 function updateWeekNavButtons() {
   const currentKey = getCurrentWeekKey();
   const activeKey = viewingWeekKey || currentKey;
+  // ISO 8601: a year has 53 weeks if Jan 1 is Thu, OR Jan 1 is Wed AND it's a leap year
+  function isoWeeksInYear(y) {
+    const d = new Date(Date.UTC(y, 0, 1)).getUTCDay();
+    const isLeap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+    return (d === 4 || (d === 3 && isLeap)) ? 53 : 52;
+  }
   function wkOffset(base, n) {
     const yr = parseInt(base.split('_W')[0]);
     const w = parseInt(base.split('_W')[1]) + n;
-    if (w < 1) return (yr-1) + '_W52';
-    if (w > 52) return (yr+1) + '_W01';
+    if (w < 1) {
+      const py = yr - 1;
+      return py + '_W' + String(isoWeeksInYear(py)).padStart(2,'0');
+    }
+    if (w > isoWeeksInYear(yr)) return (yr+1) + '_W01';
     return yr + '_W' + String(w).padStart(2,'0');
   }
   function wkLabel(k) { return 'W' + parseInt(k.split('_W')[1]); }
