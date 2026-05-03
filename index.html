@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.2.0</title>
+<title>Family Meal Planner v3.2.4</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -419,7 +419,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.2.0</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.2.4</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -891,29 +891,32 @@ function emptyPlan() {
 }
 
 function addCustomDay() {
-  // Find the day before the first active day
-  const STD_DAYS = ["sun","mon","tue","wed","thu","fri","sat"];
+  // Work out the date of the first day currently showing
+  const DAY_NAMES = ["sun","mon","tue","wed","thu","fri","sat"];
+  const DAY_LABELS = {sun:"Sun",mon:"Mon",tue:"Tue",wed:"Wed",thu:"Thu",fri:"Fri",sat:"Sat"};
   const firstKey = activeDays[0];
-  const firstStd = STD_DAYS.indexOf(firstKey);
-  let newLabel = "Day";
-  let newKey = "custom_" + Date.now();
+  const firstStdIdx = DAY_NAMES.indexOf(firstKey);
   
-  if (firstStd > 0) {
-    // Previous standard day exists
-    const prevDay = STD_DAYS[firstStd - 1];
-    const stdDay = DAYS.find(d => d.key === prevDay);
-    if (stdDay && !activeDays.includes(prevDay)) {
-      // Use the standard day key directly
-      newKey = prevDay;
-      newLabel = stdDay.label;
-      activeDays.unshift(newKey);
-      ensureDayInPlan(newKey);
-      saveToStorage();
-      renderTable();
-      return;
-    }
+  // Get the actual date of the first row
+  const weekOffset = getWeekOffset();
+  const now = new Date();
+  let firstDate = null;
+  if (firstStdIdx !== -1) {
+    const todayIdx = now.getDay(); // 0=Sun
+    const diff = firstStdIdx - todayIdx;
+    firstDate = new Date(now);
+    firstDate.setDate(now.getDate() + diff + (weekOffset * 7));
   }
-  // Fall back to custom day
+  
+  // Previous day
+  const newKey = "custom_" + Date.now();
+  let newLabel = "Day";
+  if (firstDate) {
+    const prevDate = new Date(firstDate);
+    prevDate.setDate(firstDate.getDate() - 1);
+    const prevDayIdx = prevDate.getDay();
+    newLabel = DAY_LABELS[DAY_NAMES[prevDayIdx]] + " " + prevDate.getDate() + "/" + (prevDate.getMonth()+1);
+  }
   customDays[newKey] = {key: newKey, label: newLabel, isWeekday: false};
   activeDays.unshift(newKey);
   ensureDayInPlan(newKey);
