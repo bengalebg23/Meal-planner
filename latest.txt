@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.2.4</title>
+<title>Family Meal Planner v3.2.7</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -419,7 +419,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.2.4</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.2.7</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -891,33 +891,38 @@ function emptyPlan() {
 }
 
 function addCustomDay() {
-  // Work out the date of the first day currently showing
   const DAY_NAMES = ["sun","mon","tue","wed","thu","fri","sat"];
   const DAY_LABELS = {sun:"Sun",mon:"Mon",tue:"Tue",wed:"Wed",thu:"Thu",fri:"Fri",sat:"Sat"};
-  const firstKey = activeDays[0];
-  const firstStdIdx = DAY_NAMES.indexOf(firstKey);
-  
-  // Get the actual date of the first row
   const weekOffset = getWeekOffset();
   const now = new Date();
+  const todayIdx = now.getDay();
+
+  // Get date of first row - handles standard days and previous custom days
   let firstDate = null;
+  const firstKey = activeDays[0];
+  const firstStdIdx = DAY_NAMES.indexOf(firstKey);
   if (firstStdIdx !== -1) {
-    const todayIdx = now.getDay(); // 0=Sun
     const diff = firstStdIdx - todayIdx;
     firstDate = new Date(now);
     firstDate.setDate(now.getDate() + diff + (weekOffset * 7));
+  } else if (customDays[firstKey] && customDays[firstKey].dateOffset !== undefined) {
+    firstDate = new Date(now);
+    firstDate.setDate(now.getDate() + customDays[firstKey].dateOffset + (weekOffset * 7));
   }
-  
-  // Previous day
+
   const newKey = "custom_" + Date.now();
   let newLabel = "Day";
+  let dateOffset = null;
   if (firstDate) {
     const prevDate = new Date(firstDate);
     prevDate.setDate(firstDate.getDate() - 1);
     const prevDayIdx = prevDate.getDay();
-    newLabel = DAY_LABELS[DAY_NAMES[prevDayIdx]] + " " + prevDate.getDate() + "/" + (prevDate.getMonth()+1);
+    newLabel = DAY_LABELS[DAY_NAMES[prevDayIdx]];
+    const todayMidnight = new Date(now); todayMidnight.setHours(0,0,0,0);
+    const prevMidnight = new Date(prevDate); prevMidnight.setHours(0,0,0,0);
+    dateOffset = Math.round((prevMidnight - todayMidnight) / (24*60*60*1000)) - (weekOffset * 7);
   }
-  customDays[newKey] = {key: newKey, label: newLabel, isWeekday: false};
+  customDays[newKey] = {key: newKey, label: newLabel, dateOffset: dateOffset, isWeekday: false};
   activeDays.unshift(newKey);
   ensureDayInPlan(newKey);
   saveToStorage();
@@ -1028,7 +1033,7 @@ function getDayDate(dayKey) {
   const diff = target - dayOfWeek;
   const d = new Date(now);
   d.setDate(now.getDate() + diff + (getWeekOffset() * 7));
-  return d.getDate() + '/' + (d.getMonth()+1) + '(' + getWeekOffset() + ')';
+  return d.getDate() + '/' + (d.getMonth()+1);
 }
 
 function init() {
@@ -1088,8 +1093,20 @@ function renderTable() {
       delBtn.title = "Remove this row";
       delBtn.textContent = "✕";
       delBtn.onclick = () => removeDay(dayKey);
-      tdDay.appendChild(labelInp);
-      tdDay.appendChild(delBtn);
+      const topRow = document.createElement("div");
+      topRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;";
+      topRow.appendChild(labelInp);
+      topRow.appendChild(delBtn);
+      tdDay.appendChild(topRow);
+      // Show date below label if dateOffset is stored
+      if (customDays[dayKey] && customDays[dayKey].dateOffset !== undefined) {
+        const d = new Date();
+        d.setDate(d.getDate() + customDays[dayKey].dateOffset + (getWeekOffset() * 7));
+        const dateDiv = document.createElement("div");
+        dateDiv.style.cssText = "font-size:8px;color:#a8a29e;";
+        dateDiv.textContent = d.getDate() + "/" + (d.getMonth()+1);
+        tdDay.appendChild(dateDiv);
+      }
     } else {
       const dayDate = getDayDate(dayKey);
       tdDay.innerHTML = day.label + (dayDate ? '<div style="font-size:8px;color:#a8a29e;">' + dayDate + '</div>' : '') + (isDnD ? '<div class="dnd-hint">🍕 Pizza night</div>' : '') + (isSwim ? '<div class="dnd-hint" style="color:#0369a1">⚡ Quick tea</div>' : '');
