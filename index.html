@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.2.8</title>
+<title>Family Meal Planner v3.2.9</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -419,7 +419,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.2.8</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.2.9</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -626,7 +626,7 @@ const MEAL_BANK_SECTIONS = [
   },
   {
     key:"adults", label:"🧑 Adults only", color:"#7c3aed", bg:"#ede9fe",
-    items:["Laksa","Thai curry","Indian curry","Fajita + nachos","Loaded nachos","Sourdough chicken kievs","Mushroom burgers","Spinach ricotta pasta bake","Greek feta salad","Aioli roast veg + chorizo + potato"],
+    items:["Laksa","Thai curry","Indian curry","Fajita + nachos","Loaded nachos","Sourdough chicken kievs","Mushroom burgers","Spinach ricotta pasta bake","Greek feta salad","Aioli roast veg + chorizo + potato","Marry me chicken","Marry me salmon"],
   },
   {
     key:"kids", label:"🧒 Kids", color:"#0369a1", bg:"#e0f2fe",
@@ -669,6 +669,8 @@ const UNIFIED_MEALS = [
   {name:"Spinach ricotta pasta bake", tags:["tea","veggie","adults","medium","pasta","bake"]},
   {name:"Greek feta salad", tags:["tea","veggie","adults","quick","salad"]},
   {name:"Aioli roast veg + chorizo + potato", tags:["tea","pork","adults","medium","one-tray"]},
+  {name:"Marry me chicken", tags:["tea","chicken","adults","medium"]},
+  {name:"Marry me salmon", tags:["tea","fish","adults","medium"]},
   {name:"Chicken Alfredo", tags:["tea","chicken","kids","quick","pasta"]},
   {name:"Pitta pizza", tags:["tea","kids","quick"]},
   {name:"Fish fingers + wedges", tags:["tea","fish","kids","quick"]},
@@ -755,6 +757,8 @@ const DEFAULT_RECIPES = {
   "Mushroom burgers": { tag: "ClaudeRecipe", ingredients: ["4 large portobello mushrooms","Olive oil","Burger buns","Halloumi or cheese slices","Lettuce, tomato, red onion","Burger sauce or mayo"], notes: "Adults only." },
   "Spinach ricotta pasta bake": { tag: "ClaudeRecipe", ingredients: ["400g pasta (rigatoni or penne)","250g ricotta","200g spinach","500g passata","frozen garlic","100g mozzarella, torn","Parmesan","Nutmeg"], notes: "Adults only." },
   "Greek feta salad": { tag: "ClaudeRecipe", ingredients: ["200g feta, cubed","1 cucumber, diced","400g cherry tomatoes, halved","frozen sliced red onion","Kalamata olives","Extra virgin olive oil","Dried oregano","Crusty bread to serve"], notes: "Adults only. Add grilled chicken to bulk it up." },
+  "Marry me chicken": { tag: "ClaudeRecipe", ingredients: ["4 chicken breasts","150ml double cream","100ml chicken stock","1 tin chopped tomatoes","frozen garlic","1 tsp dried chilli flakes","1 tsp dried oregano","Handful fresh basil","Parmesan to serve","Salt & pepper"], notes: "Adults only. Sear chicken in olive oil, remove and set aside. Fry garlic, add tomatoes, stock, cream, chilli and oregano. Return chicken and simmer 15-20 mins until cooked through. Finish with fresh basil and parmesan. Serve with pasta or crusty bread." },
+  "Marry me salmon": { tag: "ClaudeRecipe", ingredients: ["4 salmon fillets","150ml double cream","100ml fish or veg stock","1 tin chopped tomatoes","frozen garlic","1 tsp dried chilli flakes","1 tsp dried oregano","Handful fresh basil","Parmesan to serve","Salt & pepper"], notes: "Adults only. Same method as marry me chicken but with salmon fillets. Sear skin-side down first. Simmer in the sauce for 10-12 mins only — don't overcook the salmon. Serve with pasta or new potatoes." },
   "Aioli roast veg + chorizo + potato": { tag: "ClaudeRecipe", ingredients: ["200g chorizo, sliced","4 potatoes, cubed","2 peppers, chopped","1 courgette, sliced","frozen sliced red onion","Olive oil","Smoked paprika","Aioli to serve"], notes: "Adults only. Roast everything at 200°C for 35 mins." },
   "Chicken Alfredo": { tag: "ClaudeRecipe", ingredients: ["400g pasta (tagliatelle or penne)","400g chicken breast, sliced","300ml double cream","frozen garlic","50g parmesan","Salt & pepper","Butter"], notes: "Kids love this. Mild and creamy." },
   "Pitta pizza": { tag: "ClaudeRecipe", ingredients: ["4 pitta breads","4 tbsp tomato sauce","100g mozzarella, grated","Toppings of choice"], notes: "Quick kids' tea. Let them build their own." },

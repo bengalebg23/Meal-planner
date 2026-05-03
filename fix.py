@@ -2,54 +2,29 @@ path = '/data/data/com.termux/files/home/meal-planner/index.html'
 with open(path, 'r') as f:
     content = f.read()
 
-old = '''function getCurrentWeekKey() {
-  // ISO week number based key e.g. "2026_W16"
-  const now = new Date();
-  const jan4 = new Date(now.getFullYear(), 0, 4);
-  const weekNum = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-  return `${now.getFullYear()}_W${String(weekNum).padStart(2,'0')}`;
-}'''
+# Add to adults meal bank
+old1 = '    items:["Laksa","Thai curry","Indian curry","Fajita + nachos","Loaded nachos","Sourdough chicken kievs","Mushroom burgers","Spinach ricotta pasta bake","Greek feta salad","Aioli roast veg + chorizo + potato"],'
+new1 = '    items:["Laksa","Thai curry","Indian curry","Fajita + nachos","Loaded nachos","Sourdough chicken kievs","Mushroom burgers","Spinach ricotta pasta bake","Greek feta salad","Aioli roast veg + chorizo + potato","Marry me chicken","Marry me salmon"],'
 
-new = '''function getCurrentWeekKey() {
-  // Proper ISO 8601 week number
-  const now = new Date();
-  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  const dayNum = d.getUTCDay() || 7; // Mon=1, Sun=7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum); // nearest Thursday
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-  return `${d.getUTCFullYear()}_W${String(weekNum).padStart(2,'0')}`;
-}'''
+# Add to UNIFIED_MEALS
+old2 = '  {name:"Aioli roast veg + chorizo + potato", tags:["tea","pork","adults","medium","one-tray"]},'
+new2 = '  {name:"Aioli roast veg + chorizo + potato", tags:["tea","pork","adults","medium","one-tray"]},\n  {name:"Marry me chicken", tags:["tea","chicken","adults","medium"]},\n  {name:"Marry me salmon", tags:["tea","fish","adults","medium"]},'
 
-old2 = '''function getOffsetWeekKey(n) {
-  const now = new Date();
-  now.setDate(now.getDate() + n * 7);
-  const jan4 = new Date(now.getFullYear(), 0, 4);
-  const w = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-  return now.getFullYear() + '_W' + String(w).padStart(2, '0');
-}'''
+# Add recipes
+old3 = '  "Aioli roast veg + chorizo + potato": { tag: "ClaudeRecipe"'
+new3 = '  "Marry me chicken": { tag: "ClaudeRecipe", ingredients: ["4 chicken breasts","150ml double cream","100ml chicken stock","1 tin chopped tomatoes","frozen garlic","1 tsp dried chilli flakes","1 tsp dried oregano","Handful fresh basil","Parmesan to serve","Salt & pepper"], notes: "Adults only. Sear chicken in olive oil, remove and set aside. Fry garlic, add tomatoes, stock, cream, chilli and oregano. Return chicken and simmer 15-20 mins until cooked through. Finish with fresh basil and parmesan. Serve with pasta or crusty bread." },\n  "Marry me salmon": { tag: "ClaudeRecipe", ingredients: ["4 salmon fillets","150ml double cream","100ml fish or veg stock","1 tin chopped tomatoes","frozen garlic","1 tsp dried chilli flakes","1 tsp dried oregano","Handful fresh basil","Parmesan to serve","Salt & pepper"], notes: "Adults only. Same method as marry me chicken but with salmon fillets. Sear skin-side down first. Simmer in the sauce for 10-12 mins only — don\'t overcook the salmon. Serve with pasta or new potatoes." },\n  "Aioli roast veg + chorizo + potato": { tag: "ClaudeRecipe"'
 
-new2 = '''function getOffsetWeekKey(n) {
-  const now = new Date();
-  now.setDate(now.getDate() + n * 7);
-  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const w = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-  return `${d.getUTCFullYear()}_W${String(w).padStart(2,'0')}`;
-}'''
+old_v = 'v3.2.8'
+new_v = 'v3.2.9'
 
-old_v = 'v3.2.7'
-new_v = 'v3.2.8'
-
-hits = [old in content, old2 in content]
+hits = [old1 in content, old2 in content, old3 in content]
 print("Hits:", hits)
 if all(hits):
-    content = content.replace(old, new)
+    content = content.replace(old1, new1)
     content = content.replace(old2, new2)
+    content = content.replace(old3, new3)
     content = content.replace(old_v, new_v)
-    content = content.replace('meal-planner-v3.2.7', 'meal-planner-v3.2.8')
+    content = content.replace('meal-planner-v3.2.8', 'meal-planner-v3.2.9')
     with open(path, 'w') as f:
         f.write(content)
     print("Done")
