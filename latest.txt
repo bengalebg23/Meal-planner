@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.1</title>
+<title>Family Meal Planner v3.3.2</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -87,7 +87,9 @@
   #unified-bank-header { background: #292524; color: white; padding: 8px 13px; font-size: 12px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
   #unified-bank-header span { font-size: 9px; color: #a8a29e; margin-left: 5px; font-weight: 400; }
   #unified-bank-pills { padding: 9px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-  .upill-count { color: #a8a29e; font-size: 9px; font-weight: 400; margin-left: 4px; }
+  .filter-group-divider { display: inline-block; width: 1px; height: 20px; background: #d6d3d1; margin: 0 6px; vertical-align: middle; }
+  body.dark .filter-group-divider { background: #44403c; }
+    .upill-count { color: #a8a29e; font-size: 9px; font-weight: 400; margin-left: 4px; }
   body.dark .upill-count { color: #78716c; }
 
   /* Add-to-bank modal */
@@ -112,6 +114,8 @@
   body.dark .amm-opt { background: #292524; border-color: #44403c; color: #e2e0dd; }
   body.dark .amm-opt.selected { background: #e2e0dd; color: #1c1917; border-color: #e2e0dd; }
   body.dark #amm-skip { background: #292524; color: #a8a29e; }
+  body.dark #amm-step-info { color: #a8a29e; }
+  body.dark .amm-q-label { color: #a8a29e; }
 
   .upill { border-radius: 20px; padding: 0 11px; font-size: 12px; cursor: default; border: 1px solid #e7e5e4; background: #f5f5f4; color: #1c1917; height: 30px; line-height: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
   .upill.active-bank { cursor: pointer; }
@@ -447,7 +451,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.1</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.2</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -686,7 +690,7 @@ const UNIFIED_MEALS = [
   {name:"Spaghetti Bolognese", tags:["tea","beef","everyone","medium","pasta"]},
   {name:"Sausage potato bean", tags:["tea","pork","everyone","medium","one-pot"]},
   {name:"Fish pie", tags:["tea","fish","everyone","slow","bake"]},
-  {name:"Lasagne", tags:["tea","beef","everyone","slow","pasta","freezable"]},
+  {name:"Lasagne", tags:["tea","beef","everyone","slow","pasta"]},
   {name:"Fish cakes + wedges", tags:["tea","fish","everyone","medium"]},
   {name:"Stir fry", tags:["tea","chicken","everyone","quick"]},
   {name:"Tinga + rice", tags:["tea","chicken","everyone","medium","rice"]},
@@ -696,12 +700,12 @@ const UNIFIED_MEALS = [
   {name:"Sausage orzo", tags:["tea","pork","everyone","medium","pasta","one-pot"]},
   {name:"One pot garlic chicken", tags:["tea","chicken","everyone","medium","one-pot"]},
   {name:"Teriyaki skewers", tags:["tea","chicken","everyone","medium","rice"]},
-  {name:"Chilli", tags:["tea","beef","everyone","medium","one-pot","freezable"]},
+  {name:"Chilli", tags:["tea","beef","everyone","medium","one-pot"]},
   {name:"Pizza", tags:["tea","everyone","quick"]},
   {name:"Roast", tags:["tea","everyone","slow"]},
   {name:"Fajitas", tags:["tea","chicken","everyone","quick"]},
   {name:"Tortellini", tags:["tea","everyone","quick","pasta"]},
-  {name:"Pulled pork fajitas", tags:["tea","pork","everyone","slow","freezable"]},
+  {name:"Pulled pork fajitas", tags:["tea","pork","everyone","slow"]},
   {name:"Tuna pasta", tags:["tea","fish","everyone","quick","pasta"]},
   {name:"Mozzarella melts", tags:["tea","everyone","quick"]},
   {name:"Sausage and veg and potatoes", tags:["tea","pork","everyone","medium","one-tray"]},
@@ -752,9 +756,8 @@ const FILTER_GROUPS = [
   {key:"when",   label:"When",    filters:["lunch","tea"]},
   {key:"who",    label:"Who",     filters:["everyone","adults","kids"]},
   {key:"protein",label:"Protein", filters:["beef","chicken","pork","fish","veggie","egg"]},
-  {key:"effort", label:"Effort",  filters:["quick","medium","slow"]},
-  {key:"style",  label:"Style",   filters:["pasta","rice","curry","bake","one-pot","one-tray","salad","freezable"]},
-  {key:"sort",   label:"Sort",    filters:["popular"]},
+  {key:"effort", label:"Effort",  filters:["quick","medium","slow","popular"]},
+  {key:"style",  label:"Style",   filters:["pasta","rice","curry","bake","one-pot","one-tray","salad"]},
 ];
 
 let activeFilters = new Set();
