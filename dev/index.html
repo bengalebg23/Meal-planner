@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.3</title>
+<title>Family Meal Planner v3.3.4</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -451,7 +451,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.3</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.4</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -1398,8 +1398,15 @@ function renderFilters() {
       btn.className = "filter-btn" + (activeFilters.has(f) ? " active" : "");
       btn.textContent = f;
       btn.onclick = () => {
-        if (activeFilters.has(f)) activeFilters.delete(f);
-        else activeFilters.add(f);
+        if (activeFilters.has(f)) {
+          activeFilters.delete(f);
+        } else {
+          // If this group is exclusive, clear any other active filter in the same group first
+          if (group.exclusive) {
+            group.filters.forEach(other => activeFilters.delete(other));
+          }
+          activeFilters.add(f);
+        }
         renderFilters();
         renderUnifiedBank();
       };
@@ -2087,7 +2094,9 @@ document.addEventListener("click", e => {
   if (!activeBank && multiSelected.size === 0) return;
   if (e.target.closest("#meal-bank-pills") || e.target.closest("#quick-lunches") ||
       e.target.closest("#cooked-lunches") || e.target.closest("#viv-lunches") ||
-      e.target.closest("#meal-tbody") || e.target.closest("#floating-bar")) return;
+      e.target.closest("#meal-tbody") || e.target.closest("#floating-bar") ||
+      e.target.closest("#unified-bank") || e.target.closest("#meal-filters") ||
+      e.target.closest("#type-in-bar") || e.target.closest("#add-meal-modal")) return;
   cancelFill();
 });
 
