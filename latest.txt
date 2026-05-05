@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.6</title>
+<title>Family Meal Planner v3.3.7</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -451,7 +451,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.6</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.7</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -1407,8 +1407,11 @@ function renderFilters() {
           }
           activeFilters.add(f);
         }
-        renderFilters();
-        renderUnifiedBank();
+        // Defer re-render: the click event still needs to bubble up to the
+        // document click handler, and that handler checks e.target.closest(...).
+        // If we re-render NOW, the button is detached from the DOM mid-bubble
+        // and closest() returns null → cancelFill() fires → selection lost.
+        setTimeout(() => { renderFilters(); renderUnifiedBank(); }, 0);
       };
       grp.appendChild(btn);
     });
@@ -1568,18 +1571,6 @@ function injectMeal(text) {
 }
 
 function cancelFill() {
-  try {
-    const stack = (new Error()).stack || '';
-    const lines = stack.split('\n').slice(1, 5).map(s => s.trim()).join(' | ');
-    let banner = document.getElementById('debug-banner');
-    if (!banner) {
-      banner = document.createElement('div');
-      banner.id = 'debug-banner';
-      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#dc2626;color:white;font-size:9px;padding:4px 8px;z-index:9999;font-family:monospace;word-break:break-all;max-height:80px;overflow:auto;';
-      document.body.appendChild(banner);
-    }
-    banner.textContent = '[cancelFill ' + new Date().toLocaleTimeString() + '] ' + lines;
-  } catch(e) {}
   activeBank = null;
   multiSelected.clear();
   updateFloating();
@@ -2503,6 +2494,8 @@ function ammNext() {
 }
 
 init();
+// Clean up any leftover debug banner from earlier versions
+{ const b = document.getElementById('debug-banner'); if (b) b.remove(); }
 // Restore dark mode preference
 try {
   if (localStorage.getItem('mealplanner_dark') === '1') {
