@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.7</title>
+<title>Family Meal Planner v3.3.0</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -87,36 +87,6 @@
   #unified-bank-header { background: #292524; color: white; padding: 8px 13px; font-size: 12px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
   #unified-bank-header span { font-size: 9px; color: #a8a29e; margin-left: 5px; font-weight: 400; }
   #unified-bank-pills { padding: 9px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-  .filter-group-divider { display: inline-block; width: 1px; height: 20px; background: #d6d3d1; margin: 0 6px; vertical-align: middle; }
-  body.dark .filter-group-divider { background: #44403c; }
-    .upill-count { color: #a8a29e; font-size: 9px; font-weight: 400; margin-left: 4px; }
-  body.dark .upill-count { color: #78716c; }
-
-  /* Add-to-bank modal */
-  #add-meal-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 16px; }
-  #add-meal-modal.visible { display: flex; }
-  #amm-box { background: white; border-radius: 14px; width: 100%; max-width: 380px; overflow: hidden; }
-  #amm-header { background: #1c1917; color: white; padding: 13px 16px; font-size: 14px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
-  #amm-close { background: none; border: none; color: #a8a29e; font-size: 22px; cursor: pointer; line-height: 1; padding: 0; }
-  #amm-body { padding: 14px 16px; }
-  #amm-meal-name { font-size: 15px; font-weight: 700; color: #1c1917; margin-bottom: 4px; }
-  #amm-step-info { font-size: 11px; color: #78716c; margin-bottom: 12px; }
-  .amm-q-label { font-size: 11px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 7px; }
-  .amm-options { display: flex; flex-wrap: wrap; gap: 6px; }
-  .amm-opt { border: 1px solid #e7e5e4; background: #f5f5f4; border-radius: 20px; padding: 7px 13px; font-size: 12px; cursor: pointer; color: #1c1917; }
-  .amm-opt.selected { background: #1c1917; color: white; border-color: #1c1917; }
-  #amm-actions { display: flex; gap: 8px; margin-top: 16px; }
-  #amm-skip { flex: 1; background: #f5f5f4; color: #78716c; border: none; border-radius: 8px; padding: 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
-  #amm-next { flex: 2; background: #1c1917; color: white; border: none; border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  #amm-next:disabled { background: #a8a29e; cursor: default; }
-  body.dark #amm-box { background: #1c1917; }
-  body.dark #amm-meal-name { color: #e2e0dd; }
-  body.dark .amm-opt { background: #292524; border-color: #44403c; color: #e2e0dd; }
-  body.dark .amm-opt.selected { background: #e2e0dd; color: #1c1917; border-color: #e2e0dd; }
-  body.dark #amm-skip { background: #292524; color: #a8a29e; }
-  body.dark #amm-step-info { color: #a8a29e; }
-  body.dark .amm-q-label { color: #a8a29e; }
-
   .upill { border-radius: 20px; padding: 0 11px; font-size: 12px; cursor: default; border: 1px solid #e7e5e4; background: #f5f5f4; color: #1c1917; height: 30px; line-height: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
   .upill.active-bank { cursor: pointer; }
   .upill.active-bank:hover { opacity: 0.85; }
@@ -451,7 +421,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.7</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.0</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -625,25 +595,6 @@ onValue(planRef, (snapshot) => {
   </div>
 </div>
 
-<!-- Add-to-bank modal -->
-<div id="add-meal-modal" onclick="if(event.target===this)closeAddMealModal()">
-  <div id="amm-box">
-    <div id="amm-header">
-      <span id="amm-title">Add to meal bank?</span>
-      <button id="amm-close" onclick="closeAddMealModal()">×</button>
-    </div>
-    <div id="amm-body">
-      <div id="amm-meal-name"></div>
-      <div id="amm-step-info"></div>
-      <div id="amm-question"></div>
-      <div id="amm-actions">
-        <button id="amm-skip" onclick="closeAddMealModal()">Skip</button>
-        <button id="amm-next" onclick="ammNext()">Next</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div id="floating-bar">
   <span id="floating-text"></span>
   <button id="floating-cancel" onclick="cancelFill()">✕</button>
@@ -690,7 +641,7 @@ const UNIFIED_MEALS = [
   {name:"Spaghetti Bolognese", tags:["tea","beef","everyone","medium","pasta"]},
   {name:"Sausage potato bean", tags:["tea","pork","everyone","medium","one-pot"]},
   {name:"Fish pie", tags:["tea","fish","everyone","slow","bake"]},
-  {name:"Lasagne", tags:["tea","beef","everyone","slow","pasta"]},
+  {name:"Lasagne", tags:["tea","beef","everyone","slow","pasta","freezable"]},
   {name:"Fish cakes + wedges", tags:["tea","fish","everyone","medium"]},
   {name:"Stir fry", tags:["tea","chicken","everyone","quick"]},
   {name:"Tinga + rice", tags:["tea","chicken","everyone","medium","rice"]},
@@ -700,12 +651,12 @@ const UNIFIED_MEALS = [
   {name:"Sausage orzo", tags:["tea","pork","everyone","medium","pasta","one-pot"]},
   {name:"One pot garlic chicken", tags:["tea","chicken","everyone","medium","one-pot"]},
   {name:"Teriyaki skewers", tags:["tea","chicken","everyone","medium","rice"]},
-  {name:"Chilli", tags:["tea","beef","everyone","medium","one-pot"]},
+  {name:"Chilli", tags:["tea","beef","everyone","medium","one-pot","freezable"]},
   {name:"Pizza", tags:["tea","everyone","quick"]},
   {name:"Roast", tags:["tea","everyone","slow"]},
   {name:"Fajitas", tags:["tea","chicken","everyone","quick"]},
   {name:"Tortellini", tags:["tea","everyone","quick","pasta"]},
-  {name:"Pulled pork fajitas", tags:["tea","pork","everyone","slow"]},
+  {name:"Pulled pork fajitas", tags:["tea","pork","everyone","slow","freezable"]},
   {name:"Tuna pasta", tags:["tea","fish","everyone","quick","pasta"]},
   {name:"Mozzarella melts", tags:["tea","everyone","quick"]},
   {name:"Sausage and veg and potatoes", tags:["tea","pork","everyone","medium","one-tray"]},
@@ -753,82 +704,14 @@ const UNIFIED_MEALS = [
 ];
 
 const FILTER_GROUPS = [
-  {key:"when",   label:"When",    exclusive:true,  filters:["lunch","tea"]},
-  {key:"who",    label:"Who",     exclusive:true,  filters:["everyone","adults","kids"]},
-  {key:"protein",label:"Protein", exclusive:true,  filters:["beef","chicken","pork","fish","veggie","egg"]},
-  {key:"effort", label:"Effort",  exclusive:true,  filters:["quick","medium","slow"]},
-  {key:"style",  label:"Style",   exclusive:true,  filters:["pasta","rice","curry","bake","one-pot","one-tray","salad"]},
-  {key:"sort",   label:"Sort",    exclusive:false, filters:["popular"]},
+  {key:"when",   label:"When",    filters:["lunch","tea"]},
+  {key:"who",    label:"Who",     filters:["everyone","adults","kids"]},
+  {key:"protein",label:"Protein", filters:["beef","chicken","pork","fish","veggie","egg"]},
+  {key:"effort", label:"Effort",  filters:["quick","medium","slow"]},
+  {key:"style",  label:"Style",   filters:["pasta","rice","curry","bake","one-pot","one-tray","salad","freezable"]},
 ];
 
 let activeFilters = new Set();
-
-// ─── Custom user-added meals (persisted) ───
-function loadCustomMeals() {
-  try {
-    const raw = localStorage.getItem('mealplanner_custom_meals');
-    if (raw) {
-      const arr = JSON.parse(raw);
-      arr.forEach(m => {
-        const exists = UNIFIED_MEALS.some(u => u.name.toLowerCase() === m.name.toLowerCase());
-        if (!exists) UNIFIED_MEALS.push(m);
-      });
-    }
-  } catch(e) { console.warn('loadCustomMeals failed:', e); }
-}
-
-function saveCustomMeals() {
-  try {
-    const customs = UNIFIED_MEALS.filter(m => m._custom);
-    localStorage.setItem('mealplanner_custom_meals', JSON.stringify(customs));
-  } catch(e) { console.warn('saveCustomMeals failed:', e); }
-}
-
-function isMealInBank(name) {
-  const lc = name.trim().toLowerCase();
-  return UNIFIED_MEALS.some(m => m.name.toLowerCase() === lc);
-}
-
-// ─── Popularity counts: archive-only, lunch+tea individual ───
-let popularityCache = null;
-let popularityCacheStamp = 0;
-
-function computePopularity() {
-  // Cache for 2s to avoid recomputing on every re-render in the same render cycle
-  const now = Date.now();
-  if (popularityCache && (now - popularityCacheStamp) < 2000) return popularityCache;
-  const counts = {};
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k || !k.startsWith('mealplanner_archive_')) continue;
-      const raw = localStorage.getItem(k);
-      if (!raw) continue;
-      const snap = JSON.parse(raw);
-      if (!snap.plan) continue;
-      const wkPlan = JSON.parse(snap.plan);
-      Object.keys(wkPlan).forEach(dayKey => {
-        const meals = wkPlan[dayKey] && wkPlan[dayKey].meals;
-        if (!meals) return;
-        Object.keys(meals).forEach(person => {
-          ['L','T'].forEach(slot => {
-            const v = (meals[person][slot] || '').trim();
-            if (!v) return;
-            const lc = v.toLowerCase();
-            if (SKIP_MEALS.has(lc)) return;
-            counts[lc] = (counts[lc] || 0) + 1;
-          });
-        });
-      });
-    }
-  } catch(e) { console.warn('popularity calc failed:', e); }
-  popularityCache = counts;
-  popularityCacheStamp = now;
-  return counts;
-}
-
-function invalidatePopularity() { popularityCache = null; }
-
 const SHOP_CATS = [
   {key:"produce",label:"🥦 Fruit & Veg",color:"#166534",bg:"#f0fdf4"},
   {key:"meat",label:"🥩 Meat & Fish",color:"#991b1b",bg:"#fef2f2"},
@@ -1160,8 +1043,6 @@ function init() {
   plan = emptyPlan();
   loadFromStorage();
   initRecipes();
-  loadCustomMeals();
-  invalidatePopularity();
   try {
     const saved = localStorage.getItem('mealplanner_baseline_order');
     if (saved !== null) selectedOrderIndex = parseInt(saved);
@@ -1398,20 +1279,10 @@ function renderFilters() {
       btn.className = "filter-btn" + (activeFilters.has(f) ? " active" : "");
       btn.textContent = f;
       btn.onclick = () => {
-        if (activeFilters.has(f)) {
-          activeFilters.delete(f);
-        } else {
-          // If this group is exclusive, clear any other active filter in the same group first
-          if (group.exclusive) {
-            group.filters.forEach(other => activeFilters.delete(other));
-          }
-          activeFilters.add(f);
-        }
-        // Defer re-render: the click event still needs to bubble up to the
-        // document click handler, and that handler checks e.target.closest(...).
-        // If we re-render NOW, the button is detached from the DOM mid-bubble
-        // and closest() returns null → cancelFill() fires → selection lost.
-        setTimeout(() => { renderFilters(); renderUnifiedBank(); }, 0);
+        if (activeFilters.has(f)) activeFilters.delete(f);
+        else activeFilters.add(f);
+        renderFilters();
+        renderUnifiedBank();
       };
       grp.appendChild(btn);
     });
@@ -1420,10 +1291,8 @@ function renderFilters() {
 }
 
 function getFilteredMeals() {
-  // 'popular' is a sort, not a tag — exclude it from the tag-match filter
-  const tagFilters = [...activeFilters].filter(f => f !== 'popular');
-  if (tagFilters.length === 0) return UNIFIED_MEALS;
-  return UNIFIED_MEALS.filter(m => tagFilters.every(f => m.tags.includes(f)));
+  if (activeFilters.size === 0) return UNIFIED_MEALS;
+  return UNIFIED_MEALS.filter(m => [...activeFilters].every(f => m.tags.includes(f)));
 }
 
 function renderUnifiedBank() {
@@ -1443,19 +1312,7 @@ function renderUnifiedBank() {
     hdr.innerHTML = "🍽 Meal Bank";
   }
 
-  let meals = getFilteredMeals();
-  const counts = computePopularity();
-
-  // Popularity sort if filter active (clone array to avoid mutating UNIFIED_MEALS order)
-  if (activeFilters.has('popular')) {
-    meals = meals.slice().sort((a, b) => {
-      const ca = counts[a.name.toLowerCase()] || 0;
-      const cb = counts[b.name.toLowerCase()] || 0;
-      if (cb !== ca) return cb - ca;
-      return a.name.localeCompare(b.name);
-    });
-  }
-
+  const meals = getFilteredMeals();
   if (meals.length === 0) {
     pillsDiv.innerHTML = '<div style="padding:8px;font-size:11px;color:#a8a29e;">No meals match these filters</div>';
     return;
@@ -1463,12 +1320,7 @@ function renderUnifiedBank() {
   meals.forEach(m => {
     const btn = document.createElement("button");
     btn.className = "upill" + (isActive ? " active-bank" : "");
-    const c = counts[m.name.toLowerCase()] || 0;
-    if (c > 0) {
-      btn.innerHTML = m.name + ' <span class="upill-count">(' + c + ')</span>';
-    } else {
-      btn.textContent = m.name;
-    }
+    btn.textContent = m.name;
     if (isActive) btn.onclick = () => injectMeal(m.name);
     pillsDiv.appendChild(btn);
   });
@@ -1539,10 +1391,6 @@ function typeInConfirm() {
   if (multiSelected.size > 0 || activeBank) {
     injectMeal(val);
     document.getElementById("type-in-input").value = "";
-    // If this was a brand-new meal name, prompt to add to bank
-    if (!isMealInBank(val) && !SKIP_MEALS.has(val.toLowerCase())) {
-      openAddMealModal(val);
-    }
   }
 }
 
@@ -2095,11 +1943,11 @@ function addManualItem() {
 }
 
 // Click outside inputs to cancel active bank
-// Now scoped: only cancel if click is OUTSIDE the entire plan tab
 document.addEventListener("click", e => {
   if (!activeBank && multiSelected.size === 0) return;
-  // Anywhere inside #plan-tab is safe — only clicks on header/tabs/other tabs cancel
-  if (e.target.closest("#plan-tab") || e.target.closest("#floating-bar") || e.target.closest("#add-meal-modal")) return;
+  if (e.target.closest("#meal-bank-pills") || e.target.closest("#quick-lunches") ||
+      e.target.closest("#cooked-lunches") || e.target.closest("#viv-lunches") ||
+      e.target.closest("#meal-tbody") || e.target.closest("#floating-bar")) return;
   cancelFill();
 });
 
@@ -2137,7 +1985,7 @@ function saveCurrentToArchive() {
     shop: JSON.stringify(shopItems),
     checked: JSON.stringify(checkedItems),
   };
-  try { localStorage.setItem('mealplanner_archive_' + weekKey, JSON.stringify(snapshot)); invalidatePopularity(); } catch(e) {}
+  try { localStorage.setItem('mealplanner_archive_' + weekKey, JSON.stringify(snapshot)); } catch(e) {}
 }
 
 function navWeek(dir) {
@@ -2408,94 +2256,7 @@ function updateWeekNavButtons() {
   if (lockBtn) { lockBtn.textContent = locked ? '🔒' : '🔓'; lockBtn.classList.toggle('locked', locked); }
 }
 
-
-// ─── Add-to-bank modal logic ───
-let ammState = { name: '', step: 0, tags: [] };
-
-const AMM_STEPS = [
-  { label: 'Who is it for?', key: 'who', multi: false, opts: ['everyone','adults','kids'] },
-  { label: 'When is it eaten?', key: 'when', multi: true, opts: ['tea','lunch'] },
-  { label: 'Main protein?', key: 'protein', multi: false, opts: ['beef','chicken','pork','fish','veggie','egg','none'] },
-  { label: 'How much effort?', key: 'effort', multi: false, opts: ['quick','medium','slow'] },
-  { label: 'Style? (optional, pick any)', key: 'style', multi: true, opts: ['pasta','rice','curry','bake','one-pot','one-tray','salad','freezable','none'] },
-];
-
-function openAddMealModal(name) {
-  ammState = { name, step: 0, tags: [], stepSelections: AMM_STEPS.map(() => []) };
-  document.getElementById('amm-meal-name').textContent = '"' + name + '"';
-  document.getElementById('add-meal-modal').classList.add('visible');
-  ammRenderStep();
-}
-
-function closeAddMealModal() {
-  document.getElementById('add-meal-modal').classList.remove('visible');
-}
-
-function ammRenderStep() {
-  const step = AMM_STEPS[ammState.step];
-  document.getElementById('amm-step-info').textContent = 'Step ' + (ammState.step + 1) + ' of ' + AMM_STEPS.length;
-  const q = document.getElementById('amm-question');
-  q.innerHTML = '';
-  const lbl = document.createElement('div');
-  lbl.className = 'amm-q-label';
-  lbl.textContent = step.label;
-  q.appendChild(lbl);
-  const optsDiv = document.createElement('div');
-  optsDiv.className = 'amm-options';
-  const sel = ammState.stepSelections[ammState.step];
-  step.opts.forEach(opt => {
-    const btn = document.createElement('button');
-    btn.className = 'amm-opt' + (sel.includes(opt) ? ' selected' : '');
-    btn.textContent = opt;
-    btn.onclick = () => {
-      if (step.multi) {
-        const i = sel.indexOf(opt);
-        if (i >= 0) sel.splice(i, 1); else sel.push(opt);
-      } else {
-        ammState.stepSelections[ammState.step] = [opt];
-      }
-      ammRenderStep();
-    };
-    optsDiv.appendChild(btn);
-  });
-  q.appendChild(optsDiv);
-
-  const isLast = ammState.step === AMM_STEPS.length - 1;
-  document.getElementById('amm-next').textContent = isLast ? 'Add to bank ✓' : 'Next →';
-  // Allow proceeding only if at least one is selected (except style which is fully optional)
-  const needSelection = step.key !== 'style';
-  document.getElementById('amm-next').disabled = needSelection && sel.length === 0;
-}
-
-function ammNext() {
-  const step = AMM_STEPS[ammState.step];
-  const sel = ammState.stepSelections[ammState.step];
-  if (step.key !== 'style' && sel.length === 0) return;
-
-  if (ammState.step < AMM_STEPS.length - 1) {
-    ammState.step++;
-    ammRenderStep();
-    return;
-  }
-
-  // Final step — assemble tags from all selections
-  const tags = [];
-  AMM_STEPS.forEach((s, i) => {
-    const picked = ammState.stepSelections[i];
-    picked.forEach(p => { if (p !== 'none' && !tags.includes(p)) tags.push(p); });
-  });
-
-  // Push into UNIFIED_MEALS, mark as custom, persist, re-render
-  UNIFIED_MEALS.push({ name: ammState.name, tags, _custom: true });
-  saveCustomMeals();
-  invalidatePopularity();
-  closeAddMealModal();
-  renderBanks();
-}
-
 init();
-// Clean up any leftover debug banner from earlier versions
-{ const b = document.getElementById('debug-banner'); if (b) b.remove(); }
 // Restore dark mode preference
 try {
   if (localStorage.getItem('mealplanner_dark') === '1') {
