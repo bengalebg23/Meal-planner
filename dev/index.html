@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.10</title>
+<title>Family Meal Planner v3.3.11</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -92,7 +92,26 @@
   #new-meals-banner-close { background: none; border: none; color: #78350f; font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
   body.dark #new-meals-banner { background: #44403c; color: #fde68a; border-color: #57534e; }
   body.dark #new-meals-banner-close { color: #fde68a; }
-  #ub-actions { display: flex; gap: 6px; }
+  #ub-actions { display: flex; gap: 6px; align-items: center; }
+  .ub-action-btn.icon { padding: 4px 9px; font-size: 14px; line-height: 1; }
+  /* History modal */
+  #history-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: flex-start; justify-content: center; padding: 16px; padding-top: 60px; }
+  #history-modal.visible { display: flex; }
+  #hm-box { background: white; border-radius: 14px; width: 100%; max-width: 420px; max-height: 75vh; overflow: hidden; display: flex; flex-direction: column; }
+  #hm-header { background: #1c1917; color: white; padding: 13px 16px; font-size: 14px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  #hm-close { background: none; border: none; color: #a8a29e; font-size: 22px; cursor: pointer; line-height: 1; padding: 0; }
+  #hm-list { overflow-y: auto; flex: 1; }
+  .hm-row { padding: 11px 16px; border-bottom: 1px solid #f5f5f4; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+  .hm-row:active { background: #f5f5f4; }
+  .hm-row:last-child { border-bottom: none; }
+  .hm-meal-name { font-size: 14px; font-weight: 600; color: #1c1917; }
+  .hm-meta { font-size: 11px; color: #78716c; }
+  .hm-empty { padding: 24px 16px; text-align: center; color: #a8a29e; font-size: 12px; }
+  body.dark #hm-box { background: #1c1917; }
+  body.dark .hm-row { border-bottom-color: #292524; }
+  body.dark .hm-row:active { background: #292524; }
+  body.dark .hm-meal-name { color: #e2e0dd; }
+  body.dark .hm-meta { color: #a8a29e; }
   .ub-action-btn { background: #44403c; border: none; color: #d6d3d1; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; cursor: pointer; }
   .ub-action-btn.primary { background: #0d9488; color: white; }
   .ub-action-btn:active { opacity: 0.8; }
@@ -480,7 +499,7 @@ onValue(customMealsRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.10</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.11</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -564,6 +583,7 @@ onValue(customMealsRef, (snapshot) => {
     <div id="unified-bank-header">
       <span>🍽 Meal Bank <span id="unified-bank-hint"></span></span>
       <span id="ub-actions">
+        <button class="ub-action-btn icon" onclick="openHistoryModal()" title="History">🔔</button>
         <button class="ub-action-btn primary" onclick="openAddMealModal('')">+ Add meal</button>
         <button class="ub-action-btn" onclick="injectMeal('')">Clear cell</button>
       </span>
@@ -654,6 +674,17 @@ onValue(customMealsRef, (snapshot) => {
       </select>
       <button id="manual-add-btn" onclick="addManualItem()">Add</button>
     </div>
+  </div>
+</div>
+
+<!-- Notification history modal -->
+<div id="history-modal" onclick="if(event.target===this)closeHistoryModal()">
+  <div id="hm-box">
+    <div id="hm-header">
+      <span>🔔 Recently added meals</span>
+      <button id="hm-close" onclick="closeHistoryModal()">×</button>
+    </div>
+    <div id="hm-list"></div>
   </div>
 </div>
 
@@ -831,6 +862,68 @@ function onBannerTap() {
     });
   }, 300);
 }
+function openHistoryModal() {
+  const list = document.getElementById('hm-list');
+  list.innerHTML = '';
+  // Gather all custom meals with addedAt, sort newest first
+  const customs = UNIFIED_MEALS.filter(m => m._custom && m.addedAt);
+  customs.sort((a, b) => (b.addedAt || '').localeCompare(a.addedAt || ''));
+  if (customs.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'hm-empty';
+    empty.textContent = 'No custom meals added yet.';
+    list.appendChild(empty);
+  } else {
+    customs.forEach(m => {
+      const row = document.createElement('div');
+      row.className = 'hm-row';
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'hm-meal-name';
+      nameDiv.textContent = m.name;
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'hm-meta';
+      const who = m.addedBy || 'Someone';
+      let when = '';
+      try {
+        const d = new Date(m.addedAt);
+        const today = new Date();
+        const dayDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+        if (dayDiff === 0) when = 'today';
+        else if (dayDiff === 1) when = 'yesterday';
+        else if (dayDiff < 7) when = dayDiff + ' days ago';
+        else when = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch(e) { when = ''; }
+      metaDiv.textContent = who + (when ? ' • ' + when : '');
+      row.appendChild(nameDiv);
+      row.appendChild(metaDiv);
+      row.onclick = () => flashHistoryPill(m.name);
+      list.appendChild(row);
+    });
+  }
+  document.getElementById('history-modal').classList.add('visible');
+}
+
+function closeHistoryModal() {
+  document.getElementById('history-modal').classList.remove('visible');
+}
+
+function flashHistoryPill(name) {
+  closeHistoryModal();
+  const bank = document.getElementById('unified-bank');
+  if (bank) bank.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => {
+    document.querySelectorAll('#unified-bank-pills .upill').forEach(p => {
+      const txt = p.textContent.replace(/\s*\(\d+\)\s*$/, '').trim().toLowerCase();
+      if (txt === name.toLowerCase()) {
+        const orig = p.style.boxShadow;
+        p.style.transition = 'box-shadow 0.3s';
+        p.style.boxShadow = '0 0 0 3px #fde68a';
+        setTimeout(() => { p.style.boxShadow = orig; }, 2000);
+      }
+    });
+  }, 300);
+}
+
 function showNewMealsBanner(meals) {
   if (!meals || meals.length === 0) return;
   window._pendingNewMeals = meals.map(m => m.name);
