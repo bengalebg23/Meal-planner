@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.11</title>
+<title>Family Meal Planner v3.3.12</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -499,7 +499,7 @@ onValue(customMealsRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.11</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.12</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -1273,7 +1273,26 @@ function ensureDayInPlan(key) {
 function saveToStorage() {
   if (typeof isPlanLocked === 'function' && isPlanLocked()) return;
   const isFutureWk = viewingWeekKey !== null && viewingWeekKey > getCurrentWeekKey();
-  if (viewingWeekKey !== null && !isFutureWk) return;
+  if (viewingWeekKey !== null && !isFutureWk) {
+    if (unlockedArchivedWeeks.has(viewingWeekKey)) {
+      try {
+        const snapshot = {
+          plan: JSON.stringify(plan),
+          notes: document.getElementById('notes-ta').value,
+          week: document.getElementById('week-label').value,
+          activedays: JSON.stringify(activeDays),
+          customdays: JSON.stringify(customDays),
+          shop: JSON.stringify(shopItems),
+          checked: JSON.stringify(checkedItems),
+        };
+        localStorage.setItem('mealplanner_archive_' + viewingWeekKey, JSON.stringify(snapshot));
+        invalidatePopularity();
+        const ind = document.getElementById('save-indicator');
+        if (ind) { ind.style.display = 'inline'; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = 'none', 1500); }
+      } catch(e) { console.warn('archive save failed:', e); }
+    }
+    return;
+  }
   try {
     localStorage.setItem('mealplanner_plan', JSON.stringify(plan));
     localStorage.setItem('mealplanner_notes', document.getElementById('notes-ta').value);
@@ -1523,6 +1542,16 @@ function renderTable() {
           }
         };
         // Double-tap to toggle multi-select
+        td.addEventListener("click", e => {
+          if (inp.disabled && viewingWeekKey && !unlockedArchivedWeeks.has(viewingWeekKey)) {
+            e.preventDefault(); e.stopPropagation();
+            if (confirm('This is a read-only archived week. Edit anyway?')) {
+              unlockedArchivedWeeks.add(viewingWeekKey);
+              updateWeekNavUI();
+              setTimeout(() => inp.focus(), 50);
+            }
+          }
+        });
         td.addEventListener("touchend", e => {
           const now = Date.now();
           const last = lastTap[cellKey] || 0;
@@ -1585,8 +1614,14 @@ function updateTableHighlight() {
     if (inp) inp.classList.remove("active-input");
   });
   if (!activeBank) return;
-  // Re-render is simplest for highlight
-  renderTable();
+  const targetKey = activeBank.day + "|" + activeBank.person + "|" + activeBank.slot;
+  document.querySelectorAll(".meal-cell textarea").forEach(inp => {
+    if (inp.dataset.cellkey === targetKey) {
+      const td = inp.closest("td");
+      if (td) td.classList.add("active");
+      inp.classList.add("active-input");
+    }
+  });
 }
 
 function renderFilters() {
@@ -2311,6 +2346,7 @@ document.addEventListener("click", e => {
 
 // ── WEEK ARCHIVE ──
 let viewingWeekKey = null; // null = current live week
+let unlockedArchivedWeeks = new Set();
 
 function getCurrentWeekKey() {
   // Proper ISO 8601 week number
@@ -2454,10 +2490,19 @@ function updateWeekNavUI() {
   document.getElementById('restore-week-btn').style.display = isLive ? 'none' : 'inline-block';
   document.getElementById('week-label').readOnly = !isLive;
 
-  // Make table inputs read-only when viewing past week
+  const editable = isLive || unlockedArchivedWeeks.has(viewingWeekKey);
   document.querySelectorAll('.meal-input, .work-select, .flag-select, .day-label-input').forEach(el => {
-    el.disabled = !isLive;
+    el.disabled = !editable;
   });
+  const badge = document.getElementById('week-readonly-badge');
+  if (badge) {
+    if (isLive) { badge.style.display = 'none'; }
+    else if (unlockedArchivedWeeks.has(viewingWeekKey)) {
+      badge.style.display = 'inline'; badge.textContent = 'editing'; badge.style.background = '#d97706';
+    } else {
+      badge.style.display = 'inline'; badge.textContent = 'read-only'; badge.style.background = '#7c3aed';
+    }
+  }
 }
 
 function restoreWeek() {
