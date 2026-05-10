@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.7</title>
+<title>Family Meal Planner v3.3.12</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -85,6 +85,36 @@
   .filter-btn.active { background: #1c1917; color: white; border-color: #1c1917; }
   #unified-bank { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; margin: 8px 8px 0; }
   #unified-bank-header { background: #292524; color: white; padding: 8px 13px; font-size: 12px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  #new-meals-banner { background: #fef3c7; color: #78350f; border: 1px solid #fde68a; border-radius: 8px; padding: 8px 11px; margin: 8px 8px 0; font-size: 12px; font-weight: 600; display: none; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; }
+  #new-meals-banner.visible { display: flex; }
+  #new-meals-banner:active { opacity: 0.8; }
+  #new-meals-banner-text { flex: 1; }
+  #new-meals-banner-close { background: none; border: none; color: #78350f; font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+  body.dark #new-meals-banner { background: #44403c; color: #fde68a; border-color: #57534e; }
+  body.dark #new-meals-banner-close { color: #fde68a; }
+  #ub-actions { display: flex; gap: 6px; align-items: center; }
+  .ub-action-btn.icon { padding: 4px 9px; font-size: 14px; line-height: 1; }
+  /* History modal */
+  #history-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: flex-start; justify-content: center; padding: 16px; padding-top: 60px; }
+  #history-modal.visible { display: flex; }
+  #hm-box { background: white; border-radius: 14px; width: 100%; max-width: 420px; max-height: 75vh; overflow: hidden; display: flex; flex-direction: column; }
+  #hm-header { background: #1c1917; color: white; padding: 13px 16px; font-size: 14px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  #hm-close { background: none; border: none; color: #a8a29e; font-size: 22px; cursor: pointer; line-height: 1; padding: 0; }
+  #hm-list { overflow-y: auto; flex: 1; }
+  .hm-row { padding: 11px 16px; border-bottom: 1px solid #f5f5f4; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+  .hm-row:active { background: #f5f5f4; }
+  .hm-row:last-child { border-bottom: none; }
+  .hm-meal-name { font-size: 14px; font-weight: 600; color: #1c1917; }
+  .hm-meta { font-size: 11px; color: #78716c; }
+  .hm-empty { padding: 24px 16px; text-align: center; color: #a8a29e; font-size: 12px; }
+  body.dark #hm-box { background: #1c1917; }
+  body.dark .hm-row { border-bottom-color: #292524; }
+  body.dark .hm-row:active { background: #292524; }
+  body.dark .hm-meal-name { color: #e2e0dd; }
+  body.dark .hm-meta { color: #a8a29e; }
+  .ub-action-btn { background: #44403c; border: none; color: #d6d3d1; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; cursor: pointer; }
+  .ub-action-btn.primary { background: #0d9488; color: white; }
+  .ub-action-btn:active { opacity: 0.8; }
   #unified-bank-header span { font-size: 9px; color: #a8a29e; margin-left: 5px; font-weight: 400; }
   #unified-bank-pills { padding: 9px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
   .filter-group-divider { display: inline-block; width: 1px; height: 20px; background: #d6d3d1; margin: 0 6px; vertical-align: middle; }
@@ -338,6 +368,10 @@
   body.dark .flag-select { background: #292524; border-color: #44403c; color: #a8a29e; }
   body.dark .meal-input { color: #e2e0dd; }
   body.dark .meal-input:hover { background: #292524; }
+  body.dark .meal-input.school,
+  body.dark .meal-input.karen,
+  body.dark .meal-input.nursery,
+  body.dark .meal-input.mira { background: #44403c !important; color: #d6d3d1 !important; opacity: 0.7; }
   body.dark td.meal-cell.active { background: #451a03; }
   body.dark td.meal-cell.pizza-hint { background: #2e1065; }
   body.dark td.meal-cell.quick-hint { background: #451a03; }
@@ -432,6 +466,20 @@ onValue(planRef, (snapshot) => {
     if (ind) { ind.style.display = "inline"; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = "none", 2000); }
   } catch(e) { console.warn("Firebase apply failed:", e); }
 });
+
+// ── Custom meals shared via Firebase ──
+const customMealsRef = ref(db, "customMeals");
+window.fbSaveCustomMeal = function(entry) {
+  try {
+    const key = entry.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    set(ref(db, "customMeals/" + key), entry).catch(e => console.warn("Firebase customMeal save failed:", e));
+  } catch(e) { console.warn("fbSaveCustomMeal failed:", e); }
+};
+onValue(customMealsRef, (snapshot) => {
+  const data = snapshot.val();
+  if (!data || !window.applyRemoteCustomMeals) return;
+  try { window.applyRemoteCustomMeals(data); } catch(e) { console.warn("apply customMeals failed:", e); }
+});
 </script>
 </head>
 <body>
@@ -451,7 +499,7 @@ onValue(planRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.7</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.12</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -528,15 +576,19 @@ onValue(planRef, (snapshot) => {
 
   <div id="meal-filters"></div>
   <div id="unified-bank">
-    <div id="unified-bank-header">🍽 Meal Bank <span id="unified-bank-hint"></span></div>
-    <div id="unified-bank-pills"></div>
-  </div>
-  <div id="type-in-bar" style="padding:6px 8px 0;">
-    <div style="display:flex;gap:6px;align-items:center;">
-      <input id="type-in-input" type="text" placeholder="Type a meal name then tap a cell..." style="flex:1;border:1px solid #e7e5e4;border-radius:8px;padding:8px 11px;font-size:12px;outline:none;font-family:inherit;" />
-      <button onclick="typeInConfirm()" style="background:#1c1917;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;">Fill</button>
-      <button onclick="injectMeal('')" style="background:#e7e5e4;color:#1c1917;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;">Clear</button>
+    <div id="new-meals-banner" onclick="onBannerTap()">
+      <span id="new-meals-banner-text"></span>
+      <button id="new-meals-banner-close" onclick="event.stopPropagation(); dismissNewMealsBanner();">×</button>
     </div>
+    <div id="unified-bank-header">
+      <span>🍽 Meal Bank <span id="unified-bank-hint"></span></span>
+      <span id="ub-actions">
+        <button class="ub-action-btn icon" onclick="openHistoryModal()" title="History">🔔</button>
+        <button class="ub-action-btn primary" onclick="openAddMealModal('')">+ Add meal</button>
+        <button class="ub-action-btn" onclick="injectMeal('')">Clear cell</button>
+      </span>
+    </div>
+    <div id="unified-bank-pills"></div>
   </div>
   <div id="banks" style="display:none">
     <div class="bank-card">
@@ -622,6 +674,17 @@ onValue(planRef, (snapshot) => {
       </select>
       <button id="manual-add-btn" onclick="addManualItem()">Add</button>
     </div>
+  </div>
+</div>
+
+<!-- Notification history modal -->
+<div id="history-modal" onclick="if(event.target===this)closeHistoryModal()">
+  <div id="hm-box">
+    <div id="hm-header">
+      <span>🔔 Recently added meals</span>
+      <button id="hm-close" onclick="closeHistoryModal()">×</button>
+    </div>
+    <div id="hm-list"></div>
   </div>
 </div>
 
@@ -762,6 +825,149 @@ const FILTER_GROUPS = [
 ];
 
 let activeFilters = new Set();
+
+// ─── New-meals notification banner ───
+function getLastSeenStamp() {
+  try {
+    const raw = localStorage.getItem('mealplanner_meals_seen_at');
+    return raw ? raw : null;
+  } catch(e) { return null; }
+}
+function setLastSeenStamp(stamp) {
+  try { localStorage.setItem('mealplanner_meals_seen_at', stamp || new Date().toISOString()); } catch(e) {}
+}
+function dismissNewMealsBanner() {
+  setLastSeenStamp(new Date().toISOString());
+  const b = document.getElementById('new-meals-banner');
+  if (b) b.classList.remove('visible');
+  window._pendingNewMeals = [];
+}
+function onBannerTap() {
+  // Switch to plan tab if not already, scroll meal bank into view, briefly flash new pills
+  const meals = (window._pendingNewMeals || []).slice();
+  dismissNewMealsBanner();
+  if (typeof switchTab === 'function') switchTab('plan');
+  const bank = document.getElementById('unified-bank');
+  if (bank) bank.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Flash matching pills
+  setTimeout(() => {
+    document.querySelectorAll('#unified-bank-pills .upill').forEach(p => {
+      const txt = p.textContent.replace(/\s*\(\d+\)\s*$/, '').trim().toLowerCase();
+      if (meals.some(m => m.toLowerCase() === txt)) {
+        p.style.transition = 'background 0.3s, box-shadow 0.3s';
+        const orig = p.style.boxShadow;
+        p.style.boxShadow = '0 0 0 3px #fde68a';
+        setTimeout(() => { p.style.boxShadow = orig; }, 2000);
+      }
+    });
+  }, 300);
+}
+function openHistoryModal() {
+  const list = document.getElementById('hm-list');
+  list.innerHTML = '';
+  // Gather all custom meals with addedAt, sort newest first
+  const customs = UNIFIED_MEALS.filter(m => m._custom && m.addedAt);
+  customs.sort((a, b) => (b.addedAt || '').localeCompare(a.addedAt || ''));
+  if (customs.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'hm-empty';
+    empty.textContent = 'No custom meals added yet.';
+    list.appendChild(empty);
+  } else {
+    customs.forEach(m => {
+      const row = document.createElement('div');
+      row.className = 'hm-row';
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'hm-meal-name';
+      nameDiv.textContent = m.name;
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'hm-meta';
+      const who = m.addedBy || 'Someone';
+      let when = '';
+      try {
+        const d = new Date(m.addedAt);
+        const today = new Date();
+        const dayDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+        if (dayDiff === 0) when = 'today';
+        else if (dayDiff === 1) when = 'yesterday';
+        else if (dayDiff < 7) when = dayDiff + ' days ago';
+        else when = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch(e) { when = ''; }
+      metaDiv.textContent = who + (when ? ' • ' + when : '');
+      row.appendChild(nameDiv);
+      row.appendChild(metaDiv);
+      row.onclick = () => flashHistoryPill(m.name);
+      list.appendChild(row);
+    });
+  }
+  document.getElementById('history-modal').classList.add('visible');
+}
+
+function closeHistoryModal() {
+  document.getElementById('history-modal').classList.remove('visible');
+}
+
+function flashHistoryPill(name) {
+  closeHistoryModal();
+  const bank = document.getElementById('unified-bank');
+  if (bank) bank.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => {
+    document.querySelectorAll('#unified-bank-pills .upill').forEach(p => {
+      const txt = p.textContent.replace(/\s*\(\d+\)\s*$/, '').trim().toLowerCase();
+      if (txt === name.toLowerCase()) {
+        const orig = p.style.boxShadow;
+        p.style.transition = 'box-shadow 0.3s';
+        p.style.boxShadow = '0 0 0 3px #fde68a';
+        setTimeout(() => { p.style.boxShadow = orig; }, 2000);
+      }
+    });
+  }, 300);
+}
+
+function showNewMealsBanner(meals) {
+  if (!meals || meals.length === 0) return;
+  window._pendingNewMeals = meals.map(m => m.name);
+  const banner = document.getElementById('new-meals-banner');
+  const text = document.getElementById('new-meals-banner-text');
+  if (!banner || !text) return;
+  // Group by addedBy
+  const byUser = {};
+  meals.forEach(m => {
+    const u = m.addedBy || 'Someone';
+    if (!byUser[u]) byUser[u] = [];
+    byUser[u].push(m.name);
+  });
+  const users = Object.keys(byUser);
+  let msg;
+  if (users.length === 1) {
+    const u = users[0];
+    const names = byUser[u];
+    if (names.length === 1) msg = '🆕 ' + u + ' added "' + names[0] + '" to the bank';
+    else msg = '🆕 ' + u + ' added ' + names.length + ' new meals: ' + names.join(', ');
+  } else {
+    const total = meals.length;
+    msg = '🆕 ' + total + ' new meals from ' + users.join(' & ');
+  }
+  text.textContent = msg;
+  banner.classList.add('visible');
+}
+
+// ─── User identity (for shared custom meals) ───
+function getUserName() {
+  try {
+    let n = localStorage.getItem('mealplanner_username');
+    if (!n) {
+      n = prompt('What\'s your name? (so others can see who added new meals)');
+      if (n && n.trim()) {
+        n = n.trim();
+        localStorage.setItem('mealplanner_username', n);
+      } else {
+        n = 'Someone';
+      }
+    }
+    return n;
+  } catch(e) { return 'Someone'; }
+}
 
 // ─── Custom user-added meals (persisted) ───
 function loadCustomMeals() {
@@ -1067,7 +1273,26 @@ function ensureDayInPlan(key) {
 function saveToStorage() {
   if (typeof isPlanLocked === 'function' && isPlanLocked()) return;
   const isFutureWk = viewingWeekKey !== null && viewingWeekKey > getCurrentWeekKey();
-  if (viewingWeekKey !== null && !isFutureWk) return;
+  if (viewingWeekKey !== null && !isFutureWk) {
+    if (unlockedArchivedWeeks.has(viewingWeekKey)) {
+      try {
+        const snapshot = {
+          plan: JSON.stringify(plan),
+          notes: document.getElementById('notes-ta').value,
+          week: document.getElementById('week-label').value,
+          activedays: JSON.stringify(activeDays),
+          customdays: JSON.stringify(customDays),
+          shop: JSON.stringify(shopItems),
+          checked: JSON.stringify(checkedItems),
+        };
+        localStorage.setItem('mealplanner_archive_' + viewingWeekKey, JSON.stringify(snapshot));
+        invalidatePopularity();
+        const ind = document.getElementById('save-indicator');
+        if (ind) { ind.style.display = 'inline'; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = 'none', 1500); }
+      } catch(e) { console.warn('archive save failed:', e); }
+    }
+    return;
+  }
   try {
     localStorage.setItem('mealplanner_plan', JSON.stringify(plan));
     localStorage.setItem('mealplanner_notes', document.getElementById('notes-ta').value);
@@ -1317,6 +1542,16 @@ function renderTable() {
           }
         };
         // Double-tap to toggle multi-select
+        td.addEventListener("click", e => {
+          if (inp.disabled && viewingWeekKey && !unlockedArchivedWeeks.has(viewingWeekKey)) {
+            e.preventDefault(); e.stopPropagation();
+            if (confirm('This is a read-only archived week. Edit anyway?')) {
+              unlockedArchivedWeeks.add(viewingWeekKey);
+              updateWeekNavUI();
+              setTimeout(() => inp.focus(), 50);
+            }
+          }
+        });
         td.addEventListener("touchend", e => {
           const now = Date.now();
           const last = lastTap[cellKey] || 0;
@@ -1379,8 +1614,14 @@ function updateTableHighlight() {
     if (inp) inp.classList.remove("active-input");
   });
   if (!activeBank) return;
-  // Re-render is simplest for highlight
-  renderTable();
+  const targetKey = activeBank.day + "|" + activeBank.person + "|" + activeBank.slot;
+  document.querySelectorAll(".meal-cell textarea").forEach(inp => {
+    if (inp.dataset.cellkey === targetKey) {
+      const td = inp.closest("td");
+      if (td) td.classList.add("active");
+      inp.classList.add("active-input");
+    }
+  });
 }
 
 function renderFilters() {
@@ -2105,6 +2346,7 @@ document.addEventListener("click", e => {
 
 // ── WEEK ARCHIVE ──
 let viewingWeekKey = null; // null = current live week
+let unlockedArchivedWeeks = new Set();
 
 function getCurrentWeekKey() {
   // Proper ISO 8601 week number
@@ -2248,10 +2490,19 @@ function updateWeekNavUI() {
   document.getElementById('restore-week-btn').style.display = isLive ? 'none' : 'inline-block';
   document.getElementById('week-label').readOnly = !isLive;
 
-  // Make table inputs read-only when viewing past week
+  const editable = isLive || unlockedArchivedWeeks.has(viewingWeekKey);
   document.querySelectorAll('.meal-input, .work-select, .flag-select, .day-label-input').forEach(el => {
-    el.disabled = !isLive;
+    el.disabled = !editable;
   });
+  const badge = document.getElementById('week-readonly-badge');
+  if (badge) {
+    if (isLive) { badge.style.display = 'none'; }
+    else if (unlockedArchivedWeeks.has(viewingWeekKey)) {
+      badge.style.display = 'inline'; badge.textContent = 'editing'; badge.style.background = '#d97706';
+    } else {
+      badge.style.display = 'inline'; badge.textContent = 'read-only'; badge.style.background = '#7c3aed';
+    }
+  }
 }
 
 function restoreWeek() {
@@ -2413,16 +2664,20 @@ function updateWeekNavButtons() {
 let ammState = { name: '', step: 0, tags: [] };
 
 const AMM_STEPS = [
+  { label: 'What\'s the meal called?', key: 'name', input: true },
   { label: 'Who is it for?', key: 'who', multi: false, opts: ['everyone','adults','kids'] },
   { label: 'When is it eaten?', key: 'when', multi: true, opts: ['tea','lunch'] },
   { label: 'Main protein?', key: 'protein', multi: false, opts: ['beef','chicken','pork','fish','veggie','egg','none'] },
   { label: 'How much effort?', key: 'effort', multi: false, opts: ['quick','medium','slow'] },
-  { label: 'Style? (optional, pick any)', key: 'style', multi: true, opts: ['pasta','rice','curry','bake','one-pot','one-tray','salad','freezable','none'] },
+  { label: 'Style? (optional, pick any)', key: 'style', multi: true, opts: ['pasta','rice','curry','bake','one-pot','one-tray','salad','none'] },
 ];
 
 function openAddMealModal(name) {
-  ammState = { name, step: 0, tags: [], stepSelections: AMM_STEPS.map(() => []) };
-  document.getElementById('amm-meal-name').textContent = '"' + name + '"';
+  // If a name was supplied (typed-in scenario), pre-fill and skip the name step
+  const startStep = name ? 1 : 0;
+  ammState = { name: name || '', step: startStep, tags: [], stepSelections: AMM_STEPS.map(() => []) };
+  if (name) ammState.stepSelections[0] = [name];
+  document.getElementById('amm-meal-name').textContent = name ? '"' + name + '"' : '';
   document.getElementById('add-meal-modal').classList.add('visible');
   ammRenderStep();
 }
@@ -2440,37 +2695,66 @@ function ammRenderStep() {
   lbl.className = 'amm-q-label';
   lbl.textContent = step.label;
   q.appendChild(lbl);
-  const optsDiv = document.createElement('div');
-  optsDiv.className = 'amm-options';
-  const sel = ammState.stepSelections[ammState.step];
-  step.opts.forEach(opt => {
-    const btn = document.createElement('button');
-    btn.className = 'amm-opt' + (sel.includes(opt) ? ' selected' : '');
-    btn.textContent = opt;
-    btn.onclick = () => {
-      if (step.multi) {
-        const i = sel.indexOf(opt);
-        if (i >= 0) sel.splice(i, 1); else sel.push(opt);
-      } else {
-        ammState.stepSelections[ammState.step] = [opt];
-      }
-      ammRenderStep();
+
+  if (step.input) {
+    // Name input step
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.id = 'amm-name-input';
+    inp.placeholder = 'e.g. Beef stew';
+    inp.value = ammState.stepSelections[ammState.step][0] || '';
+    inp.style.cssText = 'width:100%;padding:9px 11px;border:1px solid #e7e5e4;border-radius:8px;font-size:13px;outline:none;font-family:inherit;color:#1c1917;background:#fafaf8;';
+    inp.oninput = () => {
+      ammState.stepSelections[ammState.step] = [inp.value.trim()];
+      ammState.name = inp.value.trim();
+      document.getElementById('amm-meal-name').textContent = inp.value.trim() ? '"' + inp.value.trim() + '"' : '';
+      document.getElementById('amm-next').disabled = !inp.value.trim();
     };
-    optsDiv.appendChild(btn);
-  });
-  q.appendChild(optsDiv);
+    inp.onkeydown = (e) => { if (e.key === 'Enter' && inp.value.trim()) ammNext(); };
+    q.appendChild(inp);
+    setTimeout(() => inp.focus(), 50);
+  } else {
+    const optsDiv = document.createElement('div');
+    optsDiv.className = 'amm-options';
+    const sel = ammState.stepSelections[ammState.step];
+    step.opts.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'amm-opt' + (sel.includes(opt) ? ' selected' : '');
+      btn.textContent = opt;
+      btn.onclick = () => {
+        if (step.multi) {
+          const i = sel.indexOf(opt);
+          if (i >= 0) sel.splice(i, 1); else sel.push(opt);
+        } else {
+          ammState.stepSelections[ammState.step] = [opt];
+        }
+        ammRenderStep();
+      };
+      optsDiv.appendChild(btn);
+    });
+    q.appendChild(optsDiv);
+  }
 
   const isLast = ammState.step === AMM_STEPS.length - 1;
   document.getElementById('amm-next').textContent = isLast ? 'Add to bank ✓' : 'Next →';
-  // Allow proceeding only if at least one is selected (except style which is fully optional)
-  const needSelection = step.key !== 'style';
-  document.getElementById('amm-next').disabled = needSelection && sel.length === 0;
+  // Disable Next if needed
+  if (step.input) {
+    document.getElementById('amm-next').disabled = !(ammState.stepSelections[ammState.step][0] || '').trim();
+  } else {
+    const needSelection = step.key !== 'style';
+    const sel = ammState.stepSelections[ammState.step];
+    document.getElementById('amm-next').disabled = needSelection && sel.length === 0;
+  }
 }
 
 function ammNext() {
   const step = AMM_STEPS[ammState.step];
   const sel = ammState.stepSelections[ammState.step];
-  if (step.key !== 'style' && sel.length === 0) return;
+  if (step.input) {
+    if (!(sel[0] || '').trim()) return;
+  } else if (step.key !== 'style' && sel.length === 0) {
+    return;
+  }
 
   if (ammState.step < AMM_STEPS.length - 1) {
     ammState.step++;
@@ -2478,16 +2762,32 @@ function ammNext() {
     return;
   }
 
-  // Final step — assemble tags from all selections
+  // Final step — first validate name and check for duplicates
+  const name = (ammState.name || '').trim();
+  if (!name) return;
+  if (isMealInBank(name)) {
+    alert('"' + name + '" is already in the meal bank.');
+    return;
+  }
+
+  // Assemble tags from all selections (skip the name step)
   const tags = [];
   AMM_STEPS.forEach((s, i) => {
+    if (s.input) return;
     const picked = ammState.stepSelections[i];
     picked.forEach(p => { if (p !== 'none' && !tags.includes(p)) tags.push(p); });
   });
 
-  // Push into UNIFIED_MEALS, mark as custom, persist, re-render
-  UNIFIED_MEALS.push({ name: ammState.name, tags, _custom: true });
+  const entry = {
+    name,
+    tags,
+    _custom: true,
+    addedBy: getUserName(),
+    addedAt: new Date().toISOString(),
+  };
+  UNIFIED_MEALS.push(entry);
   saveCustomMeals();
+  if (window.fbSaveCustomMeal) window.fbSaveCustomMeal(entry);
   invalidatePopularity();
   closeAddMealModal();
   renderBanks();
@@ -2496,6 +2796,12 @@ function ammNext() {
 init();
 // Clean up any leftover debug banner from earlier versions
 { const b = document.getElementById('debug-banner'); if (b) b.remove(); }
+// First-load: ask for the user's name so shared custom meals can be attributed
+try {
+  if (!localStorage.getItem('mealplanner_username')) {
+    setTimeout(() => { try { getUserName(); } catch(e) {} }, 800);
+  }
+} catch(e) {}
 // Restore dark mode preference
 try {
   if (localStorage.getItem('mealplanner_dark') === '1') {
