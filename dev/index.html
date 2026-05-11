@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.13</title>
+<title>Family Meal Planner v3.3.14</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -499,7 +499,7 @@ onValue(customMealsRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.13</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.14</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -1674,14 +1674,18 @@ function renderUnifiedBank() {
   const isActive = activeBank || multiSelected.size > 0;
 
   // Update header
+  // Only update the left label span, NOT the whole header (which contains action buttons)
   const hdr = document.getElementById("unified-bank-header");
-  if (activeBank) {
-    const dayLabel = DAYS.find(d => d.key === activeBank.day)?.label || "";
-    hdr.innerHTML = `🍽 Meal Bank <span>→ tap to fill ${activeBank.person} ${activeBank.slot === "L" ? "lunch" : "tea"} on ${dayLabel}</span>`;
-  } else if (multiSelected.size > 0) {
-    hdr.innerHTML = `🍽 Meal Bank <span>→ tap to fill ${multiSelected.size} cells</span>`;
-  } else {
-    hdr.innerHTML = "🍽 Meal Bank";
+  const labelSpan = hdr ? hdr.querySelector("span") : null;
+  if (labelSpan) {
+    if (activeBank) {
+      const dayLabel = DAYS.find(d => d.key === activeBank.day)?.label || "";
+      labelSpan.innerHTML = `🍽 Meal Bank <span id="unified-bank-hint">→ tap to fill ${activeBank.person} ${activeBank.slot === "L" ? "lunch" : "tea"} on ${dayLabel}</span>`;
+    } else if (multiSelected.size > 0) {
+      labelSpan.innerHTML = `🍽 Meal Bank <span id="unified-bank-hint">→ tap to fill ${multiSelected.size} cells</span>`;
+    } else {
+      labelSpan.innerHTML = `🍽 Meal Bank <span id="unified-bank-hint"></span>`;
+    }
   }
 
   let meals = getFilteredMeals();
