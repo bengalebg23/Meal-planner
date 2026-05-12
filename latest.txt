@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.21</title>
+<title>Family Meal Planner v3.3.22</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -554,7 +554,7 @@ onValue(recipesRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.21</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.22</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -1514,7 +1514,44 @@ function renderTable() {
     } else {
       const dayDate = getDayDate(dayKey);
       const customFlag = plan[dayKey].special && plan[dayKey].special.startsWith('custom:') ? plan[dayKey].special.slice(7) : '';
-      tdDay.innerHTML = day.label + (dayDate ? '<div style="font-size:8px;color:#a8a29e;">' + dayDate + '</div>' : '') + (isDnD ? '<div class="dnd-hint">🍕 Pizza night</div>' : '') + (isSwim ? '<div class="dnd-hint" style="color:#0369a1">⚡ Quick tea</div>' : '') + (customFlag ? '<div class="dnd-hint" style="color:#78716c">✏ ' + customFlag + '</div>' : '');
+      tdDay.innerHTML = day.label + (dayDate ? '<div style="font-size:8px;color:#a8a29e;">' + dayDate + '</div>' : '') + (isDnD ? '<div class="dnd-hint">🍕 Pizza night</div>' : '') + (isSwim ? '<div class="dnd-hint" style="color:#0369a1">⚡ Quick tea</div>' : '');
+      if (customFlag) {
+        const flagDiv = document.createElement('div');
+        flagDiv.className = 'dnd-hint';
+        flagDiv.style.cssText = 'color:#78716c;display:flex;align-items:center;gap:3px;';
+        const flagText = document.createElement('span');
+        flagText.textContent = '✏ ' + customFlag;
+        flagText.style.cursor = 'pointer';
+        flagText.title = 'Tap to edit';
+        flagText.onclick = (e) => {
+          e.stopPropagation();
+          const newText = prompt('Edit flag:', customFlag);
+          if (newText !== null) {
+            if (newText.trim()) {
+              plan[dayKey].special = 'custom:' + newText.trim();
+            } else {
+              plan[dayKey].special = '';
+            }
+            renderTable();
+            updateMealsDetected();
+            saveToStorage();
+          }
+        };
+        const flagDel = document.createElement('button');
+        flagDel.textContent = '×';
+        flagDel.title = 'Remove flag';
+        flagDel.style.cssText = 'background:none;border:none;color:#d6d3d1;font-size:12px;line-height:1;padding:0 2px;cursor:pointer;';
+        flagDel.onclick = (e) => {
+          e.stopPropagation();
+          plan[dayKey].special = '';
+          renderTable();
+          updateMealsDetected();
+          saveToStorage();
+        };
+        flagDiv.appendChild(flagText);
+        flagDiv.appendChild(flagDel);
+        tdDay.appendChild(flagDiv);
+      }
     }
     tr.appendChild(tdDay);
 
