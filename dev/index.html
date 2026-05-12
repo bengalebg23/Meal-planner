@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.19</title>
+<title>Family Meal Planner v3.3.18</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -554,7 +554,7 @@ onValue(recipesRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.19</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.18</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -1513,8 +1513,7 @@ function renderTable() {
       }
     } else {
       const dayDate = getDayDate(dayKey);
-      const customFlag = plan[dayKey].special && plan[dayKey].special.startsWith('custom:') ? plan[dayKey].special.slice(7) : '';
-      tdDay.innerHTML = day.label + (dayDate ? '<div style="font-size:8px;color:#a8a29e;">' + dayDate + '</div>' : '') + (isDnD ? '<div class="dnd-hint">🍕 Pizza night</div>' : '') + (isSwim ? '<div class="dnd-hint" style="color:#0369a1">⚡ Quick tea</div>' : '') + (customFlag ? '<div class="dnd-hint" style="color:#78716c">✏ ' + customFlag + '</div>' : '');
+      tdDay.innerHTML = day.label + (dayDate ? '<div style="font-size:8px;color:#a8a29e;">' + dayDate + '</div>' : '') + (isDnD ? '<div class="dnd-hint">🍕 Pizza night</div>' : '') + (isSwim ? '<div class="dnd-hint" style="color:#0369a1">⚡ Quick tea</div>' : '');
     }
     tr.appendChild(tdDay);
 
@@ -1527,8 +1526,6 @@ function renderTable() {
     const fs = special ? FLAG_STYLES[special] : null;
     if (fs) { sel.style.background = fs.bg; sel.style.color = fs.color; }
     else { sel.style.background = "white"; sel.style.color = "#78716c"; }
-    const isCustom = special && special.startsWith('custom:');
-    const customText = isCustom ? special.slice(7) : '';
     sel.innerHTML = `<option value="">—</option>
       <option value="dnd"${special==="dnd"?" selected":""}>D&D 🎲</option>
       <option value="swimming"${special==="swimming"?" selected":""}>Swimming 🏊</option>
@@ -1536,24 +1533,9 @@ function renderTable() {
       <option value="school"${special==="school"?" selected":""}>School trip</option>
       <option value="karen"${special==="karen"?" selected":""}>Karen's</option>
       <option value="out"${special==="out"?" selected":""}>Eating out</option>
-      <option value="quick"${special==="quick"?" selected":""}>⚡ Quick</option>
-      ${isCustom ? `<option value="${special}" selected>✏ ${customText}</option>` : ''}
-      <option value="__new__">✏ Custom...</option>`;
-    if (isCustom) {
-      sel.style.background = '#f5f5f4';
-      sel.style.color = '#1c1917';
-    }
+      <option value="quick"${special==="quick"?" selected":""}>⚡ Quick</option>`;
     sel.onchange = () => {
-      if (sel.value === '__new__') {
-        const text = prompt('What should this flag say?', isCustom ? customText : '');
-        if (text && text.trim()) {
-          plan[dayKey].special = 'custom:' + text.trim();
-        } else {
-          plan[dayKey].special = special; // revert if cancelled
-        }
-      } else {
-        plan[dayKey].special = sel.value;
-      }
+      plan[dayKey].special = sel.value;
       renderTable();
       updateMealsDetected();
       saveToStorage();
@@ -2875,34 +2857,6 @@ function ammNext() {
   closeAddMealModal();
   renderBanks();
 }
-
-
-// ─── One-time historical import: W9–W15 of 2026 (v3.3.19) ───
-(function() {
-  try {
-    if (localStorage.getItem('mealplanner_historical_import_v3319') === '1') return;
-    const HISTORICAL = {"2026_W09": {"mon": {"special": "custom:odd socks", "work": "office", "meals": {"Reuben": {"L": "School", "T": "Karen's"}, "Vivien": {"L": "Nursery", "T": "Nursery"}, "Emily": {"L": "Sandwich", "T": "Chicken Alfredo"}, "Ben": {"L": "MIRA", "T": "Chicken Alfredo"}}}, "tue": {"special": "", "work": "wfh", "meals": {"Reuben": {"L": "School", "T": "Pot wedges veg + fishcake"}, "Vivien": {"L": "Spaghetti on toast", "T": "Pot wedge veg fish"}, "Emily": {"L": "Spaghetti on toast", "T": "Tinga + rice"}, "Ben": {"L": "Spaghetti on toast", "T": "Tinga + rice"}}}, "wed": {"special": "swimming", "work": "office", "meals": {"Reuben": {"L": "School", "T": "Fish finger waffles"}, "Vivien": {"L": "Bagel", "T": "Pitta pizza"}, "Emily": {"L": "Pastry pot", "T": "Stir fry"}, "Ben": {"L": "MIRA", "T": "Stir fry"}}}, "thu": {"special": "", "work": "wfh", "meals": {"Reuben": {"L": "Snack Attack", "T": "Karen's"}, "Vivien": {"L": "Karen's", "T": "Karen's"}, "Emily": {"L": "Sandwiches", "T": "Teriyaki skewers"}, "Ben": {"L": "Chicken & leek bake", "T": "Teriyaki skewers"}}}, "fri": {"special": "custom:WM Repair", "work": "wfh", "meals": {"Reuben": {"L": "School", "T": "Porridge fingers"}, "Vivien": {"L": "Nursery", "T": "Nursery"}, "Emily": {"L": "Super noodle", "T": "Laksa"}, "Ben": {"L": "Super noodle", "T": "Laksa"}}}, "sat": {"special": "", "work": "weekend", "meals": {"Reuben": {"L": "Pitta pizza", "T": "Pitta pizza"}, "Vivien": {"L": "Pitta pizza", "T": "Pitta pizza"}, "Emily": {"L": "Pitta pizza", "T": "Pitta pizza"}, "Ben": {"L": "Pitta pizza", "T": "Pate Soup chicken bake"}}}, "sun": {"special": "", "work": "weekend", "meals": {"Reuben": {"L": "Pate", "T": "Tuna pasta bake"}, "Vivien": {"L": "Cheese or avo on toast", "T": "Tuna pasta bake"}, "Emily": {"L": "Pate", "T": "Tuna pasta bake"}, "Ben": {"L": "Pate", "T": "Tuna pasta bake"}}}, "spare": {"special": "", "work": "", "meals": {"Reuben": {"L": "Porridge fingers", "T": "Philly fish pasta"}, "Vivien": {"L": "Porridge fingers", "T": "Philly fish pasta"}, "Emily": {"L": "Lentils", "T": "Philly fish pasta"}, "Ben": {"L": "Lentil pancakes", "T": "Pasta sauce"}}}}, "2026_W10": {"mon": {"special": "", "work": "", "meals": {"Reuben": {"L": "", "T": ""}, "Vivien": {"L": "", "T": ""}, "Emily": {"L": "", "T": ""}, "Ben": {"L": "", "T": ""}}}, "tue": {"special": "custom:Freezer defrost", "work": "", "meals": {"Reuben": {"L": "School", "T": "Sausage Pasta"}, "Vivien": {"L": "Pancakes", "T": "Sausage Pasta"}, "Emily": {"L": "", "T": "Sausage Pasta"}, "Ben": {"L": "", "T": "Sausage Pasta"}}}, "wed": {"special": "swimming", "work": "", "meals": {"Reuben": {"L": "School", "T": "Quick Pitta Pizza"}, "Vivien": {"L": "Avo + toast cucumber", "T": "Quick Pitta Pizza"}, "Emily": {"L": "Omelette", "T": "Ready meal"}, "Ben": {"L": "", "T": "Out"}}}, "thu": {"special": "dnd", "work": "", "meals": {"Reuben": {"L": "School", "T": "Karen's"}, "Vivien": {"L": "Nursery", "T": "Nursery"}, "Emily": {"L": "Work Sandwich", "T": "Fresh pasta gnocchi"}, "Ben": {"L": "", "T": "Fresh pasta gnocchi"}}}, "fri": {"special": "", "work": "", "meals": {"Reuben": {"L": "School", "T": "Burgers"}, "Vivien": {"L": "Nursery", "T": "Nursery"}, "Emily": {"L": "", "T": "Burgers"}, "Ben": {"L": "", "T": "Burgers"}}}, "sat": {"special": "custom:Panto (lunch) + Tractors (Tarry)", "work": "", "meals": {"Reuben": {"L": "Take stuff + MIRA", "T": "Pizza @ Tarry's"}, "Vivien": {"L": "Take stuff + MIRA", "T": "Take stuff + Pizza"}, "Emily": {"L": "Out", "T": "Out"}, "Ben": {"L": "Take something", "T": "Pizza"}}}, "sun": {"special": "", "work": "", "meals": {"Reuben": {"L": "Fish fingers", "T": "Lasagne"}, "Vivien": {"L": "Fish fingers", "T": "Lasagne"}, "Emily": {"L": "Out", "T": "Lasagne"}, "Ben": {"L": "Fish fingers", "T": "Lasagne"}}}, "spare": {"special": "", "work": "", "meals": {"Reuben": {"L": "School", "T": "Karen's"}, "Vivien": {"L": "Karen's", "T": "Karen's"}, "Emily": {"L": "Work", "T": "Loaded nachos"}, "Ben": {"L": "Work", "T": "Loaded nachos"}}}}, "2026_W11": {"mon": {"special": "", "work": "office", "meals": {"Reuben": {"L": "School", "T": "Karen's"}, "Vivien": {"L": "Nursery", "T": "Nursery"}, "Emily": {"L": "Sandwich", "T": "Frozen Pizza"}, "Ben": {"L": "MIRA", "T": "Frozen Pizza"}}}, "tue": {"special": "custom:Reading M-Teams 5pm", "work": "wfh", "meals": {"Reuben": {"L": "School", "T": "Sausage mash beans"}, "Vivien": {"L": "", "T": "Sausage mash beans"}, "Emily": {"L": "", "T": "Sausage mash beans"}, "Ben": {"L": "", "T": "Sausage mash beans"}}}, "wed": {"special": "dnd", "work": "wfh", "meals": {"Reuben": {"L": "School", "T": "Fish cake + wedges + veg"}, "Vivien": {"L": "", "T": "Fish cake + wedges + veg"}, "Emily": {"L": "", "T": "Fish cake + wedges + veg"}, "Ben": {"L": "", "T": "Fish cake + wedges + veg"}}}, "thu": {"special": "", "work": "office", "meals": {"Reuben": {"L": "School", "T": "Karen's"}, "Vivien": {"L": "Karen's", "T": "Karen's"}, "Emily": {"L": "", "T": "Stir fry"}, "Ben": {"L": "MIRA", "T": "Stir fry"}}}, "fri": {"special": "custom:Contact lens app", "work": "wfh", "meals": {"Reuben": {"L": "School", "T": "Chicken & leek bake"}, "Vivien": {"L": "Nursery", "T": "Nursery"}, "Emily": {"L": "", "T": "Chicken & leek bake"}, "Ben": {"L": "", "T": "Chicken & leek bake"}}}, "sat": {"special": "custom:Emily out", "work": "", "meals": {"Reuben": {"L": "", "T": "Chicken + chorizo bake"}, "Vivien": {"L": "", "T": "Chicken + chorizo bake"}, "Emily": {"L": "Out", "T": "Out"}, "Ben": {"L": "", "T": "Chicken + chorizo bake"}}}, "sun": {"special": "custom:Gates", "work": "", "meals": {"Reuben": {"L": "", "T": "Fish Pie"}, "Vivien": {"L": "", "T": "Fish Pie"}, "Emily": {"L": "", "T": "Fish Pie"}, "Ben": {"L": "", "T": "Fish Pie"}}}, "spare": {"special": "", "work": "", "meals": {"Reuben": {"L": "", "T": "Cottage pie"}, "Vivien": {"L": "", "T": "Cottage pie"}, "Emily": {"L": "", "T": "Cottage pie"}, "Ben": {"L": "", "T": "Cottage pie"}}}}, "2026_W12": {"mon": {"special": "custom:K @ Melody", "work": "office", "meals": {"Reuben": {"L": "School", "T": "Karen's"}, "Vivien": {"L": "Karen's", "T": "Karen's"}, "Emily": {"L": "Sandwich", "T": "Sourdough chicken Mozz Avo"}, "Ben": {"L": "MIRA", "T": "Sourdough chicken Mozz Avo"}}}, "tue": {"special": "dnd", "work": "office", "meals": {"Reuben": {"L": "School", "T": "Sausage orzo"}, "Vivien": {"L": "See Below", "T": "Sausage orzo"}, "Emily": {"L": "See Below", "T": "Sausage orzo"}, "Ben": {"L": "", "T": "Sausage orzo"}}}, "wed": {"special": "swimming", "work": "wfh", "meals": {"Reuben": {"L": "School", "T": "See Right"}, "Vivien": {"L": "See Below", "T": "See Right"}, "Emily": {"L": "See Below", "T": "Fajita + nachos"}, "Ben": {"L": "", "T": "Fajita + nachos"}}}, "thu": {"special": "dnd", "work": "office", "meals": {"Reuben": {"L": "School", "T": "Karen's"}, "Vivien": {"L": "Nursery", "T": "Nursery"}, "Emily": {"L": "Sandwich", "T": "Greek feta salad"}, "Ben": {"L": "", "T": "Greek feta salad"}}}, "fri": {"special": "", "work": "wfh", "meals": {"Reuben": {"L": "School", "T": "Cheesy Bean wraps"}, "Vivien": {"L": "Nursery", "T": "Nursery"}, "Emily": {"L": "Pate", "T": "Chilli"}, "Ben": {"L": "Pate", "T": "Chilli"}}}, "sat": {"special": "", "work": "", "meals": {"Reuben": {"L": "", "T": "Fish Pie"}, "Vivien": {"L": "", "T": "Fish Pie"}, "Emily": {"L": "", "T": "Fish Pie"}, "Ben": {"L": "", "T": "Fish Pie"}}}, "sun": {"special": "", "work": "", "meals": {"Reuben": {"L": "", "T": "Pub"}, "Vivien": {"L": "", "T": "Pub"}, "Emily": {"L": "", "T": "Pub"}, "Ben": {"L": "", "T": "Pub"}}}, "spare": {"special": "custom:Mother's Day", "work": "", "meals": {"Reuben": {"L": "Karen's", "T": "Mac & cheese"}, "Vivien": {"L": "Karen's", "T": "Omelette on wrap"}, "Emily": {"L": "Karen's", "T": "Melty cheese"}, "Ben": {"L": "Karen's", "T": "Melty cheese"}}}}, "2026_W13": {"mon": {"special": "", "work": "office", "meals": {"Reuben": {"L": "School", "T": "G+G"}, "Vivien": {"L": "G+G", "T": "G+G"}, "Emily": {"L": "Sandwich", "T": "Burgers"}, "Ben": {"L": "MIRA", "T": "Burgers"}}}, "tue": {"special": "dnd", "work": "", "meals": {"Reuben": {"L": "School", "T": "Chicken Alfredo"}, "Vivien": {"L": "", "T": "Chicken Alfredo"}, "Emily": {"L": "", "T": "Chicken Alfredo"}, "Ben": {"L": "", "T": "Chicken Alfredo"}}}, "wed": {"special": "swimming", "work": "", "meals": {"Reuben": {"L": "School", "T": "Pitta pizza"}, "Vivien": {"L": "", "T": "Pitta pizza"}, "Emily": {"L": "", "T": "Aioli roast veg + chorizo + potato"}, "Ben": {"L": "", "T": "Aioli roast veg + chorizo + potato"}}}, "thu": {"special": "dnd", "work": "", "meals": {"Reuben": {"L": "School", "T": "G+G"}, "Vivien": {"L": "Nursery", "T": "Nursery"}, "Emily": {"L": "Sandwich", "T": "Fresh pasta"}, "Ben": {"L": "", "T": "Fresh pasta"}}}, "fri": {"special": "", "work": "", "meals": {"Reuben": {"L": "School", "T": "Bean + cheese + turnips omelette"}, "Vivien": {"L": "Nursery", "T": "Nursery"}, "Emily": {"L": "Pate", "T": "Mushroom burger"}, "Ben": {"L": "Pate", "T": "Mushroom burger"}}}, "sat": {"special": "", "work": "", "meals": {"Reuben": {"L": "Quiche + sandwich + sausage roll", "T": "Carrot Pie"}, "Vivien": {"L": "Quiche + sausage", "T": "Carrot Pie"}, "Emily": {"L": "Quiche + sausage", "T": "Bottomless Brunch"}, "Ben": {"L": "Quiche + sausage", "T": "Carrot Pie"}}}, "sun": {"special": "custom:Tennis", "work": "", "meals": {"Reuben": {"L": "Soup + Bread", "T": "Sausage potato bean"}, "Vivien": {"L": "Soup + Bread", "T": "Sausage potato bean"}, "Emily": {"L": "Soup + Bread", "T": "Sausage potato bean"}, "Ben": {"L": "Soup + Bread", "T": "Sausage potato bean"}}}, "spare": {"special": "", "work": "", "meals": {"Reuben": {"L": "", "T": "Fish Pie"}, "Vivien": {"L": "", "T": "Fish Pie"}, "Emily": {"L": "", "T": "Fish Pie"}, "Ben": {"L": "", "T": "Fish Pie"}}}}, "2026_W14": {"mon": {"special": "", "work": "office", "meals": {"Reuben": {"L": "School", "T": "Karen's"}, "Vivien": {"L": "Nursery", "T": "Nursery"}, "Emily": {"L": "Something", "T": "Harissa Halloumi wraps"}, "Ben": {"L": "MIRA", "T": "Harissa Halloumi wraps"}}}, "tue": {"special": "", "work": "", "meals": {"Reuben": {"L": "School", "T": "Avo philly peanut butter toast"}, "Vivien": {"L": "", "T": "Avo philly peanut butter toast"}, "Emily": {"L": "Festive bakes", "T": "Thai curry"}, "Ben": {"L": "", "T": "Thai curry"}}}, "wed": {"special": "swimming", "work": "", "meals": {"Reuben": {"L": "School", "T": "Ravioli"}, "Vivien": {"L": "Potato + beans", "T": "Ravioli"}, "Emily": {"L": "Noodles", "T": ""}, "Ben": {"L": "", "T": ""}}}, "thu": {"special": "", "work": "", "meals": {"Reuben": {"L": "School", "T": "Karen's"}, "Vivien": {"L": "Karen's", "T": "Karen's"}, "Emily": {"L": "Omelette", "T": "Spinach + ricotta pasta bake"}, "Ben": {"L": "", "T": "Spinach + ricotta pasta bake"}}}, "fri": {"special": "custom:Sileby light on 18:30", "work": "", "meals": {"Reuben": {"L": "School", "T": "Jacket potato + beans"}, "Vivien": {"L": "Nursery", "T": "Nursery"}, "Emily": {"L": "Ravioli", "T": "Spag Bol"}, "Ben": {"L": "", "T": "Spag Bol"}}}, "sat": {"special": "custom:Xmas lights", "work": "", "meals": {"Reuben": {"L": "Soup + pate", "T": "Fish pie"}, "Vivien": {"L": "Soup + pate", "T": "Fish pie"}, "Emily": {"L": "Soup + pate", "T": "Fish pie"}, "Ben": {"L": "Soup + pate", "T": "Fish pie"}}}, "sun": {"special": "", "work": "", "meals": {"Reuben": {"L": "Pitta pizza", "T": "Roast"}, "Vivien": {"L": "Pitta pizza", "T": "Roast"}, "Emily": {"L": "Pitta pizza", "T": "Roast"}, "Ben": {"L": "Pitta pizza", "T": "Roast"}}}, "spare": {"special": "", "work": "", "meals": {"Reuben": {"L": "", "T": ""}, "Vivien": {"L": "", "T": ""}, "Emily": {"L": "", "T": ""}, "Ben": {"L": "", "T": ""}}}}, "2026_W15": {"mon": {"special": "", "work": "", "meals": {"Reuben": {"L": "Karen's", "T": "Karen's"}, "Vivien": {"L": "Karen's", "T": "Karen's"}, "Emily": {"L": "Sandwiches", "T": "Teriyaki skewers"}, "Ben": {"L": "Work", "T": "Teriyaki skewers"}}}, "tue": {"special": "", "work": "", "meals": {"Reuben": {"L": "School", "T": "Pot wedges + fish fingers + veg"}, "Vivien": {"L": "", "T": "Pot wedges + fish fingers + veg"}, "Emily": {"L": "", "T": "Sourdough chicken kievs"}, "Ben": {"L": "Work", "T": "Sourdough chicken kievs"}}}, "wed": {"special": "custom:NYE", "work": "", "meals": {"Reuben": {"L": "", "T": "Picky Tea"}, "Vivien": {"L": "", "T": "Picky Tea"}, "Emily": {"L": "", "T": "Picky Tea"}, "Ben": {"L": "", "T": "Picky Tea"}}}, "thu": {"special": "", "work": "", "meals": {"Reuben": {"L": "PB toast", "T": "Bolognese"}, "Vivien": {"L": "Avo toast", "T": "Bolognese"}, "Emily": {"L": "Salmon bagel", "T": "Bolognese"}, "Ben": {"L": "Salmon bagel", "T": "Bolognese"}}}, "fri": {"special": "", "work": "", "meals": {"Reuben": {"L": "Pate", "T": "Chicken Alfredo"}, "Vivien": {"L": "Bits", "T": "Chicken Alfredo"}, "Emily": {"L": "Pate", "T": "Chicken Alfredo"}, "Ben": {"L": "Pate", "T": "Chicken Alfredo"}}}, "sat": {"special": "", "work": "", "meals": {"Reuben": {"L": "Festive bakes", "T": "Sausage potato bean"}, "Vivien": {"L": "Festive bakes", "T": "Sausage potato bean"}, "Emily": {"L": "Festive bakes", "T": "Sausage potato bean"}, "Ben": {"L": "Festive bakes", "T": "Sausage potato bean"}}}, "sun": {"special": "custom:Riverside", "work": "", "meals": {"Reuben": {"L": "Picnic", "T": "Eat out"}, "Vivien": {"L": "Picnic", "T": "Eat out"}, "Emily": {"L": "Picnic", "T": "Eat out"}, "Ben": {"L": "Picnic", "T": "Eat out"}}}, "spare": {"special": "", "work": "", "meals": {"Reuben": {"L": "", "T": ""}, "Vivien": {"L": "", "T": ""}, "Emily": {"L": "", "T": ""}, "Ben": {"L": "", "T": ""}}}}};
-    Object.keys(HISTORICAL).forEach(weekKey => {
-      const archiveKey = 'mealplanner_archive_' + weekKey;
-      // Only inject if there's nothing already there (don't overwrite user data)
-      if (localStorage.getItem(archiveKey)) return;
-      const snapshot = {
-        plan: JSON.stringify(HISTORICAL[weekKey]),
-        notes: '',
-        week: weekKey.replace('_W', ' W'),
-        activedays: JSON.stringify(['mon','tue','wed','thu','fri','sat','sun','spare']),
-        customdays: JSON.stringify({}),
-        shop: JSON.stringify({produce:[],meat:[],dairy:[],dry:[],frozen:[],other:[]}),
-        checked: JSON.stringify({}),
-      };
-      localStorage.setItem(archiveKey, JSON.stringify(snapshot));
-      if (window.fbSaveArchive) window.fbSaveArchive(weekKey, snapshot);
-    });
-    localStorage.setItem('mealplanner_historical_import_v3319', '1');
-    if (window.invalidatePopularity) window.invalidatePopularity();
-    console.log('Historical W9-W15 import complete');
-  } catch(e) { console.warn('Historical import failed:', e); }
-})();
 
 init();
 // Clean up any leftover debug banner from earlier versions
