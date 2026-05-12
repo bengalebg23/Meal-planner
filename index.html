@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.22</title>
+<title>Family Meal Planner v3.3.23</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -47,10 +47,10 @@
   tbody tr { border-top: 1px solid #e7e5e4; }
   tbody tr:nth-child(odd) { background: #fafaf8; }
   tbody tr:nth-child(even) { background: white; }
-  tbody tr.dnd-row { background: #f5f3ff !important; }
+
   td.day-cell { padding: 2px 1px; font-weight: 700; font-size: 11px; color: #1c1917; overflow: hidden; }
-  td.day-cell.dnd { color: #7c3aed; }
-  .dnd-hint { font-size: 9px; color: #7c3aed; margin-top: 1px; }
+
+  .dnd-hint { font-size: 9px; color: #78716c; margin-top: 1px; display: flex; align-items: center; gap: 3px; }
   td.flag-cell { padding: 4px 4px; }
   td.work-cell { padding: 4px 4px; }
   .work-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 1px 0; font-size: 8px; cursor: pointer; width: 100%; background: white; color: #78716c; -webkit-appearance: none; appearance: none; text-align: center; }
@@ -62,8 +62,8 @@
   td.meal-cell.active { background: #fef9c3; }
   td.meal-cell.selected { background: #ccfbf1 !important; outline: 2px solid #0d9488; outline-offset: -2px; }
   td.meal-cell.selected .meal-input { color: #0f766e; font-weight: 600; }
-  td.meal-cell.pizza-hint { background: #fdf4ff; }
-  td.meal-cell.quick-hint { background: #fffbeb; }
+
+
   .flag-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 1px 0; font-size: 8px; cursor: pointer; width: 100%; -webkit-appearance: none; appearance: none; text-align: center; }
   /* Freeze DAY column when scrolling horizontally */
   #meal-table thead th:first-child,
@@ -72,11 +72,11 @@
   /* Match each row's stripe so sticky cell looks continuous */
   #meal-table tbody tr:nth-child(odd) td:first-child { background: #fafaf8; box-shadow: 2px 0 4px -2px rgba(0,0,0,0.1); }
   #meal-table tbody tr:nth-child(even) td:first-child { background: white; box-shadow: 2px 0 4px -2px rgba(0,0,0,0.1); }
-  #meal-table tbody tr.dnd-row td:first-child { background: #f5f3ff !important; }
+
   body.dark #meal-table thead th:first-child { background: #0f0e0d !important; }
   body.dark #meal-table tbody tr:nth-child(odd) td:first-child { background: #1c1917; }
   body.dark #meal-table tbody tr:nth-child(even) td:first-child { background: #211f1d; }
-  body.dark #meal-table tbody tr.dnd-row td:first-child { background: #2e1065 !important; }
+
 
   .meal-input { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 4px; font-size: 11px; background: transparent; outline: none; cursor: text; color: #1c1917; resize: none; overflow: hidden; min-height: 24px; line-height: 1.35; display: block; font-family: inherit; white-space: pre-wrap; word-break: break-word; }
   .meal-input:hover { background: #f5f5f4; }
@@ -554,7 +554,7 @@ onValue(recipesRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.22</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.23</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -1481,7 +1481,7 @@ function renderTable() {
     const isDnD = plan[dayKey].special === "dnd";
     const isSwim = plan[dayKey].special === "swimming";
     const tr = document.createElement("tr");
-    if (isDnD) tr.classList.add("dnd-row");
+    /* dnd-row removed in v3.3.23 */
 
     // Day cell - editable label for custom days
     const tdDay = document.createElement("td");
@@ -1513,28 +1513,34 @@ function renderTable() {
       }
     } else {
       const dayDate = getDayDate(dayKey);
-      const customFlag = plan[dayKey].special && plan[dayKey].special.startsWith('custom:') ? plan[dayKey].special.slice(7) : '';
-      tdDay.innerHTML = day.label + (dayDate ? '<div style="font-size:8px;color:#a8a29e;">' + dayDate + '</div>' : '') + (isDnD ? '<div class="dnd-hint">🍕 Pizza night</div>' : '') + (isSwim ? '<div class="dnd-hint" style="color:#0369a1">⚡ Quick tea</div>' : '');
-      if (customFlag) {
+      tdDay.innerHTML = day.label + (dayDate ? '<div style="font-size:8px;color:#a8a29e;">' + dayDate + '</div>' : '');
+      // Unified flag rendering — applies to all special values
+      const flagSpecial = plan[dayKey].special;
+      if (flagSpecial) {
+        const isCustomF = flagSpecial.startsWith('custom:');
+        const flagLabels = { dnd: '🎲 D&D', swimming: '🏊 Swimming', nursery: 'Nursery',
+                             school: 'School trip', karen: "Karen's", out: 'Eating out',
+                             quick: '⚡ Quick' };
+        const flagDisplay = isCustomF ? '✏ ' + flagSpecial.slice(7) : (flagLabels[flagSpecial] || flagSpecial);
         const flagDiv = document.createElement('div');
         flagDiv.className = 'dnd-hint';
-        flagDiv.style.cssText = 'color:#78716c;display:flex;align-items:center;gap:3px;';
         const flagText = document.createElement('span');
-        flagText.textContent = '✏ ' + customFlag;
+        flagText.textContent = flagDisplay;
         flagText.style.cursor = 'pointer';
         flagText.title = 'Tap to edit';
         flagText.onclick = (e) => {
           e.stopPropagation();
-          const newText = prompt('Edit flag:', customFlag);
-          if (newText !== null) {
-            if (newText.trim()) {
-              plan[dayKey].special = 'custom:' + newText.trim();
-            } else {
-              plan[dayKey].special = '';
+          if (isCustomF) {
+            const newText = prompt('Edit flag:', flagSpecial.slice(7));
+            if (newText !== null) {
+              if (newText.trim()) plan[dayKey].special = 'custom:' + newText.trim();
+              else plan[dayKey].special = '';
+              renderTable(); updateMealsDetected(); saveToStorage();
             }
-            renderTable();
-            updateMealsDetected();
-            saveToStorage();
+          } else {
+            // For built-in flags, focus the dropdown
+            const sel = tdFlag.querySelector('select');
+            if (sel) { sel.focus(); try { sel.click(); } catch(e) {} }
           }
         };
         const flagDel = document.createElement('button');
@@ -1544,9 +1550,7 @@ function renderTable() {
         flagDel.onclick = (e) => {
           e.stopPropagation();
           plan[dayKey].special = '';
-          renderTable();
-          updateMealsDetected();
-          saveToStorage();
+          renderTable(); updateMealsDetected(); saveToStorage();
         };
         flagDiv.appendChild(flagText);
         flagDiv.appendChild(flagDel);
