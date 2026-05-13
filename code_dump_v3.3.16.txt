@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.26</title>
+<title>Family Meal Planner v3.3.16</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -47,10 +47,10 @@
   tbody tr { border-top: 1px solid #e7e5e4; }
   tbody tr:nth-child(odd) { background: #fafaf8; }
   tbody tr:nth-child(even) { background: white; }
-
+  tbody tr.dnd-row { background: #f5f3ff !important; }
   td.day-cell { padding: 2px 1px; font-weight: 700; font-size: 11px; color: #1c1917; overflow: hidden; }
-
-  .dnd-hint { font-size: 9px; color: #78716c; margin-top: 1px; display: flex; align-items: center; gap: 3px; }
+  td.day-cell.dnd { color: #7c3aed; }
+  .dnd-hint { font-size: 9px; color: #7c3aed; margin-top: 1px; }
   td.flag-cell { padding: 4px 4px; }
   td.work-cell { padding: 4px 4px; }
   .work-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 1px 0; font-size: 8px; cursor: pointer; width: 100%; background: white; color: #78716c; -webkit-appearance: none; appearance: none; text-align: center; }
@@ -62,8 +62,8 @@
   td.meal-cell.active { background: #fef9c3; }
   td.meal-cell.selected { background: #ccfbf1 !important; outline: 2px solid #0d9488; outline-offset: -2px; }
   td.meal-cell.selected .meal-input { color: #0f766e; font-weight: 600; }
-
-
+  td.meal-cell.pizza-hint { background: #fdf4ff; }
+  td.meal-cell.quick-hint { background: #fffbeb; }
   .flag-select { border: 1px solid #e7e5e4; border-radius: 5px; padding: 1px 0; font-size: 8px; cursor: pointer; width: 100%; -webkit-appearance: none; appearance: none; text-align: center; }
   /* Freeze DAY column when scrolling horizontally */
   #meal-table thead th:first-child,
@@ -72,11 +72,11 @@
   /* Match each row's stripe so sticky cell looks continuous */
   #meal-table tbody tr:nth-child(odd) td:first-child { background: #fafaf8; box-shadow: 2px 0 4px -2px rgba(0,0,0,0.1); }
   #meal-table tbody tr:nth-child(even) td:first-child { background: white; box-shadow: 2px 0 4px -2px rgba(0,0,0,0.1); }
-
+  #meal-table tbody tr.dnd-row td:first-child { background: #f5f3ff !important; }
   body.dark #meal-table thead th:first-child { background: #0f0e0d !important; }
   body.dark #meal-table tbody tr:nth-child(odd) td:first-child { background: #1c1917; }
   body.dark #meal-table tbody tr:nth-child(even) td:first-child { background: #211f1d; }
-
+  body.dark #meal-table tbody tr.dnd-row td:first-child { background: #2e1065 !important; }
 
   .meal-input { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 4px; font-size: 11px; background: transparent; outline: none; cursor: text; color: #1c1917; resize: none; overflow: hidden; min-height: 24px; line-height: 1.35; display: block; font-family: inherit; white-space: pre-wrap; word-break: break-word; }
   .meal-input:hover { background: #f5f5f4; }
@@ -105,17 +105,6 @@
   #new-meals-banner-close { background: none; border: none; color: #78350f; font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
   body.dark #new-meals-banner { background: #44403c; color: #fde68a; border-color: #57534e; }
   body.dark #new-meals-banner-close { color: #fde68a; }
-  /* Autocomplete dropdown for cell typing */
-  #cell-autocomplete { position: absolute; z-index: 999; background: white; border: 1px solid #d6d3d1; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 140px; max-width: 240px; overflow: hidden; display: none; }
-  #cell-autocomplete.visible { display: block; }
-  .ac-item { padding: 8px 11px; font-size: 12px; cursor: pointer; color: #1c1917; border-bottom: 1px solid #f5f5f4; }
-  .ac-item:last-child { border-bottom: none; }
-  .ac-item:active, .ac-item.hover { background: #f5f5f4; }
-  .ac-item .ac-count { color: #a8a29e; font-size: 10px; margin-left: 5px; }
-  body.dark #cell-autocomplete { background: #1c1917; border-color: #44403c; }
-  body.dark .ac-item { color: #e2e0dd; border-bottom-color: #292524; }
-  body.dark .ac-item:active, body.dark .ac-item.hover { background: #292524; }
-  body.dark .ac-item .ac-count { color: #78716c; }
   #ub-actions { display: flex; gap: 6px; align-items: center; }
   .ub-action-btn.icon { padding: 4px 9px; font-size: 14px; line-height: 1; }
   /* History modal */
@@ -378,7 +367,6 @@
   body.dark #tabs { background: #1c1917; border-bottom-color: #44403c; }
   body.dark .tab-btn { color: #a8a29e; }
   body.dark .tab-btn.active { color: #e2e0dd; border-bottom-color: #e2e0dd; }
-  body.dark #top-actions { background: #1c1917 !important; border-bottom-color: #44403c !important; }
   body.dark #legend { background: #1c1917; border-bottom-color: #44403c; }
   body.dark table { background: #1c1917; }
   body.dark tbody tr:nth-child(odd) { background: #1c1917; }
@@ -505,48 +493,6 @@ onValue(customMealsRef, (snapshot) => {
   if (!data || !window.applyRemoteCustomMeals) return;
   try { window.applyRemoteCustomMeals(data); } catch(e) { console.warn("apply customMeals failed:", e); }
 });
-
-// ── Archive snapshots synced to /archives ──
-let fbArchiveTimer = null;
-window.fbSaveArchive = function(weekKey, snapshot) {
-  clearTimeout(fbArchiveTimer);
-  fbArchiveTimer = setTimeout(() => {
-    set(ref(db, "archives/" + weekKey), snapshot).catch(e => console.warn("Firebase archive save failed:", e));
-  }, 1500);
-};
-const archivesRef = ref(db, "archives");
-onValue(archivesRef, (snapshot) => {
-  const data = snapshot.val();
-  if (!data) return;
-  try {
-    Object.keys(data).forEach(weekKey => {
-      const existing = localStorage.getItem("mealplanner_archive_" + weekKey);
-      const incoming = JSON.stringify(data[weekKey]);
-      if (existing !== incoming) {
-        localStorage.setItem("mealplanner_archive_" + weekKey, incoming);
-      }
-    });
-    if (window.invalidatePopularity) window.invalidatePopularity();
-  } catch(e) { console.warn("apply archives failed:", e); }
-});
-
-// ── Recipes synced to /recipes ──
-let fbRecipesTimer = null;
-window.fbSaveRecipes = function(recipesObj) {
-  clearTimeout(fbRecipesTimer);
-  fbRecipesTimer = setTimeout(() => {
-    set(ref(db, "recipes"), recipesObj).catch(e => console.warn("Firebase recipes save failed:", e));
-  }, 1500);
-};
-const recipesRef = ref(db, "recipes");
-onValue(recipesRef, (snapshot) => {
-  const data = snapshot.val();
-  if (!data) return;
-  try {
-    localStorage.setItem("mealplanner_recipes", JSON.stringify(data));
-    if (window.applyRemoteRecipes) window.applyRemoteRecipes(data);
-  } catch(e) { console.warn("apply recipes failed:", e); }
-});
 </script>
 </head>
 <body>
@@ -566,7 +512,7 @@ onValue(recipesRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.26</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.16</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -607,11 +553,15 @@ onValue(recipesRef, (snapshot) => {
 
 <!-- PLAN TAB -->
 <div id="plan-tab">
-  <div id="top-actions" style="padding:8px 10px;display:flex;gap:6px;align-items:center;background:#fafaf8;border-bottom:1px solid #e7e5e4;">
-    <button class="ub-action-btn icon" onclick="openHistoryModal()" title="History">🔔</button>
-    <button class="ub-action-btn primary" onclick="openAddMealModal('')">+ Add meal</button>
-    <button class="ub-action-btn" onclick="injectMeal('')">Clear cell</button>
-    <span id="top-hint" style="font-size:10px;color:#a8a29e;margin-left:auto;">tap cell to fill · double-tap to multi-select</span>
+  <div id="legend">
+    <span class="legend-tag" style="background:#ede9fe;color:#7c3aed;border-color:#7c3aed33">D&D 🎲</span>
+    <span class="legend-tag" style="background:#e0f2fe;color:#0369a1;border-color:#0369a133">Swimming 🏊</span>
+    <span class="legend-tag" style="background:#d1fae5;color:#065f46;border-color:#065f4633">Nursery</span>
+    <span class="legend-tag" style="background:#fef3c7;color:#92400e;border-color:#92400e33">School trip</span>
+    <span class="legend-tag" style="background:#fce7f3;color:#9d174d;border-color:#9d174d33">Karen's</span>
+    <span class="legend-tag" style="background:#f3f4f6;color:#374151;border-color:#37415133">Eating out</span>
+    <span class="legend-tag" style="background:#fffbeb;color:#b45309;border-color:#b4530933">⚡ Quick</span>
+    <span id="legend-hint">· tap cell to fill · double-tap to multi-select</span>
   </div>
 
   <div id="grid-wrap">
@@ -645,7 +595,11 @@ onValue(recipesRef, (snapshot) => {
     </div>
     <div id="unified-bank-header">
       <span>🍽 Meal Bank <span id="unified-bank-hint"></span></span>
-      
+      <span id="ub-actions">
+        <button class="ub-action-btn icon" onclick="openHistoryModal()" title="History">🔔</button>
+        <button class="ub-action-btn primary" onclick="openAddMealModal('')">+ Add meal</button>
+        <button class="ub-action-btn" onclick="injectMeal('')">Clear cell</button>
+      </span>
     </div>
     <div id="unified-bank-pills"></div>
   </div>
@@ -883,7 +837,7 @@ const FILTER_GROUPS = [
   {key:"sort",   label:"Sort",    exclusive:false, filters:["popular"]},
 ];
 
-let activeFilters = new Set(); /* 'popular' filter removed in v3.3.25 */
+let activeFilters = new Set();
 
 // ─── New-meals notification banner ───
 function getLastSeenStamp() {
@@ -1092,7 +1046,7 @@ function computePopularity() {
   return counts;
 }
 
-function invalidatePopularity() { popularityCache = null; } window.invalidatePopularity = invalidatePopularity;
+function invalidatePopularity() { popularityCache = null; }
 
 const SHOP_CATS = [
   {key:"produce",label:"🥦 Fruit & Veg",color:"#166534",bg:"#f0fdf4"},
@@ -1181,7 +1135,6 @@ function initRecipes() {
 function saveRecipes() {
   try {
     localStorage.setItem('mealplanner_recipes', JSON.stringify(recipes));
-    if (window.fbSaveRecipes) window.fbSaveRecipes(recipes);
     const ind = document.getElementById('save-indicator');
     if (ind) { ind.style.display = 'inline'; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = 'none', 1500); }
   } catch(e) {}
@@ -1347,7 +1300,6 @@ function saveToStorage() {
         };
         localStorage.setItem('mealplanner_archive_' + viewingWeekKey, JSON.stringify(snapshot));
         invalidatePopularity();
-        if (window.fbSaveArchive) window.fbSaveArchive(viewingWeekKey, snapshot);
         const ind = document.getElementById('save-indicator');
         if (ind) { ind.style.display = 'inline'; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = 'none', 1500); }
       } catch(e) { console.warn('archive save failed:', e); }
@@ -1485,7 +1437,7 @@ function renderTable() {
     const isDnD = plan[dayKey].special === "dnd";
     const isSwim = plan[dayKey].special === "swimming";
     const tr = document.createElement("tr");
-    /* dnd-row removed in v3.3.23 */
+    if (isDnD) tr.classList.add("dnd-row");
 
     // Day cell - editable label for custom days
     const tdDay = document.createElement("td");
@@ -1517,49 +1469,7 @@ function renderTable() {
       }
     } else {
       const dayDate = getDayDate(dayKey);
-      tdDay.innerHTML = day.label + (dayDate ? '<div style="font-size:8px;color:#a8a29e;">' + dayDate + '</div>' : '');
-      // Unified flag rendering — applies to all special values
-      const flagSpecial = plan[dayKey].special;
-      if (flagSpecial) {
-        const isCustomF = flagSpecial.startsWith('custom:');
-        const flagLabels = { dnd: '🎲 D&D', swimming: '🏊 Swimming', nursery: 'Nursery',
-                             school: 'School trip', karen: "Karen's", out: 'Eating out',
-                             quick: '⚡ Quick' };
-        const flagDisplay = isCustomF ? '✏ ' + flagSpecial.slice(7) : (flagLabels[flagSpecial] || flagSpecial);
-        const flagDiv = document.createElement('div');
-        flagDiv.className = 'dnd-hint';
-        const flagText = document.createElement('span');
-        flagText.textContent = flagDisplay;
-        flagText.style.cursor = 'pointer';
-        flagText.title = 'Tap to edit';
-        flagText.onclick = (e) => {
-          e.stopPropagation();
-          if (isCustomF) {
-            const newText = prompt('Edit flag:', flagSpecial.slice(7));
-            if (newText !== null) {
-              if (newText.trim()) plan[dayKey].special = 'custom:' + newText.trim();
-              else plan[dayKey].special = '';
-              renderTable(); updateMealsDetected(); saveToStorage();
-            }
-          } else {
-            // For built-in flags, focus the dropdown
-            const sel = tdFlag.querySelector('select');
-            if (sel) { sel.focus(); try { sel.click(); } catch(e) {} }
-          }
-        };
-        const flagDel = document.createElement('button');
-        flagDel.textContent = '×';
-        flagDel.title = 'Remove flag';
-        flagDel.style.cssText = 'background:none;border:none;color:#d6d3d1;font-size:12px;line-height:1;padding:0 2px;cursor:pointer;';
-        flagDel.onclick = (e) => {
-          e.stopPropagation();
-          plan[dayKey].special = '';
-          renderTable(); updateMealsDetected(); saveToStorage();
-        };
-        flagDiv.appendChild(flagText);
-        flagDiv.appendChild(flagDel);
-        tdDay.appendChild(flagDiv);
-      }
+      tdDay.innerHTML = day.label + (dayDate ? '<div style="font-size:8px;color:#a8a29e;">' + dayDate + '</div>' : '') + (isDnD ? '<div class="dnd-hint">🍕 Pizza night</div>' : '') + (isSwim ? '<div class="dnd-hint" style="color:#0369a1">⚡ Quick tea</div>' : '');
     }
     tr.appendChild(tdDay);
 
@@ -1572,8 +1482,6 @@ function renderTable() {
     const fs = special ? FLAG_STYLES[special] : null;
     if (fs) { sel.style.background = fs.bg; sel.style.color = fs.color; }
     else { sel.style.background = "white"; sel.style.color = "#78716c"; }
-    const isCustomFlag = special && special.startsWith('custom:');
-    const customText = isCustomFlag ? special.slice(7) : '';
     sel.innerHTML = `<option value="">—</option>
       <option value="dnd"${special==="dnd"?" selected":""}>D&D 🎲</option>
       <option value="swimming"${special==="swimming"?" selected":""}>Swimming 🏊</option>
@@ -1581,20 +1489,9 @@ function renderTable() {
       <option value="school"${special==="school"?" selected":""}>School trip</option>
       <option value="karen"${special==="karen"?" selected":""}>Karen's</option>
       <option value="out"${special==="out"?" selected":""}>Eating out</option>
-      <option value="quick"${special==="quick"?" selected":""}>⚡ Quick</option>
-      ${isCustomFlag ? `<option value="${special}" selected>✏ ${customText}</option>` : ''}
-      <option value="__new__">✏ Custom...</option>`;
+      <option value="quick"${special==="quick"?" selected":""}>⚡ Quick</option>`;
     sel.onchange = () => {
-      if (sel.value === '__new__') {
-        const text = prompt('What should this flag say?', isCustomFlag ? customText : '');
-        if (text && text.trim()) {
-          plan[dayKey].special = 'custom:' + text.trim();
-        } else {
-          plan[dayKey].special = special;
-        }
-      } else {
-        plan[dayKey].special = sel.value;
-      }
+      plan[dayKey].special = sel.value;
       renderTable();
       updateMealsDetected();
       saveToStorage();
@@ -1618,13 +1515,15 @@ function renderTable() {
       ["L","T"].forEach(slot => {
         const val = plan[dayKey].meals[person][slot] || "";
         const isAB = activeBank && activeBank.day === dayKey && activeBank.person === person && activeBank.slot === slot;
+        const isPizzaHint = (isDnD && slot === "T" && !val);
+        const isQuickHint = (isSwim && slot === "T" && !val);
         const td = document.createElement("td");
-        td.className = "meal-cell " + slot + (isAB ? " active" : "") + (val==="????" ? " unsure" : "");
+        td.className = "meal-cell " + slot + (isAB ? " active" : "") + (isPizzaHint ? " pizza-hint" : "") + (isQuickHint ? " quick-hint" : "") + (val==="????" ? " unsure" : "");
         const inp = document.createElement("textarea");
         inp.rows = 2;
         inp.dataset.cellkey = dayKey + "|" + person + "|" + slot;
         inp.value = val;
-        inp.placeholder = "";
+        inp.placeholder = isPizzaHint ? "🍕?" : isQuickHint ? "⚡?" : "";
         inp.className = "meal-input" + (isAB ? " active-input" : "")
           + (val==="School" ? " school" : val==="Karen's" ? " karen" : val==="Nursery" ? " nursery" : val==="MIRA" ? " mira" : val==="Sandwich" ? " sandwich" : "");
         inp.oninput = () => {
@@ -1805,13 +1704,15 @@ function renderUnifiedBank() {
   let meals = getFilteredMeals();
   const counts = computePopularity();
 
-  // Always sort by popularity desc, ties alphabetical
-  meals = meals.slice().sort((a, b) => {
-    const ca = counts[a.name.toLowerCase()] || 0;
-    const cb = counts[b.name.toLowerCase()] || 0;
-    if (cb !== ca) return cb - ca;
-    return a.name.localeCompare(b.name);
-  });
+  // Popularity sort if filter active (clone array to avoid mutating UNIFIED_MEALS order)
+  if (activeFilters.has('popular')) {
+    meals = meals.slice().sort((a, b) => {
+      const ca = counts[a.name.toLowerCase()] || 0;
+      const cb = counts[b.name.toLowerCase()] || 0;
+      if (cb !== ca) return cb - ca;
+      return a.name.localeCompare(b.name);
+    });
+  }
 
   if (meals.length === 0) {
     pillsDiv.innerHTML = '<div style="padding:8px;font-size:11px;color:#a8a29e;">No meals match these filters</div>';
@@ -2495,11 +2396,7 @@ function saveCurrentToArchive() {
     shop: JSON.stringify(shopItems),
     checked: JSON.stringify(checkedItems),
   };
-  try {
-    localStorage.setItem('mealplanner_archive_' + weekKey, JSON.stringify(snapshot));
-    invalidatePopularity();
-    if (window.fbSaveArchive) window.fbSaveArchive(weekKey, snapshot);
-  } catch(e) {}
+  try { localStorage.setItem('mealplanner_archive_' + weekKey, JSON.stringify(snapshot)); invalidatePopularity(); } catch(e) {}
 }
 
 function navWeek(dir) {
@@ -2912,95 +2809,6 @@ function ammNext() {
   closeAddMealModal();
   renderBanks();
 }
-
-// ─── Cell autocomplete ───
-let acEl = null;
-let acTargetInput = null;
-function ensureAcEl() {
-  if (acEl) return acEl;
-  acEl = document.createElement('div');
-  acEl.id = 'cell-autocomplete';
-  document.body.appendChild(acEl);
-  return acEl;
-}
-function hideAutocomplete() {
-  if (acEl) acEl.classList.remove('visible');
-  acTargetInput = null;
-}
-function showAutocomplete(input, query) {
-  if (!query || query.length < 1) { hideAutocomplete(); return; }
-  const q = query.toLowerCase();
-  // Score: 0 = prefix match, 1 = substring elsewhere
-  const matches = [];
-  UNIFIED_MEALS.forEach(m => {
-    const name = m.name;
-    const lc = name.toLowerCase();
-    if (lc.startsWith(q)) matches.push({ name, rank: 0, lc });
-    else if (lc.includes(q)) matches.push({ name, rank: 1, lc });
-  });
-  // Sort: prefix matches first (alphabetical), then substring (alphabetical)
-  matches.sort((a, b) => {
-    if (a.rank !== b.rank) return a.rank - b.rank;
-    return a.name.localeCompare(b.name);
-  });
-  const top = matches.slice(0, 5);
-  if (top.length === 0) { hideAutocomplete(); return; }
-
-  const el = ensureAcEl();
-  el.innerHTML = '';
-  top.forEach(m => {
-    const item = document.createElement('div');
-    item.className = 'ac-item';
-    item.textContent = m.name;
-    // mousedown fires before blur — use that so we can fill before the input loses focus
-    item.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      input.value = m.name;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-      hideAutocomplete();
-      input.blur();
-    });
-    el.appendChild(item);
-  });
-
-  // Position below the input
-  const rect = input.getBoundingClientRect();
-  el.style.left = (window.scrollX + rect.left) + 'px';
-  el.style.top  = (window.scrollY + rect.bottom + 2) + 'px';
-  el.style.minWidth = Math.max(140, rect.width) + 'px';
-  el.classList.add('visible');
-  acTargetInput = input;
-}
-
-// Hook into every meal-input textarea after each render
-function attachAutocomplete() {
-  document.querySelectorAll('.meal-input').forEach(inp => {
-    if (inp.dataset.acHooked === '1') return;
-    inp.dataset.acHooked = '1';
-    inp.addEventListener('input', (e) => {
-      showAutocomplete(inp, inp.value);
-    });
-    inp.addEventListener('blur', () => {
-      // Delay so mousedown on suggestion can fire first
-      setTimeout(() => { if (acTargetInput === inp) hideAutocomplete(); }, 150);
-    });
-  });
-}
-
-// Patch renderTable to attach after every render
-const _origRenderTable = window.renderTable || renderTable;
-window.renderTable = function() {
-  _origRenderTable.apply(this, arguments);
-  attachAutocomplete();
-};
-
-// Hide autocomplete when clicking elsewhere
-document.addEventListener('click', (e) => {
-  if (e.target.closest('#cell-autocomplete')) return;
-  if (e.target.closest('.meal-input')) return;
-  hideAutocomplete();
-});
 
 init();
 // Clean up any leftover debug banner from earlier versions

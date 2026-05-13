@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.26</title>
+<title>Family Meal Planner v3.3.24</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -378,7 +378,6 @@
   body.dark #tabs { background: #1c1917; border-bottom-color: #44403c; }
   body.dark .tab-btn { color: #a8a29e; }
   body.dark .tab-btn.active { color: #e2e0dd; border-bottom-color: #e2e0dd; }
-  body.dark #top-actions { background: #1c1917 !important; border-bottom-color: #44403c !important; }
   body.dark #legend { background: #1c1917; border-bottom-color: #44403c; }
   body.dark table { background: #1c1917; }
   body.dark tbody tr:nth-child(odd) { background: #1c1917; }
@@ -566,7 +565,7 @@ onValue(recipesRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.26</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.24</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -607,11 +606,15 @@ onValue(recipesRef, (snapshot) => {
 
 <!-- PLAN TAB -->
 <div id="plan-tab">
-  <div id="top-actions" style="padding:8px 10px;display:flex;gap:6px;align-items:center;background:#fafaf8;border-bottom:1px solid #e7e5e4;">
-    <button class="ub-action-btn icon" onclick="openHistoryModal()" title="History">🔔</button>
-    <button class="ub-action-btn primary" onclick="openAddMealModal('')">+ Add meal</button>
-    <button class="ub-action-btn" onclick="injectMeal('')">Clear cell</button>
-    <span id="top-hint" style="font-size:10px;color:#a8a29e;margin-left:auto;">tap cell to fill · double-tap to multi-select</span>
+  <div id="legend">
+    <span class="legend-tag" style="background:#ede9fe;color:#7c3aed;border-color:#7c3aed33">D&D 🎲</span>
+    <span class="legend-tag" style="background:#e0f2fe;color:#0369a1;border-color:#0369a133">Swimming 🏊</span>
+    <span class="legend-tag" style="background:#d1fae5;color:#065f46;border-color:#065f4633">Nursery</span>
+    <span class="legend-tag" style="background:#fef3c7;color:#92400e;border-color:#92400e33">School trip</span>
+    <span class="legend-tag" style="background:#fce7f3;color:#9d174d;border-color:#9d174d33">Karen's</span>
+    <span class="legend-tag" style="background:#f3f4f6;color:#374151;border-color:#37415133">Eating out</span>
+    <span class="legend-tag" style="background:#fffbeb;color:#b45309;border-color:#b4530933">⚡ Quick</span>
+    <span id="legend-hint">· tap cell to fill · double-tap to multi-select</span>
   </div>
 
   <div id="grid-wrap">
@@ -645,7 +648,11 @@ onValue(recipesRef, (snapshot) => {
     </div>
     <div id="unified-bank-header">
       <span>🍽 Meal Bank <span id="unified-bank-hint"></span></span>
-      
+      <span id="ub-actions">
+        <button class="ub-action-btn icon" onclick="openHistoryModal()" title="History">🔔</button>
+        <button class="ub-action-btn primary" onclick="openAddMealModal('')">+ Add meal</button>
+        <button class="ub-action-btn" onclick="injectMeal('')">Clear cell</button>
+      </span>
     </div>
     <div id="unified-bank-pills"></div>
   </div>
@@ -883,7 +890,7 @@ const FILTER_GROUPS = [
   {key:"sort",   label:"Sort",    exclusive:false, filters:["popular"]},
 ];
 
-let activeFilters = new Set(); /* 'popular' filter removed in v3.3.25 */
+let activeFilters = new Set();
 
 // ─── New-meals notification banner ───
 function getLastSeenStamp() {
@@ -1618,13 +1625,15 @@ function renderTable() {
       ["L","T"].forEach(slot => {
         const val = plan[dayKey].meals[person][slot] || "";
         const isAB = activeBank && activeBank.day === dayKey && activeBank.person === person && activeBank.slot === slot;
+        const isPizzaHint = (isDnD && slot === "T" && !val);
+        const isQuickHint = (isSwim && slot === "T" && !val);
         const td = document.createElement("td");
-        td.className = "meal-cell " + slot + (isAB ? " active" : "") + (val==="????" ? " unsure" : "");
+        td.className = "meal-cell " + slot + (isAB ? " active" : "") + (isPizzaHint ? " pizza-hint" : "") + (isQuickHint ? " quick-hint" : "") + (val==="????" ? " unsure" : "");
         const inp = document.createElement("textarea");
         inp.rows = 2;
         inp.dataset.cellkey = dayKey + "|" + person + "|" + slot;
         inp.value = val;
-        inp.placeholder = "";
+        inp.placeholder = isPizzaHint ? "🍕?" : isQuickHint ? "⚡?" : "";
         inp.className = "meal-input" + (isAB ? " active-input" : "")
           + (val==="School" ? " school" : val==="Karen's" ? " karen" : val==="Nursery" ? " nursery" : val==="MIRA" ? " mira" : val==="Sandwich" ? " sandwich" : "");
         inp.oninput = () => {
@@ -1805,13 +1814,15 @@ function renderUnifiedBank() {
   let meals = getFilteredMeals();
   const counts = computePopularity();
 
-  // Always sort by popularity desc, ties alphabetical
-  meals = meals.slice().sort((a, b) => {
-    const ca = counts[a.name.toLowerCase()] || 0;
-    const cb = counts[b.name.toLowerCase()] || 0;
-    if (cb !== ca) return cb - ca;
-    return a.name.localeCompare(b.name);
-  });
+  // Popularity sort if filter active (clone array to avoid mutating UNIFIED_MEALS order)
+  if (activeFilters.has('popular')) {
+    meals = meals.slice().sort((a, b) => {
+      const ca = counts[a.name.toLowerCase()] || 0;
+      const cb = counts[b.name.toLowerCase()] || 0;
+      if (cb !== ca) return cb - ca;
+      return a.name.localeCompare(b.name);
+    });
+  }
 
   if (meals.length === 0) {
     pillsDiv.innerHTML = '<div style="padding:8px;font-size:11px;color:#a8a29e;">No meals match these filters</div>';
