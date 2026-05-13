@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.24</title>
+<title>Family Meal Planner v3.3.25</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -565,7 +565,7 @@ onValue(recipesRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.24</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.25</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -890,7 +890,7 @@ const FILTER_GROUPS = [
   {key:"sort",   label:"Sort",    exclusive:false, filters:["popular"]},
 ];
 
-let activeFilters = new Set();
+let activeFilters = new Set(); /* 'popular' filter removed in v3.3.25 */
 
 // ─── New-meals notification banner ───
 function getLastSeenStamp() {
@@ -1814,15 +1814,13 @@ function renderUnifiedBank() {
   let meals = getFilteredMeals();
   const counts = computePopularity();
 
-  // Popularity sort if filter active (clone array to avoid mutating UNIFIED_MEALS order)
-  if (activeFilters.has('popular')) {
-    meals = meals.slice().sort((a, b) => {
-      const ca = counts[a.name.toLowerCase()] || 0;
-      const cb = counts[b.name.toLowerCase()] || 0;
-      if (cb !== ca) return cb - ca;
-      return a.name.localeCompare(b.name);
-    });
-  }
+  // Always sort by popularity desc, ties alphabetical
+  meals = meals.slice().sort((a, b) => {
+    const ca = counts[a.name.toLowerCase()] || 0;
+    const cb = counts[b.name.toLowerCase()] || 0;
+    if (cb !== ca) return cb - ca;
+    return a.name.localeCompare(b.name);
+  });
 
   if (meals.length === 0) {
     pillsDiv.innerHTML = '<div style="padding:8px;font-size:11px;color:#a8a29e;">No meals match these filters</div>';
