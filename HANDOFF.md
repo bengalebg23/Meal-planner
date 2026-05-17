@@ -1,84 +1,96 @@
-# Family Meal Planner — Handoff Notes
+# Meal Planner PWA — Handoff Document
 
-## Current state
-- **Version:** v3.3.27
-- **Branch:** `dev` (NOT `main`). Production is on `main`; promote via `mplive`.
-- **Repo:** bengalebg23/Meal-planner
-- **Stack:** Single-file `index.html` (~2500 lines) + `sw.js`. Vanilla JS, Firebase RTDB sync, GitHub Pages.
-- **PWA:** Yes. Manifest dynamically injected. Service worker caches per `CACHE = 'meal-planner-vX.X.X'`.
-- **Family:** Ben, Emily, Reuben, Vivien — 17 Melody Drive, Sileby.
+## New Chat Prompt (copy this)
+```
+I'm working on a family meal planner PWA. Please fetch these for context:
+https://cdn.jsdelivr.net/gh/bengalebg23/Meal-planner@main/HANDOFF.md?t=TIMESTAMP
+https://cdn.jsdelivr.net/gh/bengalebg23/Meal-planner@main/code_dump_v3.3.28.txt?t=TIMESTAMP
+```
+Replace `TIMESTAMP` with `$(date +%s)` (or use the `mphandoff` alias which prints a fresh one).
 
-## Workflow
-- Patches are bash scripts using Python heredocs to edit `~/meal-planner/index.html`.
-- From v3.3.17 onwards every patch must:
-  1. Bump version in `<title>`, `#version-badge`, and `sw.js` CACHE
-  2. Auto-dump `cp index.html code_dump_vX.X.X.txt`
-  3. Regenerate this HANDOFF.md
-  4. Print the dump URL: `https://raw.githubusercontent.com/bengalebg23/Meal-planner/dev/code_dump_vX.X.X.txt`
-- Push: `cd ~/meal-planner && mp` (dev) or `mplive` (prod).
+## Live URLs
+- **Production**: https://bengalebg23.github.io/Meal-planner/
+- **Dev preview**: https://bengalebg23.github.io/Meal-planner/dev/
+- **GitHub repo**: https://github.com/bengalebg23/Meal-planner.git
 
-## Self-review checklist for patches (mandatory before pushing)
-Check the JS being added for:
-- Duplicate `const`/`let` in same scope (caused v3.3.19/v3.3.20 to break)
-- Variable shadowing in forEach loops
-- Unclosed template literals
-- References to undefined vars/functions
-- Existing context in the dump that would collide
+## Current Version
+- **Dev branch**: v3.3.28
+- **Production (main)**: previous (push with `mplive` when verified)
 
-## Features
-### Plan tab
-- 4-person × 2-meal table (Reuben / Vivien / Emily / Ben × Lunch / Tea)
-- DAY column sticky-left when horizontally scrolling
-- Three-week navigation (W-1, current W, W+1) with read-only past weeks
-- Past weeks can be unlocked with confirm prompt → edits save back to archive
-- Custom day rows (insert above with auto-calculated previous date)
-- Per-day flag dropdown: D&D, Swimming, Nursery, School trip, Karen's, Eating out, Quick, plus ✏ Custom...
-- All flags render uniformly as grey text under day label with × delete + tap-to-edit
-- Per-day work mode (office / wfh / weekend)
-- Cell typing with autocomplete dropdown (top 5: prefix matches first, then substring, alphabetical)
-- Top action bar (replaces old legend): 🔔 history / + Add meal / Clear cell
-- Multi-cell select via double-tap; floating bar shows current selection
+## Tech Stack
+- Single HTML file `index.html` + `sw.js` service worker
+- Firebase Realtime Database for real-time cross-device sync
+  - Project: `meal-planner-f5ba2`
+  - DB URL: `https://meal-planner-f5ba2-default-rtdb.europe-west1.firebasedatabase.app`
+  - Rules: public read/write (private family use)
+- GitHub Pages hosting
+- Network-first service worker (auto-updates without cache clearing)
+- localStorage for offline persistence
 
-### Meal bank
-- Unified pill bank with tag filters: When / Who / Protein / Effort / Style (all exclusive within group)
-- Filter group dividers between groups
-- Always sorted by popularity descending (archive-only counts), ties alphabetical
-- Grey "(N)" count badge next to each pill (only shown when count > 0)
-- + Add meal modal: 6 steps (name → who → when → protein → effort → style)
-- Custom meals tagged `_custom: true`, synced via Firebase `/customMeals`
-- Each custom meal stores `addedBy` + `addedAt`
+## Family Config
+- **People**: Reuben, Vivien, Emily, Ben
+- **Address**: 17 Melody Drive, Sileby, Loughborough LE127UU
+- D&D nights -> 🍕 Pizza hint
+- Swimming days -> ⚡ Quick tea hint
 
-### Notifications & history
-- First-load name prompt, stored in `mealplanner_username`
-- Yellow banner above bank when others add meals (dismissable, tap to flash pill)
-- 🔔 history modal: all custom meals sorted newest-first with addedBy + relative date
-- Tapping a history row scrolls bank into view and flashes the pill
+## v3.3.28 Changes (this version)
+- **Editable past and future weeks.** Read-only gate dropped. Inputs always enabled across all weeks.
+- **Confirm-on-first-edit per non-live week.** First keystroke / dropdown change on a past or future week pops a confirm dialog with the week label. Approve once and that week stays unlocked for the rest of the session (resets on reload).
+- **Saves routed to correct archive.** Previously, edits on a future week silently clobbered the live week. Now any non-live edit writes to `mealplanner_archive_{weekKey}` and Firebase `/archives/{weekKey}`.
+- **Read-only badge replaced** with `past` (purple) / `future` (blue) / `editing` (orange).
+- **Restore-to-current button** hidden when viewing future weeks (only past makes sense to restore).
+- **Bootstrap injection** of historical archives W9–W15 of 2026 from photos. One-shot, flagged with `mealplanner_w9_w15_bootstrap` in localStorage. Won't overwrite existing keys. Pushed to Firebase on inject.
 
-### Cloud sync (Firebase RTDB)
-- `/currentWeek`: plan, notes, week label, activedays, customdays, shop
-- `/customMeals/{slug}`: custom meal bank
-- `/archives/{weekKey}`: all past week snapshots
-- `/recipes`: recipe edits
-- Last-write-wins. 1.5s debounce on archives and recipes.
+## App Features
+- Meal plan grid: 4 people × Lunch/Tea × 7-8 days
+- Unified meal bank with tag filters (When/Who/Protein/Effort/Style/Sort)
+- Lunch options sidebar (Quick/Cooked/Viv)
+- Lock button 🔓/🔒 to freeze meal plan
+- Three-week navigation (W-1 · W · W+1)
+- Week archive (auto-saves by ISO week key e.g. 2026_W16)
+- Past and future weeks now editable with confirmation
+- Share modal — exports `MEALPLAN:base64` string for import
+- Shopping tab with Asda order picker (auto-suggests best-matching past order)
+- Recipes tab with #ClaudeRecipe / #GaleRecipe tagging
+- Dark mode toggle
+- Firebase ⟳ sync indicator
+- Custom meals with addedBy + addedAt, new-meals banner, 🔔 history modal
+- Version badge (white, large) in header
 
-### Other tabs
-- Shopping tab: Asda baseline order picker, AI-generated shopping list, manual add, category breakdown
-- Recipes tab: ingredient editing, notes, #ClaudeRecipe / #GaleRecipe tagging
+## Termux Workflow (Android/Pixel)
+```bash
+# Aliases in ~/.bashrc
+mp        # git add -A, commit, push to dev branch
+mplive    # merge dev -> main, push to production
+mphandoff # commit + push HANDOFF.md, print new-chat prompt
+```
 
-### Local-only state
-- Dark mode preference, locked state, username, selected Asda baseline order
+## Branch Strategy
+- `dev` -> deploys to `/Meal-planner/dev/`
+- `main` -> deploys to `/Meal-planner/`
+- Always work on dev, test, then `mplive` to go live
 
-## Open threads
-- **W1–W8 historical import:** Ben has photos from earlier weeks but only W9–W15 attempted. v3.3.19 attempt broke the app (duplicate const), reverted. May retry later, more carefully — one week at a time.
-- **Cell typing keyboard regression:** Resolved in v3.3.12. `updateTableHighlight()` was re-rendering the entire table mid-focus event, destroying the just-focused textarea. Fix: toggle classes directly instead of re-rendering.
+## Patch Conventions (from v3.3.17 onwards)
+Every patch script must:
+1. **Always uprevision** — bump in `<title>`, `#version-badge`, and `sw.js` CACHE
+2. **Self-review JS** for scope collisions, syntax errors, duplicate `const`/`let`
+3. **Auto-dump** `index.html` -> `code_dump_vX.X.X.txt`
+4. **Output the jsDelivr dump URL** for session handoff
+5. **Regenerate HANDOFF.md** with current state
+6. Work on `dev` branch, not `main`
 
-## Key files
-- `index.html` — the whole app (~2500 lines)
-- `sw.js` — service worker (cache busting per version)
-- `code_dump_vX.X.X.txt` — snapshots committed alongside each patch
-- `HANDOFF.md` — this file, refreshed each patch
+Standard Python patch template lives in `~/meal-planner/patches/`.
 
-## Lessons learned
-- Click handlers that re-render DOM via `innerHTML = ""` destroy the click target mid-bubble. Document-level click handlers then see `e.target.closest(...)` as null. Fix: defer the re-render with `setTimeout(..., 0)`.
-- Duplicate `const isCustom` in the same forEach scope is a silent SyntaxError that kills the whole script.
-- Browser cache is aggressive on PWAs. Hard reload via long-press → "Reload from origin" or clear site data.
+## Known Issues
+- Shopping list generator (✨ Generate) requires Anthropic API key — currently asks via prompt and stores in `mealplanner_apikey` localStorage. Calls Anthropic API directly with `anthropic-dangerous-direct-browser-access` header.
+
+## File Locations
+- Phone repo: `~/meal-planner/index.html` and `~/meal-planner/sw.js`
+- Patch scripts: `~/meal-planner/patches/`
+- Claude outputs: `/mnt/user-data/outputs/`
+
+## Key Debugging Lessons
+- **White screen** -> check for duplicate `const` declarations in JS (especially `const currentKey` in `navWeek`)
+- **Table not rendering** -> check `isPlanLocked` is defined before `saveToStorage` calls it
+- **Click handlers that re-render the DOM via `innerHTML=""`** cause detached-node issues with document-level bubbling listeners — fix with `setTimeout(..., 0)` to defer re-render
+- **Stale fetches from raw.githubusercontent.com** — use jsDelivr instead with `?t=TIMESTAMP` cache buster

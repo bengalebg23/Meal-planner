@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.27</title>
+<title>Family Meal Planner v3.3.28</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -559,14 +559,14 @@ onValue(recipesRef, (snapshot) => {
       <button class="week-nav-btn current-week" id="week-center-btn" onclick="navWeek(0)">W16</button>
       <button class="week-nav-btn" id="week-next-btn" onclick="navWeek(1)">W17</button>
     </div>
-    <input id="week-label" type="text" placeholder="Week name (optional)" oninput="saveToStorage()" style="background:transparent;border:none;color:white;font-size:13px;font-weight:600;outline:none;width:100%;margin-top:2px;padding:2px 0;" />
+    <input id="week-label" type="text" placeholder="Week name (optional)" oninput="if(!confirmEditIfNeeded()){return;}saveToStorage()" style="background:transparent;border:none;color:white;font-size:13px;font-weight:600;outline:none;width:100%;margin-top:2px;padding:2px 0;" />
     <span id="week-readonly-badge">read-only</span>
     <button id="restore-week-btn" onclick="restoreWeek()">↩ Restore to current</button>
   </div>
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.27</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.28</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -674,7 +674,7 @@ onValue(recipesRef, (snapshot) => {
       </div>
       <div class="bank-card">
         <div class="bank-header">📝 Notes</div>
-        <textarea id="notes-ta" oninput="saveToStorage()" placeholder="defrost chicken Tues&#10;need pitta bread&#10;Reuben school trip Fri"></textarea>
+        <textarea id="notes-ta" oninput="if(confirmEditIfNeeded()){saveToStorage();}else{this.value=localStorage.getItem('mealplanner_notes')||'';}" placeholder="defrost chicken Tues&#10;need pitta bread&#10;Reuben school trip Fri"></textarea>
       </div>
     </div>
   </div>
@@ -1332,26 +1332,25 @@ function ensureDayInPlan(key) {
 
 function saveToStorage() {
   if (typeof isPlanLocked === 'function' && isPlanLocked()) return;
-  const isFutureWk = viewingWeekKey !== null && viewingWeekKey > getCurrentWeekKey();
-  if (viewingWeekKey !== null && !isFutureWk) {
-    if (unlockedArchivedWeeks.has(viewingWeekKey)) {
-      try {
-        const snapshot = {
-          plan: JSON.stringify(plan),
-          notes: document.getElementById('notes-ta').value,
-          week: document.getElementById('week-label').value,
-          activedays: JSON.stringify(activeDays),
-          customdays: JSON.stringify(customDays),
-          shop: JSON.stringify(shopItems),
-          checked: JSON.stringify(checkedItems),
-        };
-        localStorage.setItem('mealplanner_archive_' + viewingWeekKey, JSON.stringify(snapshot));
-        invalidatePopularity();
-        if (window.fbSaveArchive) window.fbSaveArchive(viewingWeekKey, snapshot);
-        const ind = document.getElementById('save-indicator');
-        if (ind) { ind.style.display = 'inline'; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = 'none', 1500); }
-      } catch(e) { console.warn('archive save failed:', e); }
-    }
+  // v3.3.28: any non-live week (past OR future) saves to its archive when unlocked.
+  if (viewingWeekKey !== null) {
+    if (!unlockedArchivedWeeks.has(viewingWeekKey)) return; // not yet confirmed — bail
+    try {
+      const snapshot = {
+        plan: JSON.stringify(plan),
+        notes: document.getElementById('notes-ta').value,
+        week: document.getElementById('week-label').value,
+        activedays: JSON.stringify(activeDays),
+        customdays: JSON.stringify(customDays),
+        shop: JSON.stringify(shopItems),
+        checked: JSON.stringify(checkedItems),
+      };
+      localStorage.setItem('mealplanner_archive_' + viewingWeekKey, JSON.stringify(snapshot));
+      invalidatePopularity();
+      if (window.fbSaveArchive) window.fbSaveArchive(viewingWeekKey, snapshot);
+      const ind = document.getElementById('save-indicator');
+      if (ind) { ind.style.display = 'inline'; clearTimeout(ind._t); ind._t = setTimeout(() => ind.style.display = 'none', 1500); }
+    } catch(e) { console.warn('archive save failed:', e); }
     return;
   }
   try {
@@ -1495,7 +1494,10 @@ function renderTable() {
       const labelInp = document.createElement("input");
       labelInp.className = "day-label-input";
       labelInp.value = day.label;
-      labelInp.oninput = () => { customDays[dayKey].label = labelInp.value; saveToStorage(); };
+      labelInp.oninput = () => {
+        if (!confirmEditIfNeeded()) { labelInp.value = customDays[dayKey].label || ''; return; }
+        customDays[dayKey].label = labelInp.value; saveToStorage();
+      };
       const delBtn = document.createElement("button");
       delBtn.className = "del-day-btn";
       delBtn.title = "Remove this row";
@@ -1585,6 +1587,10 @@ function renderTable() {
       ${isCustomFlag ? `<option value="${special}" selected>✏ ${customText}</option>` : ''}
       <option value="__new__">✏ Custom...</option>`;
     sel.onchange = () => {
+      if (!confirmEditIfNeeded()) {
+        sel.value = special || '';
+        return;
+      }
       if (sel.value === '__new__') {
         const text = prompt('What should this flag say?', isCustomFlag ? customText : '');
         if (text && text.trim()) {
@@ -1607,7 +1613,15 @@ function renderTable() {
     wsel2.style.display = "block";
     wsel2.style.marginBottom = "2px";
     wsel2.innerHTML = `<option value="">—</option><option value="office"${wval2==="office"?" selected":""}>🏢</option><option value="wfh"${wval2==="wfh"?" selected":""}>🏠</option><option value="weekend"${wval2==="weekend"?" selected":""}>🌤</option>`;
-    wsel2.onchange = () => { plan[dayKey].work = wsel2.value; wsel2.className = "work-select" + (wsel2.value==="office"?" office":wsel2.value==="wfh"?" wfh":wsel2.value==="weekend"?" weekend":""); saveToStorage(); };
+    wsel2.onchange = () => {
+      if (!confirmEditIfNeeded()) {
+        wsel2.value = plan[dayKey].work || "";
+        return;
+      }
+      plan[dayKey].work = wsel2.value;
+      wsel2.className = "work-select" + (wsel2.value==="office"?" office":wsel2.value==="wfh"?" wfh":wsel2.value==="weekend"?" weekend":"");
+      saveToStorage();
+    };
     tdFlag.insertBefore(wsel2, tdFlag.firstChild);
     tr.appendChild(tdFlag);
 
@@ -1628,6 +1642,11 @@ function renderTable() {
         inp.className = "meal-input" + (isAB ? " active-input" : "")
           + (val==="School" ? " school" : val==="Karen's" ? " karen" : val==="Nursery" ? " nursery" : val==="MIRA" ? " mira" : val==="Sandwich" ? " sandwich" : "");
         inp.oninput = () => {
+          if (!confirmEditIfNeeded()) {
+            // user declined — revert
+            inp.value = plan[dayKey].meals[person][slot] || '';
+            return;
+          }
           plan[dayKey].meals[person][slot] = inp.value;
           inp.style.height = 'auto';
           inp.style.height = inp.scrollHeight + 'px';
@@ -1656,16 +1675,8 @@ function renderTable() {
           }
         };
         // Double-tap to toggle multi-select
-        td.addEventListener("click", e => {
-          if (inp.disabled && viewingWeekKey && !unlockedArchivedWeeks.has(viewingWeekKey)) {
-            e.preventDefault(); e.stopPropagation();
-            if (confirm('This is a read-only archived week. Edit anyway?')) {
-              unlockedArchivedWeeks.add(viewingWeekKey);
-              updateWeekNavUI();
-              setTimeout(() => inp.focus(), 50);
-            }
-          }
-        });
+        // v3.3.28: old read-only-unlock click handler removed.
+        // Confirmation now triggered by confirmEditIfNeeded() inside oninput / onchange.
         td.addEventListener("touchend", e => {
           const now = Date.now();
           const last = lastTap[cellKey] || 0;
@@ -2464,6 +2475,28 @@ document.addEventListener("click", e => {
 let viewingWeekKey = null; // null = current live week
 let unlockedArchivedWeeks = new Set();
 
+// v3.3.28: confirmation gate for editing a non-live week.
+// Returns true if the edit may proceed, false if the user declined.
+// Once confirmed for a week, that week stays unlocked until reload.
+function confirmEditIfNeeded() {
+  if (viewingWeekKey === null) return true; // live week, always editable
+  if (unlockedArchivedWeeks.has(viewingWeekKey)) return true;
+  const cur = getCurrentWeekKey();
+  const isPast = viewingWeekKey < cur;
+  const isFuture = viewingWeekKey > cur;
+  const label = document.getElementById('week-label')?.value?.trim();
+  const wkLabel = (label ? label + ' (' + viewingWeekKey + ')' : viewingWeekKey);
+  const which = isPast ? 'past' : (isFuture ? 'future' : '');
+  const msg = 'Edit the ' + which + ' week ' + wkLabel + '?\n\nChanges will be saved to that week\u2019s archive, not the live week.';
+  if (confirm(msg)) {
+    unlockedArchivedWeeks.add(viewingWeekKey);
+    updateWeekNavUI();
+    return true;
+  }
+  return false;
+}
+
+
 function getCurrentWeekKey() {
   // Proper ISO 8601 week number
   const now = new Date();
@@ -2610,19 +2643,26 @@ function updateWeekNavUI() {
   document.getElementById('restore-week-btn').style.display = isLive ? 'none' : 'inline-block';
   document.getElementById('week-label').readOnly = !isLive;
 
-  const editable = isLive || unlockedArchivedWeeks.has(viewingWeekKey);
-  document.querySelectorAll('.meal-input, .work-select, .flag-select, .day-label-input').forEach(el => {
-    el.disabled = !editable;
-  });
+  // v3.3.28: inputs always enabled — confirmation gates writes via confirmEditIfNeeded()
+  // Lock toggle (mealplanner_locked) still disables separately if engaged.
+  // No-op here.
   const badge = document.getElementById('week-readonly-badge');
+  const cur = getCurrentWeekKey();
+  const isFutureView = !isLive && viewingWeekKey > cur;
+  const isPastView   = !isLive && viewingWeekKey < cur;
   if (badge) {
     if (isLive) { badge.style.display = 'none'; }
     else if (unlockedArchivedWeeks.has(viewingWeekKey)) {
       badge.style.display = 'inline'; badge.textContent = 'editing'; badge.style.background = '#d97706';
     } else {
-      badge.style.display = 'inline'; badge.textContent = 'read-only'; badge.style.background = '#7c3aed';
+      badge.style.display = 'inline';
+      badge.textContent = isFutureView ? 'future' : 'past';
+      badge.style.background = isFutureView ? '#0369a1' : '#7c3aed';
     }
   }
+  // Restore button only makes sense for past weeks
+  const restoreBtn = document.getElementById('restore-week-btn');
+  if (restoreBtn) restoreBtn.style.display = (isPastView || (!isLive && viewingWeekKey === cur)) ? 'inline-block' : 'none';
 }
 
 function restoreWeek() {
@@ -3003,6 +3043,32 @@ document.addEventListener('click', (e) => {
 });
 
 init();
+
+// v3.3.28: one-shot bootstrap to inject historical W9-W15 archives.
+// Runs once per device (flagged in localStorage). Will NOT overwrite existing keys.
+(function(){
+  try {
+    if (localStorage.getItem('mealplanner_w9_w15_bootstrap') === '1') return;
+    const archives = {"2026_W09": {"plan": "{\"mon\": {\"special\": \"office\", \"work\": \"office\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Karen's\", \"T\": \"Karen's\"}, \"Emily\": {\"L\": \"Sandwich\", \"T\": \"Burgers\"}, \"Ben\": {\"L\": \"MIRA\", \"T\": \"Burgers\"}}}, \"tue\": {\"special\": \"dnd\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Chicken Alfredo\"}, \"Vivien\": {\"L\": \"????\", \"T\": \"Chicken Alfredo\"}, \"Emily\": {\"L\": \"????\", \"T\": \"Chicken Alfredo\"}, \"Ben\": {\"L\": \"????\", \"T\": \"Chicken Alfredo\"}}}, \"wed\": {\"special\": \"swimming\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Pitta pizza\"}, \"Vivien\": {\"L\": \"????\", \"T\": \"Pitta pizza\"}, \"Emily\": {\"L\": \"????\", \"T\": \"Aioli roast veg + chorizo + potato\"}, \"Ben\": {\"L\": \"????\", \"T\": \"Aioli roast veg + chorizo + potato\"}}}, \"thu\": {\"special\": \"dnd\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Nursery\", \"T\": \"Nursery\"}, \"Emily\": {\"L\": \"Sandwich\", \"T\": \"Fresh pasta\"}, \"Ben\": {\"L\": \"????\", \"T\": \"Fresh pasta\"}}}, \"fri\": {\"special\": \"\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Bean + tortilla cheese + tortilla wraps + omelette\"}, \"Vivien\": {\"L\": \"Nursery\", \"T\": \"Nursery\"}, \"Emily\": {\"L\": \"Pâté\", \"T\": \"Mushroom burgers\"}, \"Ben\": {\"L\": \"Pâté\", \"T\": \"Mushroom burgers\"}}}, \"sat\": {\"special\": \"\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"Quiche + sandwich + sausage roll\", \"T\": \"Carrot pie\"}, \"Vivien\": {\"L\": \"Quiche + sandwich\", \"T\": \"Carrot pie\"}, \"Emily\": {\"L\": \"Quiche + sandwich\", \"T\": \"Bottomless brunch\"}, \"Ben\": {\"L\": \"Quiche + sandwich\", \"T\": \"Carrot pie\"}}}, \"sun\": {\"special\": \"custom:Tennis\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"Soup + bread\", \"T\": \"Sausage potato bean\"}, \"Vivien\": {\"L\": \"Soup + bread\", \"T\": \"Sausage potato bean\"}, \"Emily\": {\"L\": \"Soup + bread\", \"T\": \"Sausage potato bean\"}, \"Ben\": {\"L\": \"Soup + bread\", \"T\": \"Sausage potato bean\"}}}, \"spare\": {\"special\": \"\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"????\", \"T\": \"Fish pie\"}, \"Vivien\": {\"L\": \"????\", \"T\": \"Fish pie\"}, \"Emily\": {\"L\": \"????\", \"T\": \"Fish pie\"}, \"Ben\": {\"L\": \"????\", \"T\": \"Fish pie\"}}}}", "notes": "", "week": "2026 W09", "activedays": "[\"mon\", \"tue\", \"wed\", \"thu\", \"fri\", \"sat\", \"sun\", \"spare\"]", "customdays": "{}", "shop": "{\"produce\": [], \"meat\": [], \"dairy\": [], \"dry\": [], \"frozen\": [], \"other\": []}", "checked": "{}"}, "2026_W10": {"plan": "{\"mon\": {\"special\": \"custom:odd socks\", \"work\": \"office\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Nursery\", \"T\": \"Nursery\"}, \"Emily\": {\"L\": \"Sandwich\", \"T\": \"Chicken Alfredo\"}, \"Ben\": {\"L\": \"MIRA\", \"T\": \"Chicken Alfredo\"}}}, \"tue\": {\"special\": \"\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Potato wedges + veg + fishcake\"}, \"Vivien\": {\"L\": \"Spaghetti on toast\", \"T\": \"Potato wedges + veg + fish\"}, \"Emily\": {\"L\": \"Spaghetti on toast\", \"T\": \"Tinga + rice\"}, \"Ben\": {\"L\": \"Spaghetti on toast\", \"T\": \"Tinga + rice\"}}}, \"wed\": {\"special\": \"swimming\", \"work\": \"office\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Fish finger waffles toast\"}, \"Vivien\": {\"L\": \"Bagel\", \"T\": \"Pitta pizza toast\"}, \"Emily\": {\"L\": \"Pasta pot\", \"T\": \"Stir fry\"}, \"Ben\": {\"L\": \"MIRA\", \"T\": \"Stir fry\"}}}, \"thu\": {\"special\": \"custom:cuddles\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"Snack Attack\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Karen's\", \"T\": \"Karen's\"}, \"Emily\": {\"L\": \"Sandwiches\", \"T\": \"Teriyaki skewers\"}, \"Ben\": {\"L\": \"Chicken bake\", \"T\": \"Teriyaki skewers\"}}}, \"fri\": {\"special\": \"custom:WM Repair\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Porridge fingers\"}, \"Vivien\": {\"L\": \"Nursery\", \"T\": \"Nursery\"}, \"Emily\": {\"L\": \"Super noodle quick\", \"T\": \"Laksa\"}, \"Ben\": {\"L\": \"Super noodle\", \"T\": \"Laksa\"}}}, \"sat\": {\"special\": \"\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"Pitta pizza\", \"T\": \"Pitta pizza\"}, \"Vivien\": {\"L\": \"Pitta pizza\", \"T\": \"Pitta pizza\"}, \"Emily\": {\"L\": \"Pitta pizza\", \"T\": \"Pitta pizza\"}, \"Ben\": {\"L\": \"Pitta pizza\", \"T\": \"Pitta pizza\"}}}, \"sun\": {\"special\": \"\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"Pâté\", \"T\": \"Tuna pasta bake\"}, \"Vivien\": {\"L\": \"Cheese or avo on toast\", \"T\": \"Tuna pasta bake\"}, \"Emily\": {\"L\": \"Pâté\", \"T\": \"Tuna pasta bake\"}, \"Ben\": {\"L\": \"Pâté\", \"T\": \"Tuna pasta bake\"}}}, \"spare\": {\"special\": \"\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"Porridge fingers\", \"T\": \"Philly fish pasta\"}, \"Vivien\": {\"L\": \"Porridge / lentils\", \"T\": \"Philly fish pasta\"}, \"Emily\": {\"L\": \"P\", \"T\": \"Philly fish pasta\"}, \"Ben\": {\"L\": \"P\", \"T\": \"Philadelphia fish pasta\"}}}}", "notes": "", "week": "2026 W10", "activedays": "[\"mon\", \"tue\", \"wed\", \"thu\", \"fri\", \"sat\", \"sun\", \"spare\"]", "customdays": "{}", "shop": "{\"produce\": [], \"meat\": [], \"dairy\": [], \"dry\": [], \"frozen\": [], \"other\": []}", "checked": "{}"}, "2026_W11": {"plan": "{\"mon\": {\"special\": \"custom:K@Melody\", \"work\": \"office\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Karen's\", \"T\": \"Karen's\"}, \"Emily\": {\"L\": \"Sandwich\", \"T\": \"Sourdough\"}, \"Ben\": {\"L\": \"MIRA\", \"T\": \"Sourdough chicken Mozz Avo\"}}}, \"tue\": {\"special\": \"dnd\", \"work\": \"office\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Sausage orzo\"}, \"Vivien\": {\"L\": \"See below\", \"T\": \"Sausage orzo\"}, \"Emily\": {\"L\": \"See below\", \"T\": \"Sausage orzo\"}, \"Ben\": {\"L\": \"\", \"T\": \"Sausage orzo\"}}}, \"wed\": {\"special\": \"swimming\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"See right\"}, \"Vivien\": {\"L\": \"See below\", \"T\": \"See right\"}, \"Emily\": {\"L\": \"See below\", \"T\": \"Fajita + nachos\"}, \"Ben\": {\"L\": \"\", \"T\": \"Fajita + nachos\"}}}, \"thu\": {\"special\": \"dnd\", \"work\": \"office\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Nursery\", \"T\": \"Nursery\"}, \"Emily\": {\"L\": \"Sandwich\", \"T\": \"Greek feta salad\"}, \"Ben\": {\"L\": \"\", \"T\": \"Greek feta salad\"}}}, \"fri\": {\"special\": \"\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Cheese bean wraps\"}, \"Vivien\": {\"L\": \"Nursery\", \"T\": \"Nursery\"}, \"Emily\": {\"L\": \"Pâté\", \"T\": \"Chilli\"}, \"Ben\": {\"L\": \"Pâté\", \"T\": \"Chilli\"}}}, \"sat\": {\"special\": \"\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"????\", \"T\": \"Fish pie\"}, \"Vivien\": {\"L\": \"????\", \"T\": \"Fish pie\"}, \"Emily\": {\"L\": \"????\", \"T\": \"Fish pie\"}, \"Ben\": {\"L\": \"????\", \"T\": \"Fish pie\"}}}, \"sun\": {\"special\": \"custom:Mothers Day\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"Karen's\", \"T\": \"Mac & cheese\"}, \"Vivien\": {\"L\": \"Karen's\", \"T\": \"Omelette on wrap / porridge finger / pinwheel\"}, \"Emily\": {\"L\": \"Karen's\", \"T\": \"Melty cheese\"}, \"Ben\": {\"L\": \"Karen's\", \"T\": \"Melty cheese\"}}}, \"spare\": {\"special\": \"\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"\", \"T\": \"\"}, \"Vivien\": {\"L\": \"\", \"T\": \"\"}, \"Emily\": {\"L\": \"\", \"T\": \"\"}, \"Ben\": {\"L\": \"\", \"T\": \"\"}}}}", "notes": "", "week": "2026 W11", "activedays": "[\"mon\", \"tue\", \"wed\", \"thu\", \"fri\", \"sat\", \"sun\", \"spare\"]", "customdays": "{}", "shop": "{\"produce\": [], \"meat\": [], \"dairy\": [], \"dry\": [], \"frozen\": [], \"other\": []}", "checked": "{}"}, "2026_W12": {"plan": "{\"mon\": {\"special\": \"\", \"work\": \"office\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Nursery\", \"T\": \"Nursery\"}, \"Emily\": {\"L\": \"Sandwich\", \"T\": \"Frozen pizza\"}, \"Ben\": {\"L\": \"MIRA\", \"T\": \"Frozen pizza\"}}}, \"tue\": {\"special\": \"custom:Reading M-Teams 5pm\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Saus mash beans\"}, \"Vivien\": {\"L\": \"\", \"T\": \"Saus mash beans\"}, \"Emily\": {\"L\": \"\", \"T\": \"Saus mash beans\"}, \"Ben\": {\"L\": \"\", \"T\": \"Saus mash beans\"}}}, \"wed\": {\"special\": \"dnd\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Fish cake + wedges + veg\"}, \"Vivien\": {\"L\": \"\", \"T\": \"Fish cake + wedges + veg\"}, \"Emily\": {\"L\": \"\", \"T\": \"Fish cake + wedges + veg\"}, \"Ben\": {\"L\": \"\", \"T\": \"Fish cake + wedges + veg\"}}}, \"thu\": {\"special\": \"\", \"work\": \"office\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Karen's\", \"T\": \"Karen's\"}, \"Emily\": {\"L\": \"\", \"T\": \"Stir fry\"}, \"Ben\": {\"L\": \"MIRA\", \"T\": \"Stir fry\"}}}, \"fri\": {\"special\": \"custom:Contact lens app\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Chicken & leek bake\"}, \"Vivien\": {\"L\": \"Nursery\", \"T\": \"Nursery\"}, \"Emily\": {\"L\": \"\", \"T\": \"Chicken & leek bake\"}, \"Ben\": {\"L\": \"\", \"T\": \"Chicken & leek bake\"}}}, \"sat\": {\"special\": \"custom:Emily out\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"\", \"T\": \"Chicken + chorizo bake\"}, \"Vivien\": {\"L\": \"\", \"T\": \"Chicken + chorizo bake\"}, \"Emily\": {\"L\": \"\", \"T\": \"out\"}, \"Ben\": {\"L\": \"\", \"T\": \"Chicken + chorizo bake\"}}}, \"sun\": {\"special\": \"custom:Gates\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"\", \"T\": \"Fish pie\"}, \"Vivien\": {\"L\": \"\", \"T\": \"Fish pie\"}, \"Emily\": {\"L\": \"\", \"T\": \"Fish pie\"}, \"Ben\": {\"L\": \"\", \"T\": \"Fish pie\"}}}, \"spare\": {\"special\": \"\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"\", \"T\": \"Cottage pie\"}, \"Vivien\": {\"L\": \"\", \"T\": \"Cottage pie\"}, \"Emily\": {\"L\": \"\", \"T\": \"Cottage pie\"}, \"Ben\": {\"L\": \"\", \"T\": \"Cottage pie\"}}}}", "notes": "", "week": "2026 W12", "activedays": "[\"mon\", \"tue\", \"wed\", \"thu\", \"fri\", \"sat\", \"sun\", \"spare\"]", "customdays": "{}", "shop": "{\"produce\": [], \"meat\": [], \"dairy\": [], \"dry\": [], \"frozen\": [], \"other\": []}", "checked": "{}"}, "2026_W13": {"plan": "{\"mon\": {\"special\": \"\", \"work\": \"office\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Karen's\", \"T\": \"Karen's\"}, \"Emily\": {\"L\": \"Work\", \"T\": \"Loaded nachos\"}, \"Ben\": {\"L\": \"Work\", \"T\": \"Loaded nachos\"}}}, \"tue\": {\"special\": \"custom:Freezer defrost\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Sausage pasta\"}, \"Vivien\": {\"L\": \"Pancakes\", \"T\": \"Sausage pasta\"}, \"Emily\": {\"L\": \"????\", \"T\": \"Sausage pasta\"}, \"Ben\": {\"L\": \"????\", \"T\": \"Sausage pasta\"}}}, \"wed\": {\"special\": \"swimming\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Quick Pitta pizza\"}, \"Vivien\": {\"L\": \"Avo + toast + cucumber\", \"T\": \"Pitta pizza\"}, \"Emily\": {\"L\": \"Omelette\", \"T\": \"Ready meal\"}, \"Ben\": {\"L\": \"out\", \"T\": \"out\"}}}, \"thu\": {\"special\": \"dnd\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Nursery\", \"T\": \"Nursery\"}, \"Emily\": {\"L\": \"Work Sandwich\", \"T\": \"Fresh pasta gnocchi\"}, \"Ben\": {\"L\": \"????\", \"T\": \"Fresh pasta gnocchi\"}}}, \"fri\": {\"special\": \"\", \"work\": \"wfh\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Burgers\"}, \"Vivien\": {\"L\": \"Nursery\", \"T\": \"Nursery\"}, \"Emily\": {\"L\": \"????\", \"T\": \"Burgers\"}, \"Ben\": {\"L\": \"????\", \"T\": \"Burgers\"}}}, \"sat\": {\"special\": \"custom:Panto (lunch), Tractors (Tarry's)\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"Take stuff + MIRA\", \"T\": \"Pizza @ Tarry's\"}, \"Vivien\": {\"L\": \"Take stuff + MIRA\", \"T\": \"Take stuff + Pizza\"}, \"Emily\": {\"L\": \"out\", \"T\": \"out\"}, \"Ben\": {\"L\": \"Take something\", \"T\": \"Pizza\"}}}, \"sun\": {\"special\": \"\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"Fish fingers\", \"T\": \"Lasagne\"}, \"Vivien\": {\"L\": \"Fish fingers\", \"T\": \"Lasagne\"}, \"Emily\": {\"L\": \"out\", \"T\": \"Lasagne\"}, \"Ben\": {\"L\": \"Fish fingers\", \"T\": \"Lasagne\"}}}, \"spare\": {\"special\": \"custom:Panto 1:30\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Bolognese\"}, \"Vivien\": {\"L\": \"Beans\", \"T\": \"Bolognese\"}, \"Emily\": {\"L\": \"Pâté\", \"T\": \"Bolognese\"}, \"Ben\": {\"L\": \"Pâté\", \"T\": \"Bolognese\"}}}}", "notes": "", "week": "2026 W13", "activedays": "[\"mon\", \"tue\", \"wed\", \"thu\", \"fri\", \"sat\", \"sun\", \"spare\"]", "customdays": "{}", "shop": "{\"produce\": [], \"meat\": [], \"dairy\": [], \"dry\": [], \"frozen\": [], \"other\": []}", "checked": "{}"}, "2026_W14": {"plan": "{\"mon\": {\"special\": \"\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"Karen's\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Karen's\", \"T\": \"Karen's\"}, \"Emily\": {\"L\": \"Sandwiches\", \"T\": \"Teriyaki skewers\"}, \"Ben\": {\"L\": \"Work\", \"T\": \"Teriyaki skewers\"}}}, \"tue\": {\"special\": \"\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Pot wedges + fish fingers + veg\"}, \"Vivien\": {\"L\": \"????\", \"T\": \"Pot wedges + fish fingers + veg\"}, \"Emily\": {\"L\": \"????\", \"T\": \"Sourdough chicken kievs\"}, \"Ben\": {\"L\": \"Work\", \"T\": \"Sourdough chicken kievs\"}}}, \"wed\": {\"special\": \"swimming\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Soup\"}, \"Vivien\": {\"L\": \"\", \"T\": \"Pasta sauce\"}, \"Emily\": {\"L\": \"\", \"T\": \"\"}, \"Ben\": {\"L\": \"\", \"T\": \"\"}}}, \"thu\": {\"special\": \"\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"PB toast\", \"T\": \"Bolognese\"}, \"Vivien\": {\"L\": \"Avo toast\", \"T\": \"Bolognese\"}, \"Emily\": {\"L\": \"Salmon bagel\", \"T\": \"Bolognese\"}, \"Ben\": {\"L\": \"Salmon bagel\", \"T\": \"Bolognese\"}}}, \"fri\": {\"special\": \"\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"Pâté\", \"T\": \"Chicken Alfredo\"}, \"Vivien\": {\"L\": \"bits\", \"T\": \"Chicken Alfredo\"}, \"Emily\": {\"L\": \"Pâté\", \"T\": \"Chicken Alfredo\"}, \"Ben\": {\"L\": \"Pâté\", \"T\": \"Chicken Alfredo\"}}}, \"sat\": {\"special\": \"\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"Festive bakes\", \"T\": \"Sausage pot + bean\"}, \"Vivien\": {\"L\": \"Festive bakes\", \"T\": \"Sausage pot + bean\"}, \"Emily\": {\"L\": \"Festive bakes\", \"T\": \"Sausage pot + bean\"}, \"Ben\": {\"L\": \"Festive bakes\", \"T\": \"Sausage pot + bean\"}}}, \"sun\": {\"special\": \"custom:Riverside\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"Picnic\", \"T\": \"Eat out\"}, \"Vivien\": {\"L\": \"Picnic\", \"T\": \"Eat out\"}, \"Emily\": {\"L\": \"Picnic\", \"T\": \"Eat out\"}, \"Ben\": {\"L\": \"Picnic\", \"T\": \"Eat out\"}}}, \"spare\": {\"special\": \"custom:NYE Wed 31st\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"\", \"T\": \"Picky Tea\"}, \"Vivien\": {\"L\": \"\", \"T\": \"Picky Tea\"}, \"Emily\": {\"L\": \"\", \"T\": \"Picky Tea\"}, \"Ben\": {\"L\": \"\", \"T\": \"Picky Tea\"}}}}", "notes": "", "week": "2026 W14", "activedays": "[\"mon\", \"tue\", \"wed\", \"thu\", \"fri\", \"sat\", \"sun\", \"spare\"]", "customdays": "{}", "shop": "{\"produce\": [], \"meat\": [], \"dairy\": [], \"dry\": [], \"frozen\": [], \"other\": []}", "checked": "{}"}, "2026_W15": {"plan": "{\"mon\": {\"special\": \"\", \"work\": \"office\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Nursery\", \"T\": \"Nursery\"}, \"Emily\": {\"L\": \"Something\", \"T\": \"Harissa halloumi wraps\"}, \"Ben\": {\"L\": \"MIRA\", \"T\": \"Harissa halloumi wraps\"}}}, \"tue\": {\"special\": \"\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"\"}, \"Vivien\": {\"L\": \"Avo, philly, peanut butter toast\", \"T\": \"\"}, \"Emily\": {\"L\": \"Festive bakes\", \"T\": \"Thai curry\"}, \"Ben\": {\"L\": \"????\", \"T\": \"Thai curry\"}}}, \"wed\": {\"special\": \"swimming\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Ravioli\"}, \"Vivien\": {\"L\": \"Potato + beans\", \"T\": \"Ravioli\"}, \"Emily\": {\"L\": \"Noodles\", \"T\": \"\"}, \"Ben\": {\"L\": \"????\", \"T\": \"\"}}}, \"thu\": {\"special\": \"\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Karen's\"}, \"Vivien\": {\"L\": \"Karen's\", \"T\": \"Karen's\"}, \"Emily\": {\"L\": \"Omelette\", \"T\": \"Spinach ricotta pasta bake\"}, \"Ben\": {\"L\": \"????\", \"T\": \"Spinach ricotta pasta bake\"}}}, \"fri\": {\"special\": \"custom:Sileby light on 18:30\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"School\", \"T\": \"Jacket potato + beans\"}, \"Vivien\": {\"L\": \"Nursery\", \"T\": \"Nursery\"}, \"Emily\": {\"L\": \"Ravioli\", \"T\": \"Spaghetti Bolognese\"}, \"Ben\": {\"L\": \"????\", \"T\": \"Spaghetti Bolognese\"}}}, \"sat\": {\"special\": \"custom:Xmas lights\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"Soup + pâté\", \"T\": \"Fish pie\"}, \"Vivien\": {\"L\": \"Soup + pâté\", \"T\": \"Fish pie\"}, \"Emily\": {\"L\": \"Soup + pâté\", \"T\": \"Fish pie\"}, \"Ben\": {\"L\": \"Soup + pâté\", \"T\": \"Fish pie\"}}}, \"sun\": {\"special\": \"\", \"work\": \"weekend\", \"meals\": {\"Reuben\": {\"L\": \"Pitta pizza\", \"T\": \"Roast\"}, \"Vivien\": {\"L\": \"Pitta pizza\", \"T\": \"Roast\"}, \"Emily\": {\"L\": \"Pitta pizza\", \"T\": \"Roast\"}, \"Ben\": {\"L\": \"Pitta pizza\", \"T\": \"Roast\"}}}, \"spare\": {\"special\": \"\", \"work\": \"\", \"meals\": {\"Reuben\": {\"L\": \"\", \"T\": \"\"}, \"Vivien\": {\"L\": \"\", \"T\": \"\"}, \"Emily\": {\"L\": \"\", \"T\": \"\"}, \"Ben\": {\"L\": \"\", \"T\": \"\"}}}}", "notes": "", "week": "2026 W15", "activedays": "[\"mon\", \"tue\", \"wed\", \"thu\", \"fri\", \"sat\", \"sun\", \"spare\"]", "customdays": "{}", "shop": "{\"produce\": [], \"meat\": [], \"dairy\": [], \"dry\": [], \"frozen\": [], \"other\": []}", "checked": "{}"}};
+    let injected = 0;
+    Object.keys(archives).forEach(weekKey => {
+      const storageKey = 'mealplanner_archive_' + weekKey;
+      if (!localStorage.getItem(storageKey)) {
+        const snap = archives[weekKey];
+        localStorage.setItem(storageKey, JSON.stringify(snap));
+        injected++;
+        // Also push to Firebase so other family devices pick it up
+        if (window.fbSaveArchive) window.fbSaveArchive(weekKey, snap);
+      }
+    });
+    localStorage.setItem('mealplanner_w9_w15_bootstrap', '1');
+    if (injected > 0) {
+      console.log('[v3.3.28] injected ' + injected + ' historical archives');
+      if (window.invalidatePopularity) window.invalidatePopularity();
+    }
+  } catch(e) { console.warn('historical archive bootstrap failed:', e); }
+})();
+
 // Clean up any leftover debug banner from earlier versions
 { const b = document.getElementById('debug-banner'); if (b) b.remove(); }
 // First-load: ask for the user's name so shared custom meals can be attributed
