@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.32</title>
+<title>Family Meal Planner v3.3.33</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -566,7 +566,7 @@ onValue(recipesRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.32</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.33</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -2546,8 +2546,9 @@ function navWeek(dir) {
   if (dir === 0) { viewingWeekKey = null; loadLiveWeek(); updateWeekNavButtons(); return; }
 
   if (viewingWeekKey === null) {
-    if (dir === -1 && archiveKeys.length > 0) {
-      viewingWeekKey = archiveKeys[archiveKeys.length - 1];
+    if (dir === -1) {
+      // v3.3.33: step back one ISO week from live, regardless of archive presence
+      viewingWeekKey = getOffsetWeekKey(-1);
       loadArchivedWeek(viewingWeekKey);
       if (window.fbSubscribeWeek) window.fbSubscribeWeek(viewingWeekKey);
     } else if (dir === 1) {
@@ -2636,7 +2637,8 @@ function updateWeekNavUI() {
   const isLive = viewingWeekKey === null;
   const idx = isLive ? -1 : archiveKeys.indexOf(viewingWeekKey);
 
-  document.getElementById('week-prev-btn').disabled = isLive ? archiveKeys.length === 0 : idx === 0;
+  // v3.3.33: nav buttons always enabled — users can walk into empty weeks and edit them.
+  document.getElementById('week-prev-btn').disabled = false;
   document.getElementById('week-next-btn').disabled = false;
   if (typeof updateWeekNavButtons === 'function') updateWeekNavButtons();
   document.getElementById('week-readonly-badge').style.display = isLive ? 'none' : 'inline';
