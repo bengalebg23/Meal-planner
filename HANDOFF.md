@@ -4,19 +4,18 @@
 ```
 I'm working on a family meal planner PWA. Please fetch these for context:
 https://raw.githubusercontent.com/bengalebg23/Meal-planner/dev/HANDOFF.md
-https://raw.githubusercontent.com/bengalebg23/Meal-planner/dev/code_dump_v3.3.32.txt
+https://raw.githubusercontent.com/bengalebg23/Meal-planner/dev/code_dump_v3.3.35.txt
 ```
 
 ## Current Version
-- **Dev branch**: v3.3.32
+- **Dev branch**: v3.3.35
 
-## v3.3.32 Changes
-- Shifted historical archives W09-W15 → W13-W19. (Versions 29-31 failed due to self-review bugs; this one finally lands the shift.)
-- Safe-by-default: only writes to a target week if no real data exists. Skipped weeks surfaced in alert.
+## v3.3.35 Changes
+- Force-overwrite W13/W14/W15 with photo data (Tennis Sun / odd socks / K@Melody plans).
+- Gated on mealplanner_force_w13_w15_v3.
 
-## v3.3.28 Changes (last working baseline before this shift)
-- Past + future weeks editable with confirm-on-first-edit.
-- saveToStorage routes non-live edits to their correct archive key.
+## v3.3.33 Changes
+- Nav buttons always enabled.
 
 ## Termux Workflow
 ```
