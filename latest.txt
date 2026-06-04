@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.35</title>
+<title>Family Meal Planner v3.3.38</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -566,7 +566,7 @@ onValue(recipesRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.35</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.38</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -3143,6 +3143,124 @@ init();
     console.log(msg);
     setTimeout(() => { try { alert(msg); } catch(e) {} }, 600);
   } catch(e) { console.warn('v3.3.35 force-overwrite failed:', e); }
+})();
+
+
+// v3.3.36: one-shot push of all localStorage archives to Firebase.
+// Fixes silent write failures from before the Firebase rules were corrected.
+(function(){
+  try {
+    if (localStorage.getItem('mealplanner_push_archives_v1') === '1') return;
+
+    function tryPush() {
+      if (typeof window.fbSaveArchive !== 'function') {
+        // Firebase not initialised yet — retry shortly
+        setTimeout(tryPush, 500);
+        return;
+      }
+      const keys = Object.keys(localStorage).filter(function(k){
+        return k.indexOf('mealplanner_archive_') === 0;
+      });
+      const pushed = [];
+      keys.forEach(function(k){
+        const wk = k.replace('mealplanner_archive_', '');
+        try {
+          const snap = JSON.parse(localStorage.getItem(k));
+          window.fbSaveArchive(wk, snap);
+          pushed.push(wk);
+        } catch(e) { console.warn('push failed for ' + wk, e); }
+      });
+      // Also push the live week if it exists
+      try {
+        if (typeof window.fbSave === 'function') {
+          const liveData = {
+            plan:       localStorage.getItem('mealplanner_plan')       || '',
+            notes:      localStorage.getItem('mealplanner_notes')      || '',
+            week:       localStorage.getItem('mealplanner_week')       || '',
+            activedays: localStorage.getItem('mealplanner_activedays') || '',
+            customdays: localStorage.getItem('mealplanner_customdays') || '',
+            shop:       localStorage.getItem('mealplanner_shop')       || ''
+          };
+          if (liveData.plan) window.fbSave(liveData);
+        }
+      } catch(e) { console.warn('live-week push failed:', e); }
+
+      localStorage.setItem('mealplanner_push_archives_v1', '1');
+      const msg = '[v3.3.36] Pushed ' + pushed.length + ' archives to Firebase: ' +
+                  (pushed.length ? pushed.sort().join(', ') : '(none — localStorage was empty)');
+      console.log(msg);
+      setTimeout(function(){ try { alert(msg); } catch(e) {} }, 800);
+    }
+    setTimeout(tryPush, 800);
+  } catch(e) { console.warn('v3.3.36 push bootstrap failed:', e); }
+})();
+
+
+// v3.3.38: Firebase backfill done properly.
+// fbSaveArchive shares a single debounce timer — calling it in a loop only
+// writes the LAST entry. This bootstrap imports set() and ref() directly
+// and awaits each write so all archives actually land in Firebase.
+(function(){
+  try {
+    if (localStorage.getItem('mealplanner_push_archives_v2') === '1') return;
+
+    async function doPush() {
+      let ref, set, getDatabase;
+      try {
+        const mod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+        ref = mod.ref;
+        set = mod.set;
+        getDatabase = mod.getDatabase;
+      } catch(e) {
+        console.warn('v3.3.38: Firebase SDK import failed', e);
+        try { alert('[v3.3.38] Could not load Firebase SDK. Check connection and reload.'); } catch(_) {}
+        return;
+      }
+      const db = getDatabase();
+
+      const keys = Object.keys(localStorage).filter(function(k){
+        return k.indexOf('mealplanner_archive_') === 0;
+      });
+
+      const pushed = [];
+      const failed = [];
+      for (const k of keys) {
+        const wk = k.replace('mealplanner_archive_', '');
+        try {
+          const snap = JSON.parse(localStorage.getItem(k));
+          await set(ref(db, 'archives/' + wk), snap);
+          pushed.push(wk);
+        } catch(e) {
+          console.warn('push failed for ' + wk, e);
+          failed.push(wk);
+        }
+      }
+
+      // Also push the live week
+      try {
+        const liveData = {
+          plan:       localStorage.getItem('mealplanner_plan')       || '',
+          notes:      localStorage.getItem('mealplanner_notes')      || '',
+          week:       localStorage.getItem('mealplanner_week')       || '',
+          activedays: localStorage.getItem('mealplanner_activedays') || '',
+          customdays: localStorage.getItem('mealplanner_customdays') || '',
+          shop:       localStorage.getItem('mealplanner_shop')       || ''
+        };
+        if (liveData.plan) {
+          await set(ref(db, 'currentWeek'), liveData);
+        }
+      } catch(e) { console.warn('live-week push failed:', e); }
+
+      localStorage.setItem('mealplanner_push_archives_v2', '1');
+      let msg = '[v3.3.38] Pushed ' + pushed.length + ' archives to Firebase';
+      if (pushed.length) msg += ': ' + pushed.sort().join(', ');
+      if (failed.length) msg += '\n\nFailed: ' + failed.join(', ');
+      console.log(msg);
+      try { alert(msg); } catch(e) {}
+    }
+
+    setTimeout(doPush, 1500);
+  } catch(e) { console.warn('v3.3.38 bootstrap failed:', e); }
 })();
 
 // Clean up any leftover debug banner from earlier versions

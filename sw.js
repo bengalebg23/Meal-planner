@@ -1,4 +1,4 @@
-const CACHE = 'meal-planner-v3.3.35';
+const CACHE = 'meal-planner-v3.3.38';
 
 self.addEventListener('install', e => {
   e.waitUntil(
