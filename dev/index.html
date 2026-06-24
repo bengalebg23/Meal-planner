@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Meal Planner v3.3.38</title>
+<title>Family Meal Planner v3.3.39</title>
 <meta name="application-name" content="Meal Planner">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -566,7 +566,7 @@ onValue(recipesRef, (snapshot) => {
   <div id="header-btns">
     <span id="save-indicator" style="font-size:10px;color:#a8a29e;align-self:center;display:none">✓ saved</span>
     <span id="sync-indicator" style="font-size:10px;color:#4ade80;align-self:center;display:none">⟳ synced</span>
-    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.38</span>
+    <span id="version-badge" style="font-size:18px;color:white;font-weight:700;align-self:flex-end;padding-bottom:2px;">v3.3.39</span>
     <div id="dark-toggle-wrap">
       <span id="dark-toggle-label">🌙</span>
       <label id="dark-toggle" title="Toggle dark mode">
@@ -3261,6 +3261,79 @@ init();
 
     setTimeout(doPush, 1500);
   } catch(e) { console.warn('v3.3.38 bootstrap failed:', e); }
+})();
+
+
+// v3.3.39: inject Mediterranean lamb flatbread to meal bank + recipes.
+// Writes to Firebase directly via set() + await — bypasses the broken
+// debounce in fbSaveCustomMeal/fbSaveRecipes.
+(function(){
+  try {
+    if (localStorage.getItem('mealplanner_add_lamb_flatbread') === '1') return;
+
+    const MEAL = {"name": "Mediterranean lamb flatbread", "tags": ["tea", "adults", "medium"], "_custom": true, "addedBy": "Ben", "addedAt": "2026-05-17T22:50:00.000Z"};
+    const RECIPE = {"tag": "GaleRecipe", "ingredients": ["500g lamb mince", "1 tsp ground cumin", "1 tsp ground coriander", "1 tsp smoked paprika", "1/2 tsp ground cinnamon", "1/2 tsp chilli flakes", "frozen diced onion", "frozen garlic", "1 tbsp tomato purée", "4 large flatbreads or naans", "200g cherry tomatoes, halved", "1/2 cucumber, diced", "Red onion, sliced", "Fresh mint and parsley", "Pomegranate seeds (optional)", "Olive oil and lemon", "--- Tzatziki ---", "300g Greek yoghurt", "1/2 cucumber, grated and squeezed dry", "frozen garlic", "1 tbsp lemon juice", "1 tbsp olive oil", "Fresh dill or mint", "Salt and pepper"], "notes": "Fry the onion in olive oil for 3-4 mins, add garlic and spices, cook 30 secs. Add the lamb mince and brown for 8-10 mins, breaking it up. Stir in tomato purée, season, and cook another 2 mins until rich and sticky.\n\nFor the tzatziki: squeeze the grated cucumber really hard in a tea towel (this is the difference between proper tzatziki and watery yoghurt). Mix everything together and chill while the lamb cooks.\n\nWarm the flatbreads in a dry pan or low oven. Spread with tzatziki, top with hot lamb, scatter over tomatoes, cucumber, red onion, herbs and pomegranate. Drizzle olive oil and a squeeze of lemon.\n\nAdults only — bit too spiced for the kids. Reuben might eat the lamb plain in a wrap if you keep some back before adding the spices. Works great with leftover roast lamb too — skip the mince step, just warm shredded lamb with the spices."};
+    const MEAL_NAME = MEAL.name;
+
+    async function doInject() {
+      let ref, set, getDatabase;
+      try {
+        const mod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+        ref = mod.ref; set = mod.set; getDatabase = mod.getDatabase;
+      } catch(e) {
+        console.warn('v3.3.39: SDK import failed', e);
+        try { alert('[v3.3.39] Could not load Firebase SDK.'); } catch(_) {}
+        return;
+      }
+      const db = getDatabase();
+
+      // 1. Add to UNIFIED_MEALS if not already there (in-memory)
+      try {
+        const exists = (window.UNIFIED_MEALS || []).some(function(m){
+          return m.name.toLowerCase() === MEAL_NAME.toLowerCase();
+        });
+        if (!exists && Array.isArray(window.UNIFIED_MEALS)) {
+          window.UNIFIED_MEALS.push(MEAL);
+          if (window.saveCustomMeals) window.saveCustomMeals();
+        }
+      } catch(e) { console.warn('UNIFIED_MEALS update failed:', e); }
+
+      // 2. Add to recipes object + localStorage
+      try {
+        if (window.recipes) {
+          window.recipes[MEAL_NAME] = RECIPE;
+          localStorage.setItem('mealplanner_recipes', JSON.stringify(window.recipes));
+        }
+      } catch(e) { console.warn('recipes update failed:', e); }
+
+      // 3. Push directly to Firebase (no debounce)
+      const writes = [];
+      try {
+        const key = MEAL_NAME.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        await set(ref(db, 'customMeals/' + key), MEAL);
+        writes.push('customMeals/' + key);
+      } catch(e) { console.warn('customMeals push failed', e); }
+
+      try {
+        // Read existing recipes from Firebase first so we don't clobber the lot
+        const recipesRaw = localStorage.getItem('mealplanner_recipes');
+        const allRecipes = recipesRaw ? JSON.parse(recipesRaw) : {};
+        allRecipes[MEAL_NAME] = RECIPE;
+        await set(ref(db, 'recipes'), allRecipes);
+        writes.push('recipes (' + Object.keys(allRecipes).length + ' total)');
+      } catch(e) { console.warn('recipes push failed', e); }
+
+      localStorage.setItem('mealplanner_add_lamb_flatbread', '1');
+      if (window.invalidatePopularity) window.invalidatePopularity();
+      if (window.renderBanks) try { window.renderBanks(); } catch(e) {}
+
+      const msg = '[v3.3.39] Added "' + MEAL_NAME + '" to meal bank + recipes.\n\nFirebase writes: ' + writes.join(', ');
+      console.log(msg);
+      try { alert(msg); } catch(e) {}
+    }
+
+    setTimeout(doInject, 1800);
+  } catch(e) { console.warn('v3.3.39 bootstrap failed:', e); }
 })();
 
 // Clean up any leftover debug banner from earlier versions
